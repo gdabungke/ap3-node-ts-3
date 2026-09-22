@@ -1,0 +1,39 @@
+{
+  "name": "ap3-node-ts",
+  "version": "1.0.0",
+  "description": "AP3 - Aplikasi Penyusunan Penelitian Perkara (Versi Node.js, Express, TypeScript & SQLite)",
+  "type": "module",
+  "main": "server.cjs",
+  "scripts": {
+    "start": "node server.cjs",
+    "start:express": "node dist/server/index.js",
+    "dev": "nodemon server.cjs",
+    "build": "tsc -p tsconfig.json"
+  },
+  "keywords": [
+    "ap3",
+    "penelitian-perkara",
+    "bea-cukai",
+    "typescript",
+    "nodejs",
+    "sqlite",
+    "express"
+  ],
+  "author": "Direktorat Jenderal Bea dan Cukai",
+  "license": "ISC",
+  "dependencies": {
+    "better-sqlite3": "^11.3.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.11",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.5.5",
+    "nodemon": "^3.1.7",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.6.2"
+  }
+}
