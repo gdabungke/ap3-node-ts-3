@@ -4,8 +4,8 @@ import { autoPaginateReports, applyPageNumbers, navigatePreviewPage, updatePrevi
 import { getDocNum, fmtLP, fmtLPF, fmtSplit, fmtPrintCacah, fmtBA, fmtLHP, LPP, LPF, SPLIT, SPRIN_CACAH, BA, LHP } from '../templates/laporan.js';
 import { getTLNumFormat, BAST_PEMILIK, BA_SEGEL, KEP_BDN, SPSA, BAST_LIMPAH } from '../templates/tindaklanjut.js';
 
-export function saveDynamicVal(id, val) {
-  let el = document.getElementById(id);
+export function saveDynamicVal(id: string, val: string): void {
+  let el = document.getElementById(id) as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
   if (el) el.value = val;
   if (store.activeRecordIndex >= 0 && store.databasePerkara[store.activeRecordIndex]) {
     store.databasePerkara[store.activeRecordIndex][id] = val;
@@ -14,7 +14,7 @@ export function saveDynamicVal(id, val) {
   updateReportLive();
 }
 
-export function saveDynamicValTL(key, val) {
+export function saveDynamicValTL(key: string, val: string): void {
   if (store.activeRecordIndex >= 0 && store.databasePerkara[store.activeRecordIndex]) {
     store.databasePerkara[store.activeRecordIndex][key] = val;
     savePerkaraToStorage();
@@ -22,7 +22,7 @@ export function saveDynamicValTL(key, val) {
   }
 }
 
-export function refreshReportTableUI() {
+export function refreshReportTableUI(): void {
   let elNumLPP = document.getElementById('table_num_LPP');
   if (elNumLPP) elNumLPP.textContent = fmtLP();
   let elNumLPF = document.getElementById('table_num_LPF');
@@ -52,7 +52,7 @@ export function refreshReportTableUI() {
   updateDocumentStatuses();
 }
 
-export function updateDocumentStatuses() {
+export function updateDocumentStatuses(): void {
   let docs = [
     { type: 'LPP', num: getDocNum('No_LPP'), date: getVal('Tanggal_LPP'), extra: getVal('Catatan_LPP') },
     { type: 'LPF', num: getDocNum('No_LPF'), date: getVal('Tanggal_LPF'), extra: getVal('Catatan_LPF') },
@@ -77,7 +77,7 @@ export function updateDocumentStatuses() {
   });
 }
 
-export function refreshTLTableUI() {
+export function refreshTLTableUI(): void {
   if (store.activeRecordIndex < 0) return;
   let rec = store.databasePerkara[store.activeRecordIndex];
   
@@ -111,7 +111,7 @@ export function refreshTLTableUI() {
   showTLReportView(store.currentTLDoc);
 }
 
-export function updateTLDocumentStatuses() {
+export function updateTLDocumentStatuses(): void {
   if (store.activeRecordIndex < 0 || !store.databasePerkara[store.activeRecordIndex]) return;
   let rec = store.databasePerkara[store.activeRecordIndex];
 
@@ -163,9 +163,9 @@ export function updateTLDocumentStatuses() {
   });
 }
 
-export function switchDocTab(type) {
+export function switchDocTab(type: string): void {
   store.currentDoc = type;
-  let sel = document.getElementById('docFilterSelect');
+  let sel = document.getElementById('docFilterSelect') as HTMLSelectElement;
   if (sel) sel.value = type;
 
   let tlContainer = document.getElementById('tl_reports');
@@ -176,9 +176,9 @@ export function switchDocTab(type) {
   refreshReportTableUI();
 }
 
-export function switchTLDocTab(type) {
+export function switchTLDocTab(type: string): void {
   store.currentTLDoc = type;
-  let sel = document.getElementById('tlDocFilterSelect');
+  let sel = document.getElementById('tlDocFilterSelect') as HTMLSelectElement;
   if (sel) sel.value = type;
 
   let repContainer = document.getElementById('reports');
@@ -189,14 +189,14 @@ export function switchTLDocTab(type) {
   showTLReportView(type);
 }
 
-export function updateReportLive() {
-  let sel = document.getElementById('docFilterSelect');
+export function updateReportLive(): void {
+  let sel = document.getElementById('docFilterSelect') as HTMLSelectElement;
   let activeType = sel ? sel.value : (store.currentDoc || 'LPP');
   refreshReportTableUI();
   showReportView(activeType);
 }
 
-export function showReportView(type) {
+export function showReportView(type: string): void {
   let el = document.getElementById('reports');
   if (!el) return;
 
@@ -217,12 +217,10 @@ export function showReportView(type) {
       { fn: BA, type: 'BA' },
       { fn: LHP, type: 'LHP' }
     ];
-    // Panggil d.fn() saja tanpa menyisipkan generateKopSurat lagi di depan
     el.innerHTML = docs.map(d => d.fn()).join('<div class="pagebreak"></div>');
   } else {
-    let f = { LPP, LPF, SPLIT, SPRIN_CACAH, BA, LHP }[type];
+    let f = ({ LPP, LPF, SPLIT, SPRIN_CACAH, BA, LHP } as any)[type];
     if (f) {
-      // Panggil fungsinya langsung tanpa tambahan kopHtml
       el.innerHTML = f();
     }
   }
@@ -232,7 +230,7 @@ export function showReportView(type) {
   navigatePreviewPage(0, 'reports');
 }
 
-export function showTLReportView(type) {
+export function showTLReportView(type: string): void {
   let el = document.getElementById('tl_reports');
   if (!el) return;
 
@@ -252,12 +250,10 @@ export function showTLReportView(type) {
       { fn: SPSA, type: 'SPSA' },
       { fn: BAST_LIMPAH, type: 'BAST_LIMPAH' }
     ];
-    // Panggil d.fn() saja tanpa menyisipkan generateKopSurat lagi di depan
     el.innerHTML = docsTL.map(d => d.fn()).join('<div class="pagebreak"></div>');
   } else {
-    let f = { BAST_PEMILIK, BA_SEGEL, KEP_BDN, SPSA, BAST_LIMPAH }[type];
+    let f = ({ BAST_PEMILIK, BA_SEGEL, KEP_BDN, SPSA, BAST_LIMPAH } as any)[type];
     if (f) {
-      // Panggil fungsinya langsung tanpa tambahan kopHtml
       el.innerHTML = f();
     }
   }
@@ -267,7 +263,7 @@ export function showTLReportView(type) {
   navigatePreviewPage(0, 'tl_reports');
 }
 
-export function renderDynamicInputs(type) {
+export function renderDynamicInputs(type: string): void {
   let container = document.getElementById('modalDynamicInputBody');
   if (!container) return;
 
@@ -313,7 +309,7 @@ export function renderDynamicInputs(type) {
         </div>
         <div>
           <label>Tanggal LPP</label>
-          <input type="date" id="input_Tgl_LPP" value="${getVal('Tanggal_LPP') !== '-' ? getVal('Tanggal_LPP') : (document.getElementById('Tanggal_LP_LP_1') ? document.getElementById('Tanggal_LP_LP_1').value : '')}" onchange="saveDynamicVal('Tanggal_LPP', this.value); refreshReportTableUI();">
+          <input type="date" id="input_Tgl_LPP" value="${getVal('Tanggal_LPP') !== '-' ? getVal('Tanggal_LPP') : ((document.getElementById('Tanggal_LP_LP_1') as HTMLInputElement)?.value || '')}" onchange="saveDynamicVal('Tanggal_LPP', this.value); refreshReportTableUI();">
         </div>
       </div>
       <div style="margin-bottom:10px;">
@@ -339,7 +335,7 @@ export function renderDynamicInputs(type) {
         </div>
         <div>
           <label>Tanggal LPF</label>
-          <input type="date" id="input_Tgl_LPF" value="${getVal('Tanggal_LPF') !== '-' ? getVal('Tanggal_LPF') : (document.getElementById('Tanggal_LP_LP_1') ? document.getElementById('Tanggal_LP_LP_1').value : '')}" onchange="saveDynamicVal('Tanggal_LPF', this.value); refreshReportTableUI();">
+          <input type="date" id="input_Tgl_LPF" value="${getVal('Tanggal_LPF') !== '-' ? getVal('Tanggal_LPF') : ((document.getElementById('Tanggal_LP_LP_1') as HTMLInputElement)?.value || '')}" onchange="saveDynamicVal('Tanggal_LPF', this.value); refreshReportTableUI();">
         </div>
       </div>
       <div>
@@ -359,7 +355,7 @@ export function renderDynamicInputs(type) {
         </div>
         <div>
           <label>Tanggal SPLIT</label>
-          <input type="date" id="input_Tgl_SPLIT" value="${getVal('Tanggal_SPLIT') !== '-' ? getVal('Tanggal_SPLIT') : (document.getElementById('Tanggal_LP_LP_1') ? document.getElementById('Tanggal_LP_LP_1').value : '')}" onchange="saveDynamicVal('Tanggal_SPLIT', this.value); refreshReportTableUI();">
+          <input type="date" id="input_Tgl_SPLIT" value="${getVal('Tanggal_SPLIT') !== '-' ? getVal('Tanggal_SPLIT') : ((document.getElementById('Tanggal_LP_LP_1') as HTMLInputElement)?.value || '')}" onchange="saveDynamicVal('Tanggal_SPLIT', this.value); refreshReportTableUI();">
         </div>
       </div>
       <div>
@@ -382,7 +378,7 @@ export function renderDynamicInputs(type) {
         </div>
         <div>
           <label>Tanggal SPRIN CACAH</label>
-          <input type="date" id="input_Tgl_SPRIN" value="${getVal('Tanggal_Sprin_Cacah') !== '-' ? getVal('Tanggal_Sprin_Cacah') : (document.getElementById('Tanggal_SBP') ? document.getElementById('Tanggal_SBP').value : '')}" onchange="saveDynamicVal('Tanggal_Sprin_Cacah', this.value); refreshReportTableUI();">
+          <input type="date" id="input_Tgl_SPRIN" value="${getVal('Tanggal_Sprin_Cacah') !== '-' ? getVal('Tanggal_Sprin_Cacah') : ((document.getElementById('Tanggal_SBP') as HTMLInputElement)?.value || '')}" onchange="saveDynamicVal('Tanggal_Sprin_Cacah', this.value); refreshReportTableUI();">
         </div>
       </div>
       <p class="small" style="margin-top:0;">Daftar petugas pelaksana pencacahan barang hasil penindakan:</p>
@@ -402,7 +398,7 @@ export function renderDynamicInputs(type) {
         </div>
         <div>
           <label>Tanggal BA Cacah</label>
-          <input type="date" id="input_Tgl_BA" value="${getVal('Tanggal_BA') !== '-' ? getVal('Tanggal_BA') : (document.getElementById('Tanggal_SBP') ? document.getElementById('Tanggal_SBP').value : '')}" onchange="saveDynamicVal('Tanggal_BA', this.value); if(this.value){ const r = autoGenerateTeksTanggalBA(this.value); saveDynamicVal('Hari_Cacah', r.hari.toLowerCase()); saveDynamicVal('TeksTanggal', r.teksLengkap.toLowerCase()); document.getElementById('Hari_Cacah').value = r.hari.toLowerCase(); document.getElementById('TeksTanggal').value = r.teksLengkap.toLowerCase(); } refreshReportTableUI();">
+          <input type="date" id="input_Tgl_BA" value="${getVal('Tanggal_BA') !== '-' ? getVal('Tanggal_BA') : ((document.getElementById('Tanggal_SBP') as HTMLInputElement)?.value || '')}" onchange="saveDynamicVal('Tanggal_BA', this.value); if(this.value){ const r = autoGenerateTeksTanggalBA(this.value); saveDynamicVal('Hari_Cacah', r.hari.toLowerCase()); saveDynamicVal('TeksTanggal', r.teksLengkap.toLowerCase()); (document.getElementById('Hari_Cacah') as HTMLInputElement).value = r.hari.toLowerCase(); (document.getElementById('TeksTanggal') as HTMLInputElement).value = r.teksLengkap.toLowerCase(); } refreshReportTableUI();">
         </div>
         <div>
           <label>Hari Cacah (Huruf Kecil)</label>
@@ -431,7 +427,7 @@ export function renderDynamicInputs(type) {
         </div>
         <div>
           <label>Tanggal LHP</label>
-          <input type="date" id="input_Tgl_LHP" value="${getVal('Tanggal_LHP') !== '-' ? getVal('Tanggal_LHP') : (document.getElementById('Tanggal_LP_LP_1') ? document.getElementById('Tanggal_LP_LP_1').value : '')}" onchange="saveDynamicVal('Tanggal_LHP', this.value); refreshReportTableUI();">
+          <input type="date" id="input_Tgl_LHP" value="${getVal('Tanggal_LHP') !== '-' ? getVal('Tanggal_LHP') : ((document.getElementById('Tanggal_LP_LP_1') as HTMLInputElement)?.value || '')}" onchange="saveDynamicVal('Tanggal_LHP', this.value); refreshReportTableUI();">
         </div>
       </div>
 
@@ -494,23 +490,18 @@ export function renderDynamicInputs(type) {
   }
 }
 
-// ==========================================================================
-// FUNGSI SINKRONISASI KOMBINASI OPSI LHP (DI LUAR BLOK RENDER)
-// ==========================================================================
-export function syncUraianKombinasiLHP() {
-  const active = {};
-  document.querySelectorAll('.chk-lhp-opsi:checked').forEach(c => {
+export function syncUraianKombinasiLHP(): void {
+  const active: any = {};
+  document.querySelectorAll('.chk-lhp-opsi:checked').forEach((c: any) => {
     active[c.value] = true;
   });
 
-  let hasil = [];
+  let hasil: string[] = [];
 
-  // 1. KOMBINASI: BDN + SPSA
   if (active.bdn && active.spsa && !active.kembali) {
     hasil.push("Terhadap barang hasil penindakan yang melanggar ketentuan ditetapkan sebagai Barang yang Dikuasai Negara (BDN) untuk diproses menjadi Barang Milik Negara (BMN).");
     hasil.push("Terhadap pihak yang bertanggung jawab dikenakan sanksi administrasi berupa denda dengan menerbitkan Surat Penetapan Sanksi Administrasi (SPSA).");
   }
-  // 2. KOMBINASI: BDN + BARANG DIKEMBALIKAN
   else if (active.bdn && active.kembali) {
     hasil.push("Terhadap barang bukti hasil penindakan yang terbukti melanggar ketentuan perundang-undangan ditetapkan sebagai Barang yang Dikuasai Negara (BDN) untuk selanjutnya diusulkan menjadi Barang Milik Negara (BMN).");
     hasil.push("Terhadap barang dan/atau sarana pengangkut yang telah diteliti dan tidak terbukti melanggar ketentuan peraturan perundang-undangan dikembalikan kepada pemilik yang sah.");
@@ -518,18 +509,15 @@ export function syncUraianKombinasiLHP() {
       hasil.push("Terhadap pelanggaran administratif yang timbul dikenakan sanksi administrasi berupa denda (SPSA).");
     }
   }
-  // 3. KOMBINASI: SPSA + DIKEMBALIKAN
   else if (active.spsa && active.kembali && !active.bdn) {
     hasil.push("Terhadap pihak yang bertanggung jawab dikenakan sanksi administrasi berupa denda dengan menerbitkan Surat Penetapan Sanksi Administrasi (SPSA) dan penagihan pungutan negara.");
     hasil.push("Terhadap barang hasil penindakan dapat disetujui pengeluarannya / dikembalikan kepada pemilik setelah seluruh kewajiban pungutan negara dan sanksi denda (SPSA) dilunasi.");
   }
-  // 4. KOMBINASI: ULTIMUM REMEDIUM (UR) + PEMUSNAHAN (BMN)
   else if (active.ur || (active.ur && active.musnah)) {
     hasil.push("Memberikan rekomendasi penyelesaian perkara melalui asas Ultimum Remedium (Pasal 40B UU Cukai jo. UU HPP) dengan mewajibkan pembayaran sanksi denda sebesar 4 (empat) kali nilai cukai.");
     hasil.push("Terhadap Barang Kena Cukai (BKC) hasil penindakan dirampas untuk negara, ditetapkan sebagai Barang Milik Negara (BMN), dan selanjutnya diusulkan untuk dilakukan pemusnahan.");
     hasil.push("Apabila sanksi denda tidak diselesaikan dalam jangka waktu yang ditentukan, proses perkara segera ditingkatkan ke tahap Penyidikan.");
   }
-  // 5. KOMBINASI: RE-EKSPOR + PENGELUARAN SEBAGIAN / BDN
   else if (active.reekspor && active.keluar_sebagian) {
     hasil.push("Terhadap barang impor yang terkena ketentuan larangan dan pembatasan (lartas) direkomendasikan untuk diekspor kembali (re-ekspor) ke negara asal dalam batas waktu yang ditentukan.");
     hasil.push("Terhadap barang impor yang telah memenuhi dokumen perizinan disetujui untuk dilakukan pengeluaran barang sebagian (parsial release).");
@@ -537,7 +525,6 @@ export function syncUraianKombinasiLHP() {
       hasil.push("Apabila barang yang dire-ekspor tidak dikeluarkan dalam batas waktu yang ditetapkan, maka diproses penetapannya menjadi Barang yang Dikuasai Negara (BDN).");
     }
   }
-  // 6. OPSIONAL TUNGGAL ATAU STANDAR LAINNYA
   else {
     if (active.bdn) hasil.push("Terhadap seluruh barang hasil penindakan ditetapkan sebagai Barang yang Dikuasai Negara (BDN) untuk diproses pengadministrasiannya menjadi BMN.");
     if (active.spsa) hasil.push("Dikenakan sanksi administrasi berupa denda sesuai ketentuan dengan menerbitkan Surat Penetapan Sanksi Administrasi (SPSA).");
@@ -553,7 +540,7 @@ export function syncUraianKombinasiLHP() {
 
   const textHasil = hasil.map((txt, idx) => `${idx + 1}. ${txt}`).join('\n\n');
 
-  const textarea = document.getElementById('input_Penyelesaian_Perkara');
+  const textarea = document.getElementById('input_Penyelesaian_Perkara') as HTMLTextAreaElement;
   if (textarea) {
     textarea.value = textHasil;
     textarea.dispatchEvent(new Event('input', { bubbles: true }));
@@ -563,9 +550,9 @@ export function syncUraianKombinasiLHP() {
     }
   }
 }
-window.syncUraianKombinasiLHP = syncUraianKombinasiLHP;
+(window as any).syncUraianKombinasiLHP = syncUraianKombinasiLHP;
 
-export function renderItems(items) {
+export function renderItems(items: any[]): void {
   let c = document.getElementById('items');
   if (!c) return;
   c.innerHTML = items.map((x, i) => `
@@ -583,7 +570,7 @@ export function renderItems(items) {
     </div>
   `).join('');
 
-  c.querySelectorAll('input[data-i]').forEach(inp => {
+  c.querySelectorAll('input[data-i]').forEach((inp: any) => {
     inp.oninput = () => {
       let arr = JSON.parse(localStorage.getItem('cacahItems') || '[]');
       arr[inp.dataset.i][inp.dataset.k] = inp.value;
@@ -593,7 +580,7 @@ export function renderItems(items) {
   });
 }
 
-export function addItem() {
+export function addItem(): void {
   let items = JSON.parse(localStorage.getItem('cacahItems') || '[]');
   items.push({ komoditi: '', uraian: '', jumlah: '', kondisi: '', keterangan: '', asal: '-' });
   localStorage.setItem('cacahItems', JSON.stringify(items));
@@ -601,7 +588,7 @@ export function addItem() {
   updateReportLive();
 }
 
-export function delItem(i) {
+export function delItem(i: number): void {
   let items = JSON.parse(localStorage.getItem('cacahItems') || '[]');
   items.splice(i, 1);
   localStorage.setItem('cacahItems', JSON.stringify(items));
@@ -609,7 +596,7 @@ export function delItem(i) {
   updateReportLive();
 }
 
-export function addSplitPegawai() {
+export function addSplitPegawai(): void {
   let list = JSON.parse(localStorage.getItem('splitPegawaiList') || '[]');
   if (list.length === 0) {
     list = [
@@ -631,7 +618,7 @@ export function addSplitPegawai() {
   updateReportLive();
 }
 
-export function renderSplitPegawaiList() {
+export function renderSplitPegawaiList(): void {
   let container = document.getElementById('splitPegawaiContainer');
   if (!container) return;
 
@@ -645,7 +632,7 @@ export function renderSplitPegawaiList() {
     ];
   }
 
-  container.innerHTML = list.map((p, i) => `
+  container.innerHTML = list.map((p: any, i: number) => `
     <div class="item">
       <div class="grid3">
         <div><label>Nama Pegawai #${i+1}</label><input value="${escText(p.nama || '')}" data-pi="${i}" data-pk="nama"></div>
@@ -658,7 +645,7 @@ export function renderSplitPegawaiList() {
     </div>
   `).join('');
 
-  container.querySelectorAll('input[data-pi]').forEach(inp => {
+  container.querySelectorAll('input[data-pi]').forEach((inp: any) => {
     inp.oninput = () => {
       let arr = JSON.parse(localStorage.getItem('splitPegawaiList') || '[]');
       if (arr.length === 0) {
@@ -682,7 +669,7 @@ export function renderSplitPegawaiList() {
   });
 }
 
-export function delSplitPegawai(i) {
+export function delSplitPegawai(i: number): void {
   let list = JSON.parse(localStorage.getItem('splitPegawaiList') || '[]');
   list.splice(i, 1);
   localStorage.setItem('splitPegawaiList', JSON.stringify(list));
@@ -696,7 +683,7 @@ export function delSplitPegawai(i) {
   updateReportLive();
 }
 
-export function addSprinPegawai() {
+export function addSprinPegawai(): void {
   let list = JSON.parse(localStorage.getItem('sprinPegawaiList') || '[]');
   if (list.length === 0) {
     list = [
@@ -720,7 +707,7 @@ export function addSprinPegawai() {
   updateReportLive();
 }
 
-export function renderSprinPegawaiList() {
+export function renderSprinPegawaiList(): void {
   let container = document.getElementById('sprinPegawaiContainer');
   if (!container) return;
 
@@ -736,7 +723,7 @@ export function renderSprinPegawaiList() {
     ];
   }
 
-  container.innerHTML = list.map((p, i) => `
+  container.innerHTML = list.map((p: any, i: number) => `
     <div class="item">
       <div class="grid4">
         <div><label>Nama Pegawai #${i + 1}</label><input value="${escText(p.nama || '')}" data-spi="${i}" data-spk="nama"></div>
@@ -750,7 +737,7 @@ export function renderSprinPegawaiList() {
     </div>
   `).join('');
 
-  container.querySelectorAll('input[data-spi]').forEach(inp => {
+  container.querySelectorAll('input[data-spi]').forEach((inp: any) => {
     inp.oninput = () => {
       let arr = JSON.parse(localStorage.getItem('sprinPegawaiList') || '[]');
       if (arr.length === 0) {
@@ -776,7 +763,7 @@ export function renderSprinPegawaiList() {
   });
 }
 
-export function delSprinPegawai(i) {
+export function delSprinPegawai(i: number): void {
   let list = JSON.parse(localStorage.getItem('sprinPegawaiList') || '[]');
   list.splice(i, 1);
   localStorage.setItem('sprinPegawaiList', JSON.stringify(list));
@@ -790,7 +777,7 @@ export function delSprinPegawai(i) {
   updateReportLive();
 }
 
-export function renderTLFormSection(type) {
+export function renderTLFormSection(type: string): void {
   let container = document.getElementById('modalDynamicInputBodyTL');
   if (!container) return;
   if (store.activeRecordIndex < 0) {
@@ -800,13 +787,12 @@ export function renderTLFormSection(type) {
   let rec = store.databasePerkara[store.activeRecordIndex];
 
    if (type === 'BAST_PEMILIK') {
-    // Pastikan list array diinisialisasi
     if (!rec.TL_BAST_SarkutList) {
       rec.TL_BAST_SarkutList = [{ jenis: rec.TL_Nama_Sarkut || rec.Pengangkut || '-', nopol: rec.TL_No_Reg_Sarkut || '-' }];
     }
     if (!rec.TL_BAST_BarangList) {
       let jmlKoli = rec.Jumlah_Koli || '12';
-      let teksJml = tanggalKeTeks ? tanggalKeTeks(jmlKoli) : 'dua belas';
+      let teksJml = (window as any).tanggalKeTeks ? (window as any).tanggalKeTeks(jmlKoli) : 'dua belas';
       let jenisKoli = rec.Jenis_Koli || 'koli';
       let komoditi = rec.Komoditi || rec.Uraian_Barang || 'Sepatu';
       
@@ -839,23 +825,22 @@ export function renderTLFormSection(type) {
     let isManualRangka = !opsiRangka.slice(0, 5).includes(selectedRangka);
     let optionsHtml = opsiRangka.map(o => `<option value="${o}" ${(isManualRangka && o === 'Penyelesaian lainnya') || selectedRangka === o ? 'selected' : ''}>${o}</option>`).join('');
 
-    // Trigger Kalender
-    window.onTanggalBastChange = function(val) {
+    (window as any).onTanggalBastChange = function(val: string) {
       saveDynamicValTL('TL_Tanggal_Surat', val);
       if (!val) return;
       if (typeof autoGenerateTeksTanggalBA === 'function') {
         const res = autoGenerateTeksTanggalBA(val);
         saveDynamicValTL('TL_Hari_BAST', res.hari);
         saveDynamicValTL('TL_Tgl_Huruf_BAST', res.teksLengkap);
-        let elHari = document.getElementById('input_TL_Hari_BAST');
+        let elHari = document.getElementById('input_TL_Hari_BAST') as HTMLInputElement;
         if (elHari) elHari.value = res.hari;
-        let elTeks = document.getElementById('input_TL_Tgl_Huruf_BAST');
+        let elTeks = document.getElementById('input_TL_Tgl_Huruf_BAST') as HTMLInputElement;
         if (elTeks) elTeks.value = res.teksLengkap;
       }
       showTLReportView('BAST_PEMILIK');
     };
 
-    window.addBastItem = function(category) {
+    (window as any).addBastItem = function(category: string) {
       if (category === 'sarkut') rec.TL_BAST_SarkutList.push({ jenis: '', nopol: '' });
       if (category === 'barang') rec.TL_BAST_BarangList.push({ kemasan: '', uraian: '' });
       if (category === 'dokumen') rec.TL_BAST_DokumenList.push({ uraian: '' });
@@ -865,7 +850,7 @@ export function renderTLFormSection(type) {
       showTLReportView('BAST_PEMILIK');
     };
 
-    window.delBastItem = function(category, idx) {
+    (window as any).delBastItem = function(category: string, idx: number) {
       if (category === 'sarkut' && rec.TL_BAST_SarkutList.length > 1) rec.TL_BAST_SarkutList.splice(idx, 1);
       if (category === 'barang' && rec.TL_BAST_BarangList.length > 1) rec.TL_BAST_BarangList.splice(idx, 1);
       if (category === 'dokumen' && rec.TL_BAST_DokumenList.length > 1) rec.TL_BAST_DokumenList.splice(idx, 1);
@@ -875,7 +860,7 @@ export function renderTLFormSection(type) {
       showTLReportView('BAST_PEMILIK');
     };
 
-    const toLetter = (i) => String.fromCharCode(97 + i) + '.';
+    const toLetter = (i: number) => String.fromCharCode(97 + i) + '.';
 
     container.innerHTML = `
       <div style="background:#0f172a; border:1px solid var(--border-color); padding:10px; border-radius:6px; margin-bottom:12px;">
@@ -902,13 +887,12 @@ export function renderTLFormSection(type) {
         </div>
       </div>
 
-      <!-- SARKUT -->
       <div style="border:1px solid var(--border-color); padding:10px; border-radius:6px; margin-bottom:10px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
           <span style="font-size:11px; font-weight:700; color:#cbd5e1;">1. SARANA PENGANGKUT</span>
           <button type="button" class="btn primary" onclick="addBastItem('sarkut')" style="padding:2px 8px; font-size:11px;">+ Tambah Sarkut (b, c..)</button>
         </div>
-        ${rec.TL_BAST_SarkutList.map((s, idx) => `
+        ${rec.TL_BAST_SarkutList.map((s: any, idx: number) => `
           <div style="background:#1e293b; padding:8px; border-radius:4px; margin-bottom:6px;">
             <div style="font-weight:bold; font-size:11px; margin-bottom:4px; color:var(--primary);">${toLetter(idx)} Sarkut #${idx+1}</div>
             <div class="grid">
@@ -920,13 +904,12 @@ export function renderTLFormSection(type) {
         `).join('')}
       </div>
 
-      <!-- BARANG -->
       <div style="border:1px solid var(--border-color); padding:10px; border-radius:6px; margin-bottom:10px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
           <span style="font-size:11px; font-weight:700; color:#cbd5e1;">2. BARANG</span>
           <button type="button" class="btn primary" onclick="addBastItem('barang')" style="padding:2px 8px; font-size:11px;">+ Tambah Barang (b, c..)</button>
         </div>
-        ${rec.TL_BAST_BarangList.map((b, idx) => `
+        ${rec.TL_BAST_BarangList.map((b: any, idx: number) => `
           <div style="background:#1e293b; padding:8px; border-radius:4px; margin-bottom:6px;">
             <div style="font-weight:bold; font-size:11px; margin-bottom:4px; color:var(--primary);">${toLetter(idx)} Barang #${idx+1}</div>
             <div class="grid">
@@ -948,13 +931,12 @@ export function renderTLFormSection(type) {
         `).join('')}
       </div>
 
-      <!-- DOKUMEN -->
       <div style="border:1px solid var(--border-color); padding:10px; border-radius:6px; margin-bottom:10px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
           <span style="font-size:11px; font-weight:700; color:#cbd5e1;">3. DOKUMEN</span>
           <button type="button" class="btn primary" onclick="addBastItem('dokumen')" style="padding:2px 8px; font-size:11px;">+ Tambah Dokumen (b, c..)</button>
         </div>
-        ${rec.TL_BAST_DokumenList.map((d, idx) => `
+        ${rec.TL_BAST_DokumenList.map((d: any, idx: number) => `
           <div style="background:#1e293b; padding:8px; border-radius:4px; margin-bottom:6px;">
             <div style="font-weight:bold; font-size:11px; margin-bottom:4px; color:var(--primary);">${toLetter(idx)} Dokumen #${idx+1}</div>
             <input value="${escText(d.uraian)}" oninput="rec.TL_BAST_DokumenList[${idx}].uraian = this.value; savePerkaraToStorage(); showTLReportView('BAST_PEMILIK');">
@@ -963,13 +945,12 @@ export function renderTLFormSection(type) {
         `).join('')}
       </div>
 
-      <!-- ORANG -->
       <div style="border:1px solid var(--border-color); padding:10px; border-radius:6px; margin-bottom:10px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
           <span style="font-size:11px; font-weight:700; color:#cbd5e1;">4. ORANG</span>
           <button type="button" class="btn primary" onclick="addBastItem('orang')" style="padding:2px 8px; font-size:11px;">+ Tambah Orang (b, c..)</button>
         </div>
-        ${rec.TL_BAST_OrangList.map((o, idx) => `
+        ${rec.TL_BAST_OrangList.map((o: any, idx: number) => `
           <div style="background:#1e293b; padding:8px; border-radius:4px; margin-bottom:6px;">
             <div style="font-weight:bold; font-size:11px; margin-bottom:4px; color:var(--primary);">${toLetter(idx)} Orang #${idx+1}</div>
             <div class="grid">
@@ -981,7 +962,6 @@ export function renderTLFormSection(type) {
         `).join('')}
       </div>
 
-      <!-- PENERIMA -->
       <div style="border:1px solid var(--border-color); padding:10px; border-radius:6px; margin-bottom:12px;">
         <span style="font-size:11px; font-weight:700; color:#cbd5e1;">PENERIMA & RANGKA PENYERAHAN</span>
         <div class="grid">
@@ -1000,9 +980,9 @@ export function renderTLFormSection(type) {
           <label>Penyerahan Dilaksanakan Dalam Rangka:</label>
           <select style="width:100%; padding:7px; margin-bottom:6px;" onchange="
             if (this.value === 'Penyelesaian lainnya') {
-              document.getElementById('wrapper_manual_rangka').style.display = 'block';
+              (document.getElementById('wrapper_manual_rangka') as HTMLElement).style.display = 'block';
             } else {
-              document.getElementById('wrapper_manual_rangka').style.display = 'none';
+              (document.getElementById('wrapper_manual_rangka') as HTMLElement).style.display = 'none';
               saveDynamicValTL('TL_Rangka_Penyerahan', this.value);
             }
             showTLReportView('BAST_PEMILIK');
@@ -1015,7 +995,6 @@ export function renderTLFormSection(type) {
         </div>
       </div>
 
-      <!-- PETUGAS & SAKSI -->
       <div style="border:1px solid var(--border-color); padding:10px; border-radius:6px;">
         <span style="font-size:11px; font-weight:700; color:#cbd5e1;">PETUGAS PENYERAH & SAKSI</span>
         <div class="grid" style="margin-top:8px;">
@@ -1036,7 +1015,7 @@ export function renderTLFormSection(type) {
         </div>
       </div>
     `;
-} else if (type === 'BA_SEGEL') {
+  } else if (type === 'BA_SEGEL') {
     container.innerHTML = `
       <div class="grid" style="margin-bottom:10px;">
         <div><label>Hari Pembukaan Segel</label><input value="${escText(rec.TL_Segel_Hari || '')}" oninput="saveDynamicValTL('TL_Segel_Hari', this.value)"></div>
@@ -1090,18 +1069,17 @@ export function renderTLFormSection(type) {
   }
 }
 
-// Expose fungsi ke lingkup global agar dapat diakses oleh event inline HTML (oninput, onchange, onclick)
-window.saveDynamicVal = saveDynamicVal;
-window.saveDynamicValTL = saveDynamicValTL;
-window.showReportView = showReportView;
-window.showTLReportView = showTLReportView;
-window.renderDynamicInputs = renderDynamicInputs;
-window.renderTLFormSection = renderTLFormSection;
-window.switchDocTab = switchDocTab;
-window.switchTLDocTab = switchTLDocTab;
-window.addItem = addItem;
-window.delItem = delItem;
-window.addSplitPegawai = addSplitPegawai;
-window.delSplitPegawai = delSplitPegawai;
-window.addSprinPegawai = addSprinPegawai;
-window.delSprinPegawai = delSprinPegawai;
+(window as any).saveDynamicVal = saveDynamicVal;
+(window as any).saveDynamicValTL = saveDynamicValTL;
+(window as any).showReportView = showReportView;
+(window as any).showTLReportView = showTLReportView;
+(window as any).renderDynamicInputs = renderDynamicInputs;
+(window as any).renderTLFormSection = renderTLFormSection;
+(window as any).switchDocTab = switchDocTab;
+(window as any).switchTLDocTab = switchTLDocTab;
+(window as any).addItem = addItem;
+(window as any).delItem = delItem;
+(window as any).addSplitPegawai = addSplitPegawai;
+(window as any).delSplitPegawai = delSplitPegawai;
+(window as any).addSprinPegawai = addSprinPegawai;
+(window as any).delSprinPegawai = delSprinPegawai;

@@ -1,4 +1,6 @@
-export function formatProperCase(str) {
+import { store } from '../state/store.js';
+
+export function formatProperCase(str: string): string {
   if (!str || str === '-') return '-';
   let cleanStr = str.toString().trim();
   
@@ -36,18 +38,18 @@ export function formatProperCase(str) {
   return formattedWords.join(' ');
 }
 
-export function getVal(id) {
-  let el = document.getElementById(id);
+export function getVal(id: string): string {
+  let el = document.getElementById(id) as HTMLInputElement;
   if(!el) return '-';
   let val = String(el.value || '').trim();
   return val !== '' ? formatProperCase(val) : '-';
 }
 
-export function escText(s) {
-  return String(s ?? '-').replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+export function escText(s: any): string {
+  return String(s ?? '-').replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m] || m));
 }
 
-export function formatModusVerb(modus) {
+export function formatModusVerb(modus: string): string {
   if (!modus || modus === '-') return '-';
   let str = modus.trim();
 
@@ -72,10 +74,10 @@ export function formatModusVerb(modus) {
   return str.charAt(0).toLowerCase() + str.slice(1);
 }
 
-export function terbilangHuruf(angka) {
+export function terbilangHuruf(angka: any): string {
   let bilangan = ["", "satu", "dua", "tiga", "empat", "lima", "enam", "tujuh", "delapan", "sembilan", "sepuluh", "sebelas"];
   let n = parseInt(angka, 10);
-  if (isNaN(n)) return angka;
+  if (isNaN(n)) return String(angka);
   if (n < 12) return bilangan[n];
   if (n < 20) return terbilangHuruf(n - 10) + " belas";
   if (n < 100) return terbilangHuruf(Math.floor(n / 10)) + " puluh " + terbilangHuruf(n % 10);
@@ -86,18 +88,18 @@ export function terbilangHuruf(angka) {
   return n.toString();
 }
 
-export function terbilang(angka) {
+export function terbilang(angka: any): string {
   return terbilangHuruf(angka);
 }
 
-export function tanggalKeTeks(dateString) {
+export function tanggalKeTeks(dateString: string): string {
   if(!dateString) return '';
   let d = new Date(dateString + 'T12:00:00');
   let bulan = ['januari', 'februari', 'maret', 'april', 'mei', 'juni', 'juli', 'agustus', 'september', 'oktober', 'november', 'desember'];
   return `${terbilang(d.getDate())} bulan ${bulan[d.getMonth()]} tahun ${terbilang(d.getFullYear())}`.replace(/\s+/g, ' ').trim();
 }
 
-export function formatJam24(el) {
+export function formatJam24(el: HTMLInputElement): void {
   let val = el.value.replace(/[^0-9]/g, '');
   if (val.length >= 3) {
     el.value = val.slice(0, 2) + '.' + val.slice(2, 4);
@@ -106,7 +108,7 @@ export function formatJam24(el) {
   }
 }
 
-export function validateJam24(el) {
+export function validateJam24(el: HTMLInputElement): void {
   let val = el.value.trim().replace(':', '.');
   if (!val) return;
 
@@ -128,7 +130,7 @@ export function validateJam24(el) {
   }
 }
 
-export function formatRupiahInput(el) {
+export function formatRupiahInput(el: HTMLInputElement): void {
   let raw = el.value.replace(/[^0-9]/g, '');
   if (!raw) {
     el.value = '';
@@ -138,7 +140,7 @@ export function formatRupiahInput(el) {
   el.value = `Rp ${formatted}`;
 }
 
-export function formatRupiahFinal(el) {
+export function formatRupiahFinal(el: HTMLInputElement): void {
   let raw = el.value.replace(/[^0-9]/g, '');
   if (!raw) {
     el.value = '';
@@ -148,7 +150,7 @@ export function formatRupiahFinal(el) {
   el.value = `Rp ${formatted},00`;
 }
 
-export function formatDateIndo(dateStr) {
+export function formatDateIndo(dateStr: string): string {
   if (!dateStr || dateStr === '-') return '-';
   let cleanStr = String(dateStr).trim();
   let bulanList = [
@@ -173,8 +175,8 @@ export function formatDateIndo(dateStr) {
   return cleanStr;
 }
 
-export function formatDate(id) {
-  let el = document.getElementById(id);
+export function formatDate(id: string): string {
+  let el = document.getElementById(id) as HTMLInputElement;
   let val = el ? el.value : '';
   if (!val) {
     let v = getVal(id);
@@ -183,7 +185,7 @@ export function formatDate(id) {
   return formatDateIndo(val);
 }
 
-export function autoGenerateTeksTanggalBA(dateStr) {
+export function autoGenerateTeksTanggalBA(dateStr: string): { hari: string; teksLengkap: string } {
   if (!dateStr) return { hari: '', teksLengkap: '' };
 
   const hariArr = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
@@ -196,15 +198,14 @@ export function autoGenerateTeksTanggalBA(dateStr) {
     'sepuluh', 'sebelas'
   ];
 
-  function terbilang(n) {
-    n = parseInt(n, 10);
+  function terbilangCustom(n: number): string {
     if (n < 12) return angkaTeks[n];
-    if (n < 20) return terbilang(n - 10) + ' belas';
-    if (n < 100) return terbilang(Math.floor(n / 10)) + ' puluh' + (n % 10 !== 0 ? ' ' + terbilang(n % 10) : '');
-    if (n < 200) return 'seratus' + (n % 100 !== 0 ? ' ' + terbilang(n % 100) : '');
-    if (n < 1000) return terbilang(Math.floor(n / 100)) + ' ratus' + (n % 100 !== 0 ? ' ' + terbilang(n % 100) : '');
-    if (n < 2000) return 'seribu' + (n % 1000 !== 0 ? ' ' + terbilang(n % 1000) : '');
-    if (n < 1000000) return terbilang(Math.floor(n / 1000)) + ' ribu' + (n % 1000 !== 0 ? ' ' + terbilang(n % 1000) : '');
+    if (n < 20) return terbilangCustom(n - 10) + ' belas';
+    if (n < 100) return terbilangCustom(Math.floor(n / 10)) + ' puluh' + (n % 10 !== 0 ? ' ' + terbilangCustom(n % 10) : '');
+    if (n < 200) return 'seratus' + (n % 100 !== 0 ? ' ' + terbilangCustom(n % 100) : '');
+    if (n < 1000) return terbilangCustom(Math.floor(n / 100)) + ' ratus' + (n % 100 !== 0 ? ' ' + terbilangCustom(n % 100) : '');
+    if (n < 2000) return 'seribu' + (n % 1000 !== 0 ? ' ' + terbilangCustom(n % 1000) : '');
+    if (n < 1000000) return terbilangCustom(Math.floor(n / 1000)) + ' ribu' + (n % 1000 !== 0 ? ' ' + terbilangCustom(n % 1000) : '');
     return n.toString();
   }
 
@@ -219,8 +220,7 @@ export function autoGenerateTeksTanggalBA(dateStr) {
   const hari = hariArr[dt.getDay()];
   const namaBulan = bulanArr[m];
 
-  // Output huruf kecil murni: "satu bulan maret tahun dua ribu dua puluh enam"
-  const teksLengkap = `${terbilang(d)} bulan ${namaBulan.toLowerCase()} tahun ${terbilang(y)}`;
+  const teksLengkap = `${terbilangCustom(d)} bulan ${namaBulan.toLowerCase()} tahun ${terbilangCustom(y)}`;
 
   return {
     hari: hari,
@@ -228,15 +228,7 @@ export function autoGenerateTeksTanggalBA(dateStr) {
   };
 }
 
-/**
- * Menutup sisa ruang baris teks/paragraf dengan garis strip (---)
- * Otomatis pas batas margin kanan, dinamis, dan anti-meluber.
- * 
- * @param {string} text - Teks kalimat
- * @param {string} [prefix=''] - Awalan opsional (misal: '----------')
- * @returns {string} HTML string
- */
-export function formatTrailingDashes(text, prefix = '') {
+export function formatTrailingDashes(text: string, prefix: string = ''): string {
   const clean = (text || '').trim();
   const pre = prefix ? `${prefix}` : '';
   const filler = '----------------------------------------------------------------------------------------------------------------------------------------------------------------';
@@ -249,16 +241,7 @@ export function formatTrailingDashes(text, prefix = '') {
   `.trim();
 }
 
-/**
- * Baris tabel identitas dengan tanda hubung strip (---)
- * Otomatis menambahkan tanda titik (.) di akhir nilai jika bukan strip tunggal.
- * 
- * @param {string} label - Nama field (contoh: 'Nama', 'Alamat', 'Jabatan')
- * @param {string} value - Nilai teks data
- * @param {string} [labelWidth='271px'] - Lebar kolom label agar titik dua rata sejajar
- * @returns {string} HTML string <tr>
- */
-export function formatRowTrailingDashes(label, value, labelWidth = '271px') {
+export function formatRowTrailingDashes(label: string, value: string, labelWidth: string = '271px'): string {
   let val = (value || '-').trim();
   
   if (val !== '-' && !val.endsWith('.')) {
@@ -281,11 +264,7 @@ export function formatRowTrailingDashes(label, value, labelWidth = '271px') {
   `.trim();
 }
 
-/**
- * Baris tabel identitas dengan tanda titik-titik (...)
- * Berguna jika format dokumen tertentu meminta titik pengisi.
- */
-export function formatRowTrailingDots(label, value, labelWidth = '271px') {
+export function formatRowTrailingDots(label: string, value: string, labelWidth: string = '271px'): string {
   let val = (value || '-').trim();
   const dotFiller = '................................................................................................................................................................';
   
@@ -303,18 +282,14 @@ export function formatRowTrailingDots(label, value, labelWidth = '271px') {
   `.trim();
 }
 
-// ==========================================================================
-// MESIN VALIDASI & AUTO-BOOKING NOMOR DOKUMEN TERPUSAT (GLOBAL)
-// ==========================================================================
-
-export function extractDocSequenceNumber(docString) {
+export function extractDocSequenceNumber(docString: string): number | null {
   if (!docString) return null;
   let match = String(docString).match(/\b(\d+)\b/);
   return match ? parseInt(match[1], 10) : null;
 }
 
-export function getAllGlobalRecords() {
-  let perkaraList = [];
+export function getAllGlobalRecords(): any[] {
+  let perkaraList: any[] = [];
   if (typeof store !== 'undefined' && Array.isArray(store.databasePerkara)) {
     perkaraList = store.databasePerkara;
   } else {
@@ -325,7 +300,7 @@ export function getAllGlobalRecords() {
     }
   }
 
-  let disposisiList = [];
+  let disposisiList: any[] = [];
   try {
     disposisiList = JSON.parse(localStorage.getItem('databaseDisposisi') || '[]');
   } catch (e) {
@@ -335,7 +310,7 @@ export function getAllGlobalRecords() {
   return [...perkaraList, ...disposisiList];
 }
 
-export function generateNextBookingNumber(prefix, fieldKey, suffixPattern = '', padLength = 3) {
+export function generateNextBookingNumber(prefix: string, fieldKey: string, suffixPattern: string = '', padLength: number = 3): string {
   let allRecords = getAllGlobalRecords();
   let maxSeq = 0;
 
@@ -360,7 +335,7 @@ export function generateNextBookingNumber(prefix, fieldKey, suffixPattern = '', 
   return `${prefix}${formattedSeq}${suffixPattern}`;
 }
 
-export function validateGlobalDocSequence(newDocNum, newDocDate, fieldNumKey, fieldDateKey, currentRecordId = null, linkedParentId = null) {
+export function validateGlobalDocSequence(newDocNum: string, newDocDate: string, fieldNumKey: string, fieldDateKey: string, currentRecordId: any = null, linkedParentId: any = null): { isValid: boolean; message?: string } {
   if (!newDocNum || !newDocDate) {
     return { isValid: true };
   }
@@ -373,17 +348,14 @@ export function validateGlobalDocSequence(newDocNum, newDocDate, fieldNumKey, fi
   for (let item of allRecords) {
     let itemId = item.id || item.recordId;
     
-    // Lewati jika item yang diperiksa adalah record ini sendiri
     if (currentRecordId && String(itemId) === String(currentRecordId)) {
       continue;
     }
 
-    // Lewati jika item yang diperiksa adalah data induk disposisi asalnya sendiri
     if (linkedParentId && String(itemId) === String(linkedParentId)) {
       continue;
     }
 
-    // Lewati jika item adalah perkara anak yang merujuk pada disposisi yang sama
     if (linkedParentId && item.disposisiId && String(item.disposisiId) === String(linkedParentId)) {
       continue;
     }
@@ -392,7 +364,6 @@ export function validateGlobalDocSequence(newDocNum, newDocDate, fieldNumKey, fi
     let existDate = item[fieldDateKey] ? String(item[fieldDateKey]).trim() : '';
     if (!existNum || !existDate) continue;
 
-    // 1. Cek duplikasi nomor surat persis dengan berkas lain
     if (existNum.toLowerCase() === cleanNum) {
       return {
         isValid: false,
@@ -400,7 +371,6 @@ export function validateGlobalDocSequence(newDocNum, newDocDate, fieldNumKey, fi
       };
     }
 
-    // 2. Cek anomali kronologis nomor urut vs tanggal
     if (targetSeq !== null) {
       let existSeq = extractDocSequenceNumber(existNum);
       if (existSeq !== null) {
@@ -426,7 +396,7 @@ export function validateGlobalDocSequence(newDocNum, newDocDate, fieldNumKey, fi
   return { isValid: true };
 }
 
-export function validateFormDocumentNumbers(docItems = [], currentRecordId = null, linkedParentId = null) {
+export function validateFormDocumentNumbers(docItems: any[] = [], currentRecordId: any = null, linkedParentId: any = null): { isValid: boolean; message: string } {
   for (let item of docItems) {
     if (item.num && item.date) {
       let result = validateGlobalDocSequence(item.num, item.date, item.numKey, item.dateKey, currentRecordId, linkedParentId);
@@ -441,22 +411,10 @@ export function validateFormDocumentNumbers(docItems = [], currentRecordId = nul
   return { isValid: true, message: '' };
 }
 
-if (typeof window !== 'undefined') {
-  window.extractDocSequenceNumber = extractDocSequenceNumber;
-  window.getAllGlobalRecords = getAllGlobalRecords;
-  window.generateNextBookingNumber = generateNextBookingNumber;
-  window.validateGlobalDocSequence = validateGlobalDocSequence;
-  window.validateFormDocumentNumbers = validateFormDocumentNumbers;
-}
-
-/**
- * VALIDASI URUTAN KRONOLOGI OPERASIONAL
- * SPRIN INDAK <= SBP <= LP <= LPP <= LPF <= SPLIT
- */
-export function validateOperationalChronology(dates = {}) {
+export function validateOperationalChronology(dates: any = {}): { isValid: boolean; message?: string } {
   let { tglSprin, tglSbp, tglLp, tglLpp, tglLpf, tglSplit, tglSprinCacah, tglBa, tglLhp } = dates;
 
-  let parse = (d) => (d ? new Date(d).getTime() : null);
+  let parse = (d: any) => (d ? new Date(d).getTime() : null);
 
   let dSprin = parse(tglSprin);
   let dSbp = parse(tglSbp);
@@ -468,28 +426,22 @@ export function validateOperationalChronology(dates = {}) {
   let dBa = parse(tglBa);
   let dLhp = parse(tglLhp);
 
-  // 1. SPRIN INDAK vs SBP
   if (dSprin && dSbp && dSprin > dSbp) {
     return { isValid: false, message: "Tanggal SPRIN INDAK tidak boleh melebihi Tanggal SBP!" };
   }
-  // 2. SBP vs LP
   if (dSbp && dLp && dSbp > dLp) {
     return { isValid: false, message: "Tanggal SBP tidak boleh mendahului/melewati Tanggal LP!" };
   }
-  // 3. LP vs LPP
   if (dLp && dLpp && dLp > dLpp) {
     return { isValid: false, message: "Tanggal Laporan Pelanggaran (LP) tidak boleh lebih baru dari LPP!" };
   }
-  // 4. LPP vs LPF
   if (dLpp && dLpf && dLpp > dLpf) {
     return { isValid: false, message: "Tanggal LPP tidak boleh melebihi Tanggal LPF!" };
   }
-  // 5. LPF vs SPLIT
   if (dLpf && dSplit && dLpf > dSplit) {
     return { isValid: false, message: "Tanggal LPF tidak boleh melebihi Tanggal SPLIT!" };
   }
 
-  // 6. Rentang Pencacahan (Situasional: jika diisi, harus setelah SBP/LP)
   if (dSbp && dSprinCacah && dSprinCacah < dSbp) {
     return { isValid: false, message: "Tanggal SPRIN CACAH tidak boleh mendahului Tanggal SBP!" };
   }
@@ -504,5 +456,10 @@ export function validateOperationalChronology(dates = {}) {
 }
 
 if (typeof window !== 'undefined') {
-  window.validateOperationalChronology = validateOperationalChronology;
+  (window as any).extractDocSequenceNumber = extractDocSequenceNumber;
+  (window as any).getAllGlobalRecords = getAllGlobalRecords;
+  (window as any).generateNextBookingNumber = generateNextBookingNumber;
+  (window as any).validateGlobalDocSequence = validateGlobalDocSequence;
+  (window as any).validateFormDocumentNumbers = validateFormDocumentNumbers;
+  (window as any).validateOperationalChronology = validateOperationalChronology;
 }

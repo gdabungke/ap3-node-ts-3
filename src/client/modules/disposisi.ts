@@ -2,14 +2,14 @@ import { store, savePerkaraToStorage } from '../state/store.js';
 import { escText, terbilangHuruf } from '../utils/formatters.js';
 import { showToast } from './ui.js';
 
-export function syncDspJenisPerkara(val) {
-  let el = document.getElementById('dsp_jenis_perkara');
+export function syncDspJenisPerkara(val: string): void {
+  let el = document.getElementById('dsp_jenis_perkara') as HTMLInputElement;
   if(el) el.value = val;
 }
 
-export function toggleDspJenisDokumen(val) {
-  let manual = document.getElementById('dsp_jenis_dok_manual');
-  let nomorInput = document.getElementById('dsp_nomor_dok');
+export function toggleDspJenisDokumen(val: string): void {
+  let manual = document.getElementById('dsp_jenis_dok_manual') as HTMLInputElement;
+  let nomorInput = document.getElementById('dsp_nomor_dok') as HTMLInputElement;
   
   if(val === 'Tanpa Dokumen') {
     if(manual) {
@@ -20,7 +20,7 @@ export function toggleDspJenisDokumen(val) {
       nomorInput.value = '';
       nomorInput.disabled = true;
     }
-    let dokEl = document.getElementById('dsp_dokumen_pemberitahuan');
+    let dokEl = document.getElementById('dsp_dokumen_pemberitahuan') as HTMLInputElement;
     if(dokEl) dokEl.value = 'Tanpa Dokumen';
   } else {
     if(nomorInput) nomorInput.disabled = false;
@@ -36,27 +36,27 @@ export function toggleDspJenisDokumen(val) {
   }
 }
 
-export function syncDspDokumenPemberitahuan() {
-  let selEl = document.getElementById('dsp_jenis_dok_select');
+export function syncDspDokumenPemberitahuan(): void {
+  let selEl = document.getElementById('dsp_jenis_dok_select') as HTMLSelectElement;
   let sel = selEl ? selEl.value : 'Tanpa Dokumen';
-  let dokEl = document.getElementById('dsp_dokumen_pemberitahuan');
+  let dokEl = document.getElementById('dsp_dokumen_pemberitahuan') as HTMLInputElement;
   if (sel === 'Tanpa Dokumen') {
     if(dokEl) dokEl.value = 'Tanpa Dokumen';
     return;
   }
-  let manEl = document.getElementById('dsp_jenis_dok_manual');
+  let manEl = document.getElementById('dsp_jenis_dok_manual') as HTMLInputElement;
   let jenis = sel === 'LAINNYA' ? (manEl ? manEl.value : '') : (sel === '-' ? '' : sel);
-  let nomorEl = document.getElementById('dsp_nomor_dok');
+  let nomorEl = document.getElementById('dsp_nomor_dok') as HTMLInputElement;
   let nomor = nomorEl ? nomorEl.value : '';
   
-  let res = [];
+  let res: string[] = [];
   if(jenis && jenis.trim()) res.push(jenis.trim());
   if(nomor && nomor.trim()) res.push(nomor.trim());
   if(dokEl) dokEl.value = res.length > 0 ? res.join(' ') : 'Tanpa Dokumen';
 }
 
-export function handleDspJenisKoliChange(val) {
-  let manualInput = document.getElementById('dsp_jenis_koli');
+export function handleDspJenisKoliChange(val: string): void {
+  let manualInput = document.getElementById('dsp_jenis_koli') as HTMLInputElement;
   if (!manualInput) return;
 
   if (val === 'LAINNYA') {
@@ -70,21 +70,21 @@ export function handleDspJenisKoliChange(val) {
   generateDspUraianBarangOtomatis();
 }
 
-export function handleDspJenisKoliSelectChange(val) {
+export function handleDspJenisKoliSelectChange(val: string): void {
   handleDspJenisKoliChange(val);
 }
 
-export function generateDspUraianBarangOtomatis() {
-  let jml = document.getElementById('dsp_jumlah_koli') ? document.getElementById('dsp_jumlah_koli').value.trim() : '';
-  let satuanSelect = document.getElementById('dsp_jenis_koli_select') ? document.getElementById('dsp_jenis_koli_select').value : '';
+export function generateDspUraianBarangOtomatis(): void {
+  let jml = (document.getElementById('dsp_jumlah_koli') as HTMLInputElement) ? (document.getElementById('dsp_jumlah_koli') as HTMLInputElement).value.trim() : '';
+  let satuanSelect = (document.getElementById('dsp_jenis_koli_select') as HTMLSelectElement) ? (document.getElementById('dsp_jenis_koli_select') as HTMLSelectElement).value : '';
   let satuan = satuanSelect === 'LAINNYA' 
-    ? (document.getElementById('dsp_jenis_koli') ? document.getElementById('dsp_jenis_koli').value.trim() : '') 
+    ? ((document.getElementById('dsp_jenis_koli') as HTMLInputElement) ? (document.getElementById('dsp_jenis_koli') as HTMLInputElement).value.trim() : '') 
     : (satuanSelect !== '-' ? satuanSelect : '');
-  let barang = document.getElementById('dsp_auto_barang') ? document.getElementById('dsp_auto_barang').value.trim() : '';
-  let akhiranTipe = document.getElementById('dsp_auto_akhiran_select') ? document.getElementById('dsp_auto_akhiran_select').value : '';
-  let kustomText = document.getElementById('dsp_auto_kustom_text') ? document.getElementById('dsp_auto_kustom_text').value.trim() : '';
+  let barang = (document.getElementById('dsp_auto_barang') as HTMLInputElement) ? (document.getElementById('dsp_auto_barang') as HTMLInputElement).value.trim() : '';
+  let akhiranTipe = (document.getElementById('dsp_auto_akhiran_select') as HTMLSelectElement) ? (document.getElementById('dsp_auto_akhiran_select') as HTMLSelectElement).value : '';
+  let kustomText = (document.getElementById('dsp_auto_kustom_text') as HTMLInputElement) ? (document.getElementById('dsp_auto_kustom_text') as HTMLInputElement).value.trim() : '';
 
-  let kustomContainer = document.getElementById('dsp_auto_kustom_container');
+  let kustomContainer = document.getElementById('dsp_auto_kustom_container') as HTMLElement;
   if (kustomContainer) {
     kustomContainer.style.display = (akhiranTipe === 'manual') ? 'block' : 'none';
   }
@@ -114,16 +114,16 @@ export function generateDspUraianBarangOtomatis() {
     }
   }
 
-  let uraianTarget = document.getElementById('dsp_uraian_barang');
+  let uraianTarget = document.getElementById('dsp_uraian_barang') as HTMLInputElement;
   if (uraianTarget) {
     uraianTarget.value = baseText;
   }
 }
 
-export function updateDspCodePreviews() {
-  let valLP = document.getElementById('dsp_no_lp') ? document.getElementById('dsp_no_lp').value.trim() : '';
-  let valSBP = document.getElementById('dsp_no_sbp') ? document.getElementById('dsp_no_sbp').value.trim() : '';
-  let valSPRIN = document.getElementById('dsp_no_sprin') ? document.getElementById('dsp_no_sprin').value.trim() : '';
+export function updateDspCodePreviews(): void {
+  let valLP = (document.getElementById('dsp_no_lp') as HTMLInputElement) ? (document.getElementById('dsp_no_lp') as HTMLInputElement).value.trim() : '';
+  let valSBP = (document.getElementById('dsp_no_sbp') as HTMLInputElement) ? (document.getElementById('dsp_no_sbp') as HTMLInputElement).value.trim() : '';
+  let valSPRIN = (document.getElementById('dsp_no_sprin') as HTMLInputElement) ? (document.getElementById('dsp_no_sprin') as HTMLInputElement).value.trim() : '';
 
   let previewLP = document.getElementById('dsp_preview_NoLP');
   let previewSBP = document.getElementById('dsp_preview_SBP');
@@ -144,9 +144,9 @@ export function updateDspCodePreviews() {
 let currentDisposisiPage = 1;
 const rowsPerPage = 5;
 
-function cloneDropdown(masterId, dspId) {
-  let master = document.getElementById(masterId);
-  let dsp = document.getElementById(dspId);
+function cloneDropdown(masterId: string, dspId: string): void {
+  let master = document.getElementById(masterId) as HTMLSelectElement;
+  let dsp = document.getElementById(dspId) as HTMLSelectElement;
   if (master && dsp) {
     dsp.innerHTML = master.innerHTML;
     dsp.value = master.value;
@@ -154,11 +154,11 @@ function cloneDropdown(masterId, dspId) {
   }
 }
 
-export function openDisposisiModal(editIndex = -1) {
+export function openDisposisiModal(editIndex: number = -1): void {
   let modal = document.getElementById('disposisiModal') || document.getElementById('modalDisposisi') || document.getElementById('modalUsulDisposisi');
   let modalTitle = document.getElementById('disposisiModalTitle') || document.getElementById('modalDisposisiTitle');
-  let editingIndexInput = document.getElementById('editingDisposisiIndex') || document.getElementById('editingDisposisiId');
-  if (editingIndexInput) editingIndexInput.value = editIndex;
+  let editingIndexInput = document.getElementById('editingDisposisiIndex') as HTMLInputElement || document.getElementById('editingDisposisiId') as HTMLInputElement;
+  if (editingIndexInput) editingIndexInput.value = String(editIndex);
 
   cloneDropdown('Jenis_Identitas_Select', 'dsp_jenis_identitas');
   cloneDropdown('Jenis_Perkara_Select', 'dsp_jenis_perkara_select');
@@ -167,56 +167,54 @@ export function openDisposisiModal(editIndex = -1) {
   cloneDropdown('Komoditi_Select', 'dsp_komoditi');
   cloneDropdown('Jenis_Koli_Select', 'dsp_jenis_koli_select');
   
-  // RESET DATA FORM (JIKA BUAT BARU)
   if (editIndex < 0) {
-    if (document.getElementById('dsp_nama_pelaku')) document.getElementById('dsp_nama_pelaku').value = '';
+    if (document.getElementById('dsp_nama_pelaku')) (document.getElementById('dsp_nama_pelaku') as HTMLInputElement).value = '';
     
-    let jenisIdentitasSelect = document.getElementById('dsp_jenis_identitas');
+    let jenisIdentitasSelect = document.getElementById('dsp_jenis_identitas') as HTMLSelectElement;
     if (jenisIdentitasSelect) {
       jenisIdentitasSelect.value = jenisIdentitasSelect.options[0] ? jenisIdentitasSelect.options[0].value : 'KTP';
     }
-    let nomorIdentitasInput = document.getElementById('dsp_nomor_identitas') || document.getElementById('dsp_no_identitas');
+    let nomorIdentitasInput = document.getElementById('dsp_nomor_identitas') as HTMLInputElement || document.getElementById('dsp_no_identitas') as HTMLInputElement;
     if (nomorIdentitasInput) nomorIdentitasInput.value = '';
 
-    let jenisPerkaraSelect = document.getElementById('dsp_jenis_perkara_select');
+    let jenisPerkaraSelect = document.getElementById('dsp_jenis_perkara_select') as HTMLSelectElement;
     if (jenisPerkaraSelect) jenisPerkaraSelect.value = '-';
-    if (document.getElementById('dsp_jenis_perkara')) document.getElementById('dsp_jenis_perkara').value = '';
+    if (document.getElementById('dsp_jenis_perkara')) (document.getElementById('dsp_jenis_perkara') as HTMLInputElement).value = '';
     
-    let jenisDokSelect = document.getElementById('dsp_jenis_dok_select');
+    let jenisDokSelect = document.getElementById('dsp_jenis_dok_select') as HTMLSelectElement;
     if (jenisDokSelect) jenisDokSelect.value = 'Tanpa Dokumen';
-    let manualDok = document.getElementById('dsp_jenis_dok_manual');
+    let manualDok = document.getElementById('dsp_jenis_dok_manual') as HTMLElement;
     if (manualDok) manualDok.style.display = 'none';
-    let nomorDok = document.getElementById('dsp_nomor_dok');
+    let nomorDok = document.getElementById('dsp_nomor_dok') as HTMLInputElement;
     if (nomorDok) {
       nomorDok.value = '';
       nomorDok.disabled = true;
     }
-    if (document.getElementById('dsp_dokumen_pemberitahuan')) document.getElementById('dsp_dokumen_pemberitahuan').value = 'Tanpa Dokumen';
-    if (document.getElementById('dsp_tgl_dokumen')) document.getElementById('dsp_tgl_dokumen').value = '';
+    if (document.getElementById('dsp_dokumen_pemberitahuan')) (document.getElementById('dsp_dokumen_pemberitahuan') as HTMLInputElement).value = 'Tanpa Dokumen';
+    if (document.getElementById('dsp_tgl_dokumen')) (document.getElementById('dsp_tgl_dokumen') as HTMLInputElement).value = '';
     
-    let komoditiSelect = document.getElementById('dsp_komoditi_select') || document.getElementById('dsp_komoditi');
+    let komoditiSelect = document.getElementById('dsp_komoditi_select') as HTMLSelectElement || document.getElementById('dsp_komoditi') as HTMLSelectElement;
     if (komoditiSelect) komoditiSelect.value = '-';
 
-    if (document.getElementById('dsp_jumlah_koli')) document.getElementById('dsp_jumlah_koli').value = '';
-    let jenisKoliSelect = document.getElementById('dsp_jenis_koli_select');
+    if (document.getElementById('dsp_jumlah_koli')) (document.getElementById('dsp_jumlah_koli') as HTMLInputElement).value = '';
+    let jenisKoliSelect = document.getElementById('dsp_jenis_koli_select') as HTMLSelectElement;
     if (jenisKoliSelect) jenisKoliSelect.value = '-';
-    let manualKoli = document.getElementById('dsp_jenis_koli');
+    let manualKoli = document.getElementById('dsp_jenis_koli') as HTMLElement;
     if (manualKoli) manualKoli.style.display = 'none';
-    if (document.getElementById('dsp_auto_barang')) document.getElementById('dsp_auto_barang').value = '';
-    if (document.getElementById('dsp_uraian_barang')) document.getElementById('dsp_uraian_barang').value = '';
+    if (document.getElementById('dsp_auto_barang')) (document.getElementById('dsp_auto_barang') as HTMLInputElement).value = '';
+    if (document.getElementById('dsp_uraian_barang')) (document.getElementById('dsp_uraian_barang') as HTMLInputElement).value = '';
     
-    if (document.getElementById('dsp_no_lp')) document.getElementById('dsp_no_lp').value = '';
-    if (document.getElementById('dsp_tgl_lp')) document.getElementById('dsp_tgl_lp').value = '';
-    if (document.getElementById('dsp_no_sbp')) document.getElementById('dsp_no_sbp').value = '';
-    if (document.getElementById('dsp_tgl_sbp')) document.getElementById('dsp_tgl_sbp').value = '';
-    if (document.getElementById('dsp_no_sprin')) document.getElementById('dsp_no_sprin').value = '';
-    if (document.getElementById('dsp_tgl_sprin')) document.getElementById('dsp_tgl_sprin').value = '';
+    if (document.getElementById('dsp_no_lp')) (document.getElementById('dsp_no_lp') as HTMLInputElement).value = '';
+    if (document.getElementById('dsp_tgl_lp')) (document.getElementById('dsp_tgl_lp') as HTMLInputElement).value = '';
+    if (document.getElementById('dsp_no_sbp')) (document.getElementById('dsp_no_sbp') as HTMLInputElement).value = '';
+    if (document.getElementById('dsp_tgl_sbp')) (document.getElementById('dsp_tgl_sbp') as HTMLInputElement).value = '';
+    if (document.getElementById('dsp_no_sprin')) (document.getElementById('dsp_no_sprin') as HTMLInputElement).value = '';
+    if (document.getElementById('dsp_tgl_sprin')) (document.getElementById('dsp_tgl_sprin') as HTMLInputElement).value = '';
     
-    let targetSelect = document.getElementById('dsp_target_penyidik');
+    let targetSelect = document.getElementById('dsp_target_penyidik') as HTMLSelectElement;
     if (targetSelect) targetSelect.value = '-';
   }
 
-  // ISI DATA RECORD (JIKA EDIT / LIHAT DETAIL)
   let isReadOnly = false;
   if (editIndex >= 0) {
     let listDisposisi = JSON.parse(localStorage.getItem('databaseDisposisi') || '[]');
@@ -224,35 +222,33 @@ export function openDisposisiModal(editIndex = -1) {
     
     if (dspData) {
       let rawStatus = String(dspData.status || dspData.statusDisposisi || '').toLowerCase();
-      // Kunci jika berkas sudah terkirim / sudah diproses
       if (rawStatus.includes('didisposisikan') || rawStatus.includes('diterima')) {
         isReadOnly = true;
       }
 
-      if (document.getElementById('dsp_nama_pelaku')) document.getElementById('dsp_nama_pelaku').value = dspData.pelaku || '';
+      if (document.getElementById('dsp_nama_pelaku')) (document.getElementById('dsp_nama_pelaku') as HTMLInputElement).value = dspData.pelaku || '';
       
-      let jenisIdentitasSelect = document.getElementById('dsp_jenis_identitas');
+      let jenisIdentitasSelect = document.getElementById('dsp_jenis_identitas') as HTMLSelectElement;
       if (jenisIdentitasSelect) jenisIdentitasSelect.value = dspData.jenisIdentitas || 'KTP';
 
-      let nomorIdentitasInput = document.getElementById('dsp_nomor_identitas') || document.getElementById('dsp_no_identitas');
+      let nomorIdentitasInput = document.getElementById('dsp_nomor_identitas') as HTMLInputElement || document.getElementById('dsp_no_identitas') as HTMLInputElement;
       if (nomorIdentitasInput) nomorIdentitasInput.value = dspData.nomorIdentitas || '';
 
-      if (document.getElementById('dsp_jenis_perkara')) document.getElementById('dsp_jenis_perkara').value = dspData.jenisPerkara || '';
-      let jpSel = document.getElementById('dsp_jenis_perkara_select');
+      if (document.getElementById('dsp_jenis_perkara')) (document.getElementById('dsp_jenis_perkara') as HTMLInputElement).value = dspData.jenisPerkara || '';
+      let jpSel = document.getElementById('dsp_jenis_perkara_select') as HTMLSelectElement;
       if (jpSel && dspData.jenisPerkara) jpSel.value = dspData.jenisPerkara;
 
-      let komoditiTarget = document.getElementById('dsp_komoditi_select') || document.getElementById('dsp_komoditi');
+      let komoditiTarget = document.getElementById('dsp_komoditi_select') as HTMLSelectElement || document.getElementById('dsp_komoditi') as HTMLSelectElement;
       if (komoditiTarget) komoditiTarget.value = dspData.komoditi || '-';
 
-      // Dokumen Pemberitahuan
       if (dspData.dokPemberitahuan && dspData.dokPemberitahuan !== 'Tanpa Dokumen') {
         let parts = dspData.dokPemberitahuan.split(' Nomor ');
         let jDok = parts[0] ? parts[0].trim() : '';
         let nDok = parts[1] ? parts[1].trim() : '';
 
-        let jDokSelect = document.getElementById('dsp_jenis_dok_select');
-        let jDokManual = document.getElementById('dsp_jenis_dok_manual');
-        let nDokInput = document.getElementById('dsp_nomor_dok');
+        let jDokSelect = document.getElementById('dsp_jenis_dok_select') as HTMLSelectElement;
+        let jDokManual = document.getElementById('dsp_jenis_dok_manual') as HTMLInputElement;
+        let nDokInput = document.getElementById('dsp_nomor_dok') as HTMLInputElement;
 
         if (jDokSelect) {
           let hasOpt = Array.from(jDokSelect.options).some(o => o.value === jDok);
@@ -272,54 +268,50 @@ export function openDisposisiModal(editIndex = -1) {
           nDokInput.value = nDok;
         }
       } else {
-        let jDokSelect = document.getElementById('dsp_jenis_dok_select');
+        let jDokSelect = document.getElementById('dsp_jenis_dok_select') as HTMLSelectElement;
         if (jDokSelect) jDokSelect.value = 'Tanpa Dokumen';
-        let nDokInput = document.getElementById('dsp_nomor_dok');
+        let nDokInput = document.getElementById('dsp_nomor_dok') as HTMLInputElement;
         if (nDokInput) {
           nDokInput.value = '';
           nDokInput.disabled = true;
         }
       }
 
-      if (document.getElementById('dsp_dokumen_pemberitahuan')) document.getElementById('dsp_dokumen_pemberitahuan').value = dspData.dokPemberitahuan || 'Tanpa Dokumen';
-      if (document.getElementById('dsp_tgl_dokumen')) document.getElementById('dsp_tgl_dokumen').value = dspData.tglDokPemberitahuan || '';
+      if (document.getElementById('dsp_dokumen_pemberitahuan')) (document.getElementById('dsp_dokumen_pemberitahuan') as HTMLInputElement).value = dspData.dokPemberitahuan || 'Tanpa Dokumen';
+      if (document.getElementById('dsp_tgl_dokumen')) (document.getElementById('dsp_tgl_dokumen') as HTMLInputElement).value = dspData.tglDokPemberitahuan || '';
       
-      if (document.getElementById('dsp_jumlah_koli')) document.getElementById('dsp_jumlah_koli').value = dspData.jumlahKoli || '';
+      if (document.getElementById('dsp_jumlah_koli')) (document.getElementById('dsp_jumlah_koli') as HTMLInputElement).value = dspData.jumlahKoli || '';
       if (document.getElementById('dsp_jenis_koli_select')) {
-        document.getElementById('dsp_jenis_koli_select').value = dspData.jenisKoli || '-';
+        (document.getElementById('dsp_jenis_koli_select') as HTMLSelectElement).value = dspData.jenisKoli || '-';
         handleDspJenisKoliChange(dspData.jenisKoli || '-');
       }
-      if (document.getElementById('dsp_auto_barang')) document.getElementById('dsp_auto_barang').value = dspData.autoBarang || '';
-      if (document.getElementById('dsp_uraian_barang')) document.getElementById('dsp_uraian_barang').value = dspData.uraianBarang || '';
+      if (document.getElementById('dsp_auto_barang')) (document.getElementById('dsp_auto_barang') as HTMLInputElement).value = dspData.autoBarang || '';
+      if (document.getElementById('dsp_uraian_barang')) (document.getElementById('dsp_uraian_barang') as HTMLInputElement).value = dspData.uraianBarang || '';
 
-      if (document.getElementById('dsp_no_lp')) document.getElementById('dsp_no_lp').value = dspData.noLp || '';
-      if (document.getElementById('dsp_tgl_lp')) document.getElementById('dsp_tgl_lp').value = dspData.tglLp || '';
-      if (document.getElementById('dsp_no_sbp')) document.getElementById('dsp_no_sbp').value = dspData.noSbp || '';
-      if (document.getElementById('dsp_tgl_sbp')) document.getElementById('dsp_tgl_sbp').value = dspData.tglSbp || '';
-      if (document.getElementById('dsp_no_sprin')) document.getElementById('dsp_no_sprin').value = dspData.noSprin || '';
-      if (document.getElementById('dsp_tgl_sprin')) document.getElementById('dsp_tgl_sprin').value = dspData.tglSprin || '';
+      if (document.getElementById('dsp_no_lp')) (document.getElementById('dsp_no_lp') as HTMLInputElement).value = dspData.noLp || '';
+      if (document.getElementById('dsp_tgl_lp')) (document.getElementById('dsp_tgl_lp') as HTMLInputElement).value = dspData.tglLp || '';
+      if (document.getElementById('dsp_no_sbp')) (document.getElementById('dsp_no_sbp') as HTMLInputElement).value = dspData.noSbp || '';
+      if (document.getElementById('dsp_tgl_sbp')) (document.getElementById('dsp_tgl_sbp') as HTMLInputElement).value = dspData.tglSbp || '';
+      if (document.getElementById('dsp_no_sprin')) (document.getElementById('dsp_no_sprin') as HTMLInputElement).value = dspData.noSprin || '';
+      if (document.getElementById('dsp_tgl_sprin')) (document.getElementById('dsp_tgl_sprin') as HTMLInputElement).value = dspData.tglSprin || '';
       
-      let targetSelect = document.getElementById('dsp_target_penyidik');
+      let targetSelect = document.getElementById('dsp_target_penyidik') as HTMLSelectElement;
       if (targetSelect) targetSelect.value = dspData.targetPenyidik || '-';
     }
   }
 
-  // TERAPKAN MODE READ-ONLY & SEMBUNYIKAN SEMUA TOMBOL
   if (modal) {
-    // 1. Kunci semua field isian formulir
     let inputs = modal.querySelectorAll('input, select, textarea');
-    inputs.forEach(el => {
+    inputs.forEach((el: any) => {
       if (el.id !== 'editingDisposisiIndex') {
         el.disabled = isReadOnly;
       }
     });
 
-    // 2. Sembunyikan semua tombol di area bawah formulir saat read-only
     let footerContainers = modal.querySelectorAll('.modal-footer, .modal-actions, .form-actions, div[style*="justify-content: flex-end"]');
-    footerContainers.forEach(container => {
+    footerContainers.forEach((container: any) => {
       let buttons = container.querySelectorAll('button');
-      buttons.forEach(btn => {
-        // Biarkan tombol tutup modal (jika ada tombol dengan tanda silang di header)
+      buttons.forEach((btn: HTMLElement) => {
         if (!btn.classList.contains('close-modal-btn') && !btn.classList.contains('btn-close')) {
           btn.style.display = isReadOnly ? 'none' : '';
         }
@@ -338,47 +330,47 @@ export function openDisposisiModal(editIndex = -1) {
   if (modal) modal.classList.add('active');
 }
 
-export function closeDisposisiModal() {
+export function closeDisposisiModal(): void {
   let modal = document.getElementById('disposisiModal') || document.getElementById('modalDisposisi') || document.getElementById('modalUsulDisposisi');
   if(modal) modal.classList.remove('active');
 }
 
-export function populatePenyidikDropdownForDisposisi() {
-  let select = document.getElementById('dsp_target_penyidik');
+export function populatePenyidikDropdownForDisposisi(): void {
+  let select = document.getElementById('dsp_target_penyidik') as HTMLSelectElement;
   if (!select) return;
 
-  let sourceUsers = store.userAccounts || store.databaseUser || JSON.parse(localStorage.getItem('databaseUser') || '[]');
-  let penyidikList = sourceUsers.filter(u => 
+  let sourceUsers = store.userAccounts || (store as any).databaseUser || JSON.parse(localStorage.getItem('databaseUser') || '[]');
+  let penyidikList = sourceUsers.filter((u: any) => 
     u.role === 'Penyidik / Ketua Tim Peneliti' || u.role === 'Penyidik'
   );
 
   if (penyidikList.length > 0) {
     select.innerHTML = `<option value="-">- Pilih Penyidik / Peneliti Tujuan -</option>` + 
-      penyidikList.map(u => `<option value="${escText(u.nama || u.username)}">${escText(u.nama || u.username)} (${escText(u.email || u.role || 'Penyidik')})</option>`).join('');
+      penyidikList.map((u: any) => `<option value="${escText(u.nama || u.username)}">${escText(u.nama || u.username)} (${escText(u.email || u.role || 'Penyidik')})</option>`).join('');
   } else {
-    let masterTarget = document.getElementById('val_disposisi_user');
+    let masterTarget = document.getElementById('val_disposisi_user') as HTMLSelectElement;
     if (masterTarget && masterTarget.options.length > 0) {
       select.innerHTML = masterTarget.innerHTML;
     }
   }
 }
 
-// 1. KHUSUS SIMPAN DRAF
-export function simpanDraftDisposisi() {
-  let pelaku = document.getElementById('dsp_nama_pelaku') ? document.getElementById('dsp_nama_pelaku').value.trim() : '';
+export function simpanDraftDisposisi(): void {
+  let pelaku = (document.getElementById('dsp_nama_pelaku') as HTMLInputElement) ? (document.getElementById('dsp_nama_pelaku') as HTMLInputElement).value.trim() : '';
   
-  let jenisIdentitasSelect = document.getElementById('dsp_jenis_identitas');
+  let jenisIdentitasSelect = document.getElementById('dsp_jenis_identitas') as HTMLSelectElement;
   let jenisIdentitas = jenisIdentitasSelect ? jenisIdentitasSelect.value : 'KTP';
-  let nomorIdentitasInput = document.getElementById('dsp_nomor_identitas') || document.getElementById('dsp_no_identitas');
+  let nomorIdentitasInput = document.getElementById('dsp_nomor_identitas') as HTMLInputElement || document.getElementById('dsp_no_identitas') as HTMLInputElement;
   let nomorIdentitas = nomorIdentitasInput ? nomorIdentitasInput.value.trim() : '';
 
-  let jenisPerkaraSelect = document.getElementById('dsp_jenis_perkara_select') ? document.getElementById('dsp_jenis_perkara_select').value : '';
-  let jenisPerkaraManual = document.getElementById('dsp_jenis_perkara') ? document.getElementById('dsp_jenis_perkara').value.trim() : '';
-  let jenisPerkara = jenisPerkaraManual || (jenisPerkaraSelect !== '-' ? jenisPerkaraSelect : '');
+  let jenisPerkaraSelect = document.getElementById('dsp_jenis_perkara_select') as HTMLSelectElement;
+  let jenisPerkaraSelectVal = jenisPerkaraSelect ? jenisPerkaraSelect.value : '';
+  let jenisPerkaraManual = (document.getElementById('dsp_jenis_perkara') as HTMLInputElement) ? (document.getElementById('dsp_jenis_perkara') as HTMLInputElement).value.trim() : '';
+  let jenisPerkara = jenisPerkaraManual || (jenisPerkaraSelectVal !== '-' ? jenisPerkaraSelectVal : '');
 
-  let jenisDokSelect = document.getElementById('dsp_jenis_dok_select') ? document.getElementById('dsp_jenis_dok_select').value : 'Tanpa Dokumen';
-  let jenisDokManual = document.getElementById('dsp_jenis_dok_manual') ? document.getElementById('dsp_jenis_dok_manual').value.trim() : '';
-  let nomorDok = document.getElementById('dsp_nomor_dok') ? document.getElementById('dsp_nomor_dok').value.trim() : '';
+  let jenisDokSelect = (document.getElementById('dsp_jenis_dok_select') as HTMLSelectElement) ? (document.getElementById('dsp_jenis_dok_select') as HTMLSelectElement).value : 'Tanpa Dokumen';
+  let jenisDokManual = (document.getElementById('dsp_jenis_dok_manual') as HTMLInputElement) ? (document.getElementById('dsp_jenis_dok_manual') as HTMLInputElement).value.trim() : '';
+  let nomorDok = (document.getElementById('dsp_nomor_dok') as HTMLInputElement) ? (document.getElementById('dsp_nomor_dok') as HTMLInputElement).value.trim() : '';
   
   let jenisDokFinal = (jenisDokSelect === 'Lainnya' || jenisDokSelect === 'LAINNYA') ? jenisDokManual : jenisDokSelect;
   let dokPemberitahuan = jenisDokFinal;
@@ -386,29 +378,29 @@ export function simpanDraftDisposisi() {
     dokPemberitahuan = `${jenisDokFinal} Nomor ${nomorDok}`;
   }
 
-  let komoditiSelect = document.getElementById('dsp_komoditi_select') || document.getElementById('dsp_komoditi');
+  let komoditiSelect = document.getElementById('dsp_komoditi_select') as HTMLSelectElement || document.getElementById('dsp_komoditi') as HTMLSelectElement;
   let komoditi = komoditiSelect ? komoditiSelect.value : '-';
 
-  let tglDokPemberitahuan = document.getElementById('dsp_tgl_dokumen') ? document.getElementById('dsp_tgl_dokumen').value : '';
-  let jumlahKoli = document.getElementById('dsp_jumlah_koli') ? document.getElementById('dsp_jumlah_koli').value.trim() : '';
-  let jenisKoli = document.getElementById('dsp_jenis_koli_select') ? document.getElementById('dsp_jenis_koli_select').value : '-';
-  let autoBarang = document.getElementById('dsp_auto_barang') ? document.getElementById('dsp_auto_barang').value.trim() : '';
-  let uraianBarang = document.getElementById('dsp_uraian_barang') ? document.getElementById('dsp_uraian_barang').value.trim() : '';
+  let tglDokPemberitahuan = (document.getElementById('dsp_tgl_dokumen') as HTMLInputElement) ? (document.getElementById('dsp_tgl_dokumen') as HTMLInputElement).value : '';
+  let jumlahKoli = (document.getElementById('dsp_jumlah_koli') as HTMLInputElement) ? (document.getElementById('dsp_jumlah_koli') as HTMLInputElement).value.trim() : '';
+  let jenisKoli = (document.getElementById('dsp_jenis_koli_select') as HTMLSelectElement) ? (document.getElementById('dsp_jenis_koli_select') as HTMLSelectElement).value : '-';
+  let autoBarang = (document.getElementById('dsp_auto_barang') as HTMLInputElement) ? (document.getElementById('dsp_auto_barang') as HTMLInputElement).value.trim() : '';
+  let uraianBarang = (document.getElementById('dsp_uraian_barang') as HTMLInputElement) ? (document.getElementById('dsp_uraian_barang') as HTMLInputElement).value.trim() : '';
   
-  let noLp = document.getElementById('dsp_no_lp') ? document.getElementById('dsp_no_lp').value.trim() : '';
-  let tglLp = document.getElementById('dsp_tgl_lp') ? document.getElementById('dsp_tgl_lp').value : '';
-  let noSbp = document.getElementById('dsp_no_sbp') ? document.getElementById('dsp_no_sbp').value.trim() : '';
-  let tglSbp = document.getElementById('dsp_tgl_sbp') ? document.getElementById('dsp_tgl_sbp').value : '';
-  let noSprin = document.getElementById('dsp_no_sprin') ? document.getElementById('dsp_no_sprin').value.trim() : '';
-  let tglSprin = document.getElementById('dsp_tgl_sprin') ? document.getElementById('dsp_tgl_sprin').value : '';
-  let targetPenyidik = document.getElementById('dsp_target_penyidik') ? document.getElementById('dsp_target_penyidik').value : '-';
+  let noLp = (document.getElementById('dsp_no_lp') as HTMLInputElement) ? (document.getElementById('dsp_no_lp') as HTMLInputElement).value.trim() : '';
+  let tglLp = (document.getElementById('dsp_tgl_lp') as HTMLInputElement) ? (document.getElementById('dsp_tgl_lp') as HTMLInputElement).value : '';
+  let noSbp = (document.getElementById('dsp_no_sbp') as HTMLInputElement) ? (document.getElementById('dsp_no_sbp') as HTMLInputElement).value.trim() : '';
+  let tglSbp = (document.getElementById('dsp_tgl_sbp') as HTMLInputElement) ? (document.getElementById('dsp_tgl_sbp') as HTMLInputElement).value : '';
+  let noSprin = (document.getElementById('dsp_no_sprin') as HTMLInputElement) ? (document.getElementById('dsp_no_sprin') as HTMLInputElement).value.trim() : '';
+  let tglSprin = (document.getElementById('dsp_tgl_sprin') as HTMLInputElement) ? (document.getElementById('dsp_tgl_sprin') as HTMLInputElement).value : '';
+  let targetPenyidik = (document.getElementById('dsp_target_penyidik') as HTMLSelectElement) ? (document.getElementById('dsp_target_penyidik') as HTMLSelectElement).value : '-';
 
   if(!noLp || !pelaku) {
     showToast("ISIAN BELUM LENGKAP", "Nomor LP dan Nama Pelaku wajib diisi untuk menyimpan draf!", "warning");
     return;
   }
 
-  let editIndexInput = document.getElementById('editingDisposisiIndex') || document.getElementById('editingDisposisiId');
+  let editIndexInput = document.getElementById('editingDisposisiIndex') as HTMLInputElement || document.getElementById('editingDisposisiId') as HTMLInputElement;
   let editIndex = editIndexInput ? parseInt(editIndexInput.value) : -1;
 
   let listDisposisi = JSON.parse(localStorage.getItem('databaseDisposisi') || '[]');
@@ -441,7 +433,7 @@ export function simpanDraftDisposisi() {
     notifiedForMe: false
   };
 
-  let existingIndexById = listDisposisi.findIndex(d => Number(d.id) === Number(targetId));
+  let existingIndexById = listDisposisi.findIndex((d: any) => Number(d.id) === Number(targetId));
   if (existingIndexById !== -1) {
     listDisposisi[existingIndexById] = dspDataObj;
   } else {
@@ -454,22 +446,22 @@ export function simpanDraftDisposisi() {
   showToast("BERHASIL", "Draf disposisi berhasil disimpan.", "success");
 }
 
-// 2. KHUSUS KIRIM DISPOSISI
-export function kirimDisposisiBerkat() {
-  let pelaku = document.getElementById('dsp_nama_pelaku') ? document.getElementById('dsp_nama_pelaku').value.trim() : '';
+export function kirimDisposisiBerkat(): void {
+  let pelaku = (document.getElementById('dsp_nama_pelaku') as HTMLInputElement) ? (document.getElementById('dsp_nama_pelaku') as HTMLInputElement).value.trim() : '';
   
-  let jenisIdentitasSelect = document.getElementById('dsp_jenis_identitas');
+  let jenisIdentitasSelect = document.getElementById('dsp_jenis_identitas') as HTMLSelectElement;
   let jenisIdentitas = jenisIdentitasSelect ? jenisIdentitasSelect.value : 'KTP';
-  let nomorIdentitasInput = document.getElementById('dsp_nomor_identitas') || document.getElementById('dsp_no_identitas');
+  let nomorIdentitasInput = document.getElementById('dsp_nomor_identitas') as HTMLInputElement || document.getElementById('dsp_no_identitas') as HTMLInputElement;
   let nomorIdentitas = nomorIdentitasInput ? nomorIdentitasInput.value.trim() : '';
 
-  let jenisPerkaraSelect = document.getElementById('dsp_jenis_perkara_select') ? document.getElementById('dsp_jenis_perkara_select').value : '';
-  let jenisPerkaraManual = document.getElementById('dsp_jenis_perkara') ? document.getElementById('dsp_jenis_perkara').value.trim() : '';
-  let jenisPerkara = jenisPerkaraManual || (jenisPerkaraSelect !== '-' ? jenisPerkaraSelect : '');
+  let jenisPerkaraSelect = document.getElementById('dsp_jenis_perkara_select') as HTMLSelectElement;
+  let jenisPerkaraSelectVal = jenisPerkaraSelect ? jenisPerkaraSelect.value : '';
+  let jenisPerkaraManual = (document.getElementById('dsp_jenis_perkara') as HTMLInputElement) ? (document.getElementById('dsp_jenis_perkara') as HTMLInputElement).value.trim() : '';
+  let jenisPerkara = jenisPerkaraManual || (jenisPerkaraSelectVal !== '-' ? jenisPerkaraSelectVal : '');
 
-  let jenisDokSelect = document.getElementById('dsp_jenis_dok_select') ? document.getElementById('dsp_jenis_dok_select').value : 'Tanpa Dokumen';
-  let jenisDokManual = document.getElementById('dsp_jenis_dok_manual') ? document.getElementById('dsp_jenis_dok_manual').value.trim() : '';
-  let nomorDok = document.getElementById('dsp_nomor_dok') ? document.getElementById('dsp_nomor_dok').value.trim() : '';
+  let jenisDokSelect = (document.getElementById('dsp_jenis_dok_select') as HTMLSelectElement) ? (document.getElementById('dsp_jenis_dok_select') as HTMLSelectElement).value : 'Tanpa Dokumen';
+  let jenisDokManual = (document.getElementById('dsp_jenis_dok_manual') as HTMLInputElement) ? (document.getElementById('dsp_jenis_dok_manual') as HTMLInputElement).value.trim() : '';
+  let nomorDok = (document.getElementById('dsp_nomor_dok') as HTMLInputElement) ? (document.getElementById('dsp_nomor_dok') as HTMLInputElement).value.trim() : '';
   
   let jenisDokFinal = (jenisDokSelect === 'Lainnya' || jenisDokSelect === 'LAINNYA') ? jenisDokManual : jenisDokSelect;
   let dokPemberitahuan = jenisDokFinal;
@@ -477,29 +469,29 @@ export function kirimDisposisiBerkat() {
     dokPemberitahuan = `${jenisDokFinal} Nomor ${nomorDok}`;
   }
 
-  let komoditiSelect = document.getElementById('dsp_komoditi_select') || document.getElementById('dsp_komoditi');
+  let komoditiSelect = document.getElementById('dsp_komoditi_select') as HTMLSelectElement || document.getElementById('dsp_komoditi') as HTMLSelectElement;
   let komoditi = komoditiSelect ? komoditiSelect.value : '-';
 
-  let tglDokPemberitahuan = document.getElementById('dsp_tgl_dokumen') ? document.getElementById('dsp_tgl_dokumen').value : '';
-  let jumlahKoli = document.getElementById('dsp_jumlah_koli') ? document.getElementById('dsp_jumlah_koli').value.trim() : '';
-  let jenisKoli = document.getElementById('dsp_jenis_koli_select') ? document.getElementById('dsp_jenis_koli_select').value : '-';
-  let autoBarang = document.getElementById('dsp_auto_barang') ? document.getElementById('dsp_auto_barang').value.trim() : '';
-  let uraianBarang = document.getElementById('dsp_uraian_barang') ? document.getElementById('dsp_uraian_barang').value.trim() : '';
+  let tglDokPemberitahuan = (document.getElementById('dsp_tgl_dokumen') as HTMLInputElement) ? (document.getElementById('dsp_tgl_dokumen') as HTMLInputElement).value : '';
+  let jumlahKoli = (document.getElementById('dsp_jumlah_koli') as HTMLInputElement) ? (document.getElementById('dsp_jumlah_koli') as HTMLInputElement).value.trim() : '';
+  let jenisKoli = (document.getElementById('dsp_jenis_koli_select') as HTMLSelectElement) ? (document.getElementById('dsp_jenis_koli_select') as HTMLSelectElement).value : '-';
+  let autoBarang = (document.getElementById('dsp_auto_barang') as HTMLInputElement) ? (document.getElementById('dsp_auto_barang') as HTMLInputElement).value.trim() : '';
+  let uraianBarang = (document.getElementById('dsp_uraian_barang') as HTMLInputElement) ? (document.getElementById('dsp_uraian_barang') as HTMLInputElement).value.trim() : '';
   
-  let noLp = document.getElementById('dsp_no_lp') ? document.getElementById('dsp_no_lp').value.trim() : '';
-  let tglLp = document.getElementById('dsp_tgl_lp') ? document.getElementById('dsp_tgl_lp').value : '';
-  let noSbp = document.getElementById('dsp_no_sbp') ? document.getElementById('dsp_no_sbp').value.trim() : '';
-  let tglSbp = document.getElementById('dsp_tgl_sbp') ? document.getElementById('dsp_tgl_sbp').value : '';
-  let noSprin = document.getElementById('dsp_no_sprin') ? document.getElementById('dsp_no_sprin').value.trim() : '';
-  let tglSprin = document.getElementById('dsp_tgl_sprin') ? document.getElementById('dsp_tgl_sprin').value : '';
-  let targetPenyidik = document.getElementById('dsp_target_penyidik') ? document.getElementById('dsp_target_penyidik').value : '-';
+  let noLp = (document.getElementById('dsp_no_lp') as HTMLInputElement) ? (document.getElementById('dsp_no_lp') as HTMLInputElement).value.trim() : '';
+  let tglLp = (document.getElementById('dsp_tgl_lp') as HTMLInputElement) ? (document.getElementById('dsp_tgl_lp') as HTMLInputElement).value : '';
+  let noSbp = (document.getElementById('dsp_no_sbp') as HTMLInputElement) ? (document.getElementById('dsp_no_sbp') as HTMLInputElement).value.trim() : '';
+  let tglSbp = (document.getElementById('dsp_tgl_sbp') as HTMLInputElement) ? (document.getElementById('dsp_tgl_sbp') as HTMLInputElement).value : '';
+  let noSprin = (document.getElementById('dsp_no_sprin') as HTMLInputElement) ? (document.getElementById('dsp_no_sprin') as HTMLInputElement).value.trim() : '';
+  let tglSprin = (document.getElementById('dsp_tgl_sprin') as HTMLInputElement) ? (document.getElementById('dsp_tgl_sprin') as HTMLInputElement).value : '';
+  let targetPenyidik = (document.getElementById('dsp_target_penyidik') as HTMLSelectElement) ? (document.getElementById('dsp_target_penyidik') as HTMLSelectElement).value : '-';
 
   if(!noLp || !pelaku || !targetPenyidik || targetPenyidik === '-') {
     showToast("BELUM LENGKAP", "Nomor LP, Nama Pelaku, dan Penyidik Tujuan WAJIB diisi untuk mengirim disposisi!", "warning");
     return;
   }
 
-  let editIndexInput = document.getElementById('editingDisposisiIndex') || document.getElementById('editingDisposisiId');
+  let editIndexInput = document.getElementById('editingDisposisiIndex') as HTMLInputElement || document.getElementById('editingDisposisiId') as HTMLInputElement;
   let editIndex = editIndexInput ? parseInt(editIndexInput.value) : -1;
 
   let listDisposisi = JSON.parse(localStorage.getItem('databaseDisposisi') || '[]');
@@ -532,7 +524,7 @@ export function kirimDisposisiBerkat() {
     notifiedForMe: false
   };
 
-  let existingIndexById = listDisposisi.findIndex(d => Number(d.id) === Number(targetId));
+  let existingIndexById = listDisposisi.findIndex((d: any) => Number(d.id) === Number(targetId));
   if (existingIndexById !== -1) {
     listDisposisi[existingIndexById] = dspDataObj;
   } else {
@@ -545,8 +537,7 @@ export function kirimDisposisiBerkat() {
   showToast("BERHASIL", `Berkas LP-${noLp} berhasil didisposisikan kepada ${targetPenyidik}.`, "success");
 }
 
-// 3. RENDER TABEL DISPOSISI (9 KOLOM SESUAI URUTAN BARU)
-export function renderDisposisiTable() {
+export function renderDisposisiTable(): void {
   let tbody = document.getElementById('disposisiTableBody');
   if(!tbody) return;
 
@@ -559,8 +550,8 @@ export function renderDisposisiTable() {
   );
 
   if(isPenyidik) {
-    let curNama = (store.currentUser.namaLengkap || store.currentUser.nama || store.currentUser.username || '').toLowerCase();
-    filtered = listDisposisi.filter(d => 
+    let curNama = (store.currentUser?.namaLengkap || store.currentUser?.nama || store.currentUser?.username || '').toLowerCase();
+    filtered = listDisposisi.filter((d: any) => 
       d.targetPenyidik && curNama && d.targetPenyidik.trim().toLowerCase() === curNama
     );
   }
@@ -574,22 +565,16 @@ export function renderDisposisiTable() {
 
   if(paginatedData.length === 0) {
     tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding:20px; color:var(--text-muted, #94a3b8);">Belum ada data disposisi berkas.</td></tr>`;
-    let pageInfo = document.getElementById('disposisiPageInfo');
-    if(pageInfo) pageInfo.textContent = `Menampilkan 0 data`;
-    let btnPrev = document.getElementById('btnPrevDsp');
-    let btnNext = document.getElementById('btnNextDsp');
-    if (btnPrev) btnPrev.disabled = true;
-    if (btnNext) btnNext.disabled = true;
+    renderDisposisiPagination(totalPages, filtered.length);
     return;
   }
 
-  tbody.innerHTML = paginatedData.map((d, index) => {
-    let realIndex = listDisposisi.findIndex(item => item.id === d.id);
+  tbody.innerHTML = paginatedData.map((d: any, index: number) => {
+    let realIndex = listDisposisi.findIndex((item: any) => item.id === d.id);
     let i = startIdx + index;
     let actionBtn = '';
     let rawStatus = String(d.status || d.statusDisposisi || 'DIDISPOSISIKAN');
 
-    // Penentuan Label & Warna Status Berdasarkan Role Akun
     let statusText = '';
     let statusBadgeClass = 'badge-ready';
 
@@ -600,7 +585,6 @@ export function renderDisposisiTable() {
       statusText = 'SUDAH DITERIMA';
       statusBadgeClass = 'badge-success';
     } else {
-      // Status saat berkas dikirim/didisposisikan
       if (isPenyidik) {
         statusText = 'DISPOSISI MASUK';
         statusBadgeClass = 'badge-warning';
@@ -612,7 +596,6 @@ export function renderDisposisiTable() {
 
     let tglFormatted = d.tanggalDisposisi ? new Date(d.tanggalDisposisi).toLocaleDateString('id-ID', {day: 'numeric', month: 'short', year: 'numeric'}) : '-';
 
-    // Tombol Aksi Sesuai Role
     if(isPenyidik) {
       if(!rawStatus.toLowerCase().includes('diterima') && !rawStatus.toLowerCase().includes('ditolak')) {
         actionBtn = `
@@ -641,34 +624,23 @@ export function renderDisposisiTable() {
 
     return `
       <tr>
-        <!-- 1. NO -->
         <td><b>${i + 1}</b></td>
-
-        <!-- 2. NO. SBP -->
         <td>
           <b>SBP-${escText(cleanSBP)}</b><br>
           <small style="color:var(--text-muted, #94a3b8); font-size:10px;">Tgl: ${escText(d.tglSbp || '-')}</small>
         </td>
-
-        <!-- 3. NO. LP -->
         <td>
           <b>LP-${escText(cleanLP)}</b><br>
           <small style="color:var(--text-muted, #94a3b8); font-size:10px;">Tgl: ${escText(d.tglLp || '-')}</small>
         </td>
-
-        <!-- 4. NAMA PELAKU -->
         <td>
           <span style="font-weight:600; font-size:12px; color:var(--text-main, #f8fafc);">${escText(d.pelaku || '-')}</span>
         </td>
-
-        <!-- 5. JENIS PERKARA -->
         <td>
           <span style="font-size:11px; color:var(--text-main, #cbd5e1); font-weight:500;">
             <i class="fi fi-rr-document" style="font-size:10px; margin-right:3px;"></i>${escText(d.jenisPerkara || d.dokPemberitahuan || 'Kepabeanan & Cukai')}
           </span>
         </td>
-
-        <!-- 6. KOMODITI / BARANG -->
         <td>
           <div style="display:flex; flex-direction:column; gap:4px; align-items:flex-start;">
             <span class="badge" style="background:rgba(14, 165, 233, 0.15); color:#38bdf8; border:1px solid rgba(56, 189, 248, 0.3); font-size:11px; padding:2px 7px; border-radius:4px; white-space:normal; line-height:1.3; text-align:left;">
@@ -679,49 +651,61 @@ export function renderDisposisiTable() {
             </small>
           </div>
         </td>
-
-        <!-- 7. STATUS DISPOSISI -->
         <td>
           <span class="badge-status ${statusBadgeClass}">${escText(statusText)}</span><br>
           <small style="color:var(--text-muted, #94a3b8); font-size:10px;">Tgl: ${tglFormatted}</small>
         </td>
-
-        <!-- 8. PENYIDIK / PENELITI DITUNJUK -->
         <td>
           <b>${escText(d.targetPenyidik || '-')}</b><br>
           <small style="color:var(--text-muted, #94a3b8); font-size:10px;">Oleh: ${escText(d.pengusul || '-')}</small>
         </td>
-
-        <!-- 9. AKSI -->
         <td style="text-align:right;">${actionBtn}</td>
       </tr>
     `;
   }).join('');
 
-  let pageInfo = document.getElementById('disposisiPageInfo');
-  if(pageInfo) {
-    pageInfo.textContent = `Halaman ${currentDisposisiPage} dari ${totalPages} (Total: ${filtered.length} data)`;
-  }
-  
-  let btnPrev = document.getElementById('btnPrevDsp');
-  let btnNext = document.getElementById('btnNextDsp');
-  if (btnPrev) btnPrev.disabled = currentDisposisiPage === 1;
-  if (btnNext) btnNext.disabled = currentDisposisiPage === totalPages;
+  renderDisposisiPagination(totalPages, filtered.length);
 }
 
-export function changeDisposisiPage(direction) {
+function renderDisposisiPagination(totalPages: number, totalItems: number = 0): void {
+  let paginationContainer = document.getElementById('disposisiPaginationContainer');
+  if (!paginationContainer) {
+    let cardBodyEl = document.querySelector('#disposisi .panel-body, #disposisi .data-table-container, #disposisi');
+    if (cardBodyEl) {
+      let div = document.createElement('div');
+      div.id = 'disposisiPaginationContainer';
+      div.style.cssText = 'display: flex; justify-content: space-between; align-items: center; margin-top: 16px; padding: 4px 8px; font-size: 12px;';
+      cardBodyEl.appendChild(div);
+      paginationContainer = div;
+    } else {
+      return;
+    }
+  }
+
+  const maxPage = totalPages > 0 ? totalPages : 1;
+  if (currentDisposisiPage > maxPage) currentDisposisiPage = maxPage;
+
+  paginationContainer.innerHTML = `
+    <span style="color: var(--text-muted);">Halaman ${currentDisposisiPage} dari ${maxPage} <b style="margin-left: 8px; color: var(--text-main);">Total: ${totalItems} Data</b></span>
+    <div style="display: flex; gap: 4px;">
+      <button type="button" class="btn secondary" style="padding: 4px 10px; font-size: 11px;" ${currentDisposisiPage === 1 ? 'disabled' : ''} onclick="window.changeDisposisiPage(${currentDisposisiPage - 1})">Sebelumnya</button>
+      <button type="button" class="btn secondary" style="padding: 4px 10px; font-size: 11px;" ${currentDisposisiPage >= maxPage ? 'disabled' : ''} onclick="window.changeDisposisiPage(${currentDisposisiPage + 1})">Selanjutnya</button>
+    </div>
+  `;
+}
+
+export function changeDisposisiPage(direction: number): void {
   currentDisposisiPage += direction;
   renderDisposisiTable();
 }
 
-export function terimaDisposisi(dspData) {
+export function terimaDisposisi(dspData: any): void {
   responDisposisi('terima', dspData.id || dspData.noLp);
 }
 
-// 4. RESPON DISPOSISI (LENGKAP BRIDGING PERKARA)
-export function responDisposisi(aksi, idDisposisi) {
+export function responDisposisi(aksi: string, idDisposisi: any): void {
   let listDisposisi = JSON.parse(localStorage.getItem('databaseDisposisi') || '[]');
-  let target = listDisposisi.find(d => String(d.id) === String(idDisposisi) || String(d.noLp) === String(idDisposisi));
+  let target = listDisposisi.find((d: any) => String(d.id) === String(idDisposisi) || String(d.noLp) === String(idDisposisi));
   
   if (aksi === 'terima') {
     if (!target) {
@@ -736,13 +720,12 @@ export function responDisposisi(aksi, idDisposisi) {
 
     let cleanTargetLP = String(target.noLp || '').replace(/^LP-?/i, '').trim();
 
-    let foundIdx = store.databasePerkara.findIndex(r => {
+    let foundIdx = store.databasePerkara.findIndex((r: any) => {
       let rLP = String(r.NoLP_LP_1 || '').replace(/^LP-?/i, '').trim();
       let rId = r.disposisiId ? String(r.disposisiId) : '';
       return (rId && rId === String(target.id)) || (rLP && rLP === cleanTargetLP);
     });
 
-    // Otomatis hitung nama hari dari tanggal SBP
     let autoHariSBP = '';
     if (target.tglSbp) {
       let d = new Date(target.tglSbp);
@@ -758,7 +741,7 @@ export function responDisposisi(aksi, idDisposisi) {
 
     let teksBarang = target.uraianBarang || target.autoBarang || target.komoditi || '';
 
-    let mappedData = {
+    let mappedData: any = {
       disposisiId: target.id,
       NoLP_LP_1: target.noLp || '',
       Tanggal_LP_LP_1: target.tglLp || new Date().toISOString().split('T')[0],
@@ -796,18 +779,18 @@ export function responDisposisi(aksi, idDisposisi) {
     }
 
     savePerkaraToStorage();
-    if (typeof window.renderPerkaraTable === 'function') window.renderPerkaraTable();
+    if (typeof (window as any).renderPerkaraTable === 'function') (window as any).renderPerkaraTable();
 
-    document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-    document.querySelectorAll('.tab-pane').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach((btn: Element) => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach((tab: Element) => tab.classList.remove('active'));
     
     let dataBtn = document.querySelector('.nav-btn[data-target="data"]');
     if(dataBtn) dataBtn.classList.add('active');
     let dataTab = document.getElementById('data');
     if(dataTab) dataTab.classList.add('active');
 
-    if (typeof window.editPerkara === 'function') {
-      window.editPerkara(store.activeRecordIndex);
+    if (typeof (window as any).editPerkara === 'function') {
+      (window as any).editPerkara(store.activeRecordIndex);
     }
 
     showToast("DISPOSISI DITERIMA", `Berkas a.n ${target.pelaku} diterima. Data berhasil dipetakan otomatis ke form perkara.`, "success");
@@ -815,8 +798,8 @@ export function responDisposisi(aksi, idDisposisi) {
   } 
   else if (aksi === 'tolak') {
     let modal = document.getElementById('alasanTolakModal');
-    let inputData = document.getElementById('currentTolakDspData');
-    let inputText = document.getElementById('inputAlasanTolak');
+    let inputData = document.getElementById('currentTolakDspData') as HTMLInputElement;
+    let inputText = document.getElementById('inputAlasanTolak') as HTMLInputElement;
     
     if(inputData) inputData.value = String(idDisposisi);
     if(inputText) inputText.value = '';
@@ -825,14 +808,14 @@ export function responDisposisi(aksi, idDisposisi) {
   }
 }
 
-export function closeAlasanTolakModal() {
+export function closeAlasanTolakModal(): void {
   let modal = document.getElementById('alasanTolakModal');
   if(modal) modal.classList.remove('active');
 }
 
-export function submitTolakDisposisi() {
-  let rawId = document.getElementById('currentTolakDspData') ? document.getElementById('currentTolakDspData').value : '';
-  let alasan = document.getElementById('inputAlasanTolak') ? document.getElementById('inputAlasanTolak').value.trim() : '';
+export function submitTolakDisposisi(): void {
+  let rawId = (document.getElementById('currentTolakDspData') as HTMLInputElement) ? (document.getElementById('currentTolakDspData') as HTMLInputElement).value : '';
+  let alasan = (document.getElementById('inputAlasanTolak') as HTMLInputElement) ? (document.getElementById('inputAlasanTolak') as HTMLInputElement).value.trim() : '';
 
   if(!rawId) {
     showToast("GAGAL", "ID data tidak valid.", "danger");
@@ -840,7 +823,7 @@ export function submitTolakDisposisi() {
   }
 
   let listDisposisi = JSON.parse(localStorage.getItem('databaseDisposisi') || '[]');
-  let target = listDisposisi.find(d => String(d.id) === String(rawId) || String(d.noLp) === String(rawId));
+  let target = listDisposisi.find((d: any) => String(d.id) === String(rawId) || String(d.noLp) === String(rawId));
   
   if(target) {
     target.status = "Disposisi Ditolak: " + (alasan || "Tanpa alasan");
@@ -856,53 +839,53 @@ export function submitTolakDisposisi() {
   }
 }
 
-export function checkDisposisiAccessByRole() {
-  let btnBuatDisposisi = document.getElementById('btnBuatDisposisiBaru') || document.querySelector('.btn-buat-disposisi');
+export function checkDisposisiAccessByRole(): void {
+  let btnBuatDisposisi = document.getElementById('btnBuatDisposisiBaru') || document.querySelector('.btn-buat-disposisi') as HTMLElement;
   if(!btnBuatDisposisi) return;
 
   if(store.currentUser && store.currentUser.role === 'Penyidik / Ketua Tim Peneliti') {
-    btnBuatDisposisi.style.display = 'none';
+    (btnBuatDisposisi as HTMLElement).style.display = 'none';
   } else {
-    btnBuatDisposisi.style.display = 'inline-flex';
+    (btnBuatDisposisi as HTMLElement).style.display = 'inline-flex';
   }
 }
 
-export function cekNotifikasiDisposisiMasuk() {
+export function cekNotifikasiDisposisiMasuk(): void {
   if (!store.currentUser || store.currentUser.role !== 'Penyidik / Ketua Tim Peneliti') {
-    let wrapper = document.querySelector('.notification-wrapper');
+    let wrapper = document.querySelector('.notification-wrapper') as HTMLElement;
     if(wrapper) wrapper.style.display = 'none';
     return;
   }
 
   let listDisposisi = JSON.parse(localStorage.getItem('databaseDisposisi') || '[]');
-  let curNama = (store.currentUser.namaLengkap || store.currentUser.nama || store.currentUser.username || '').toLowerCase();
+  let curNama = (store.currentUser?.namaLengkap || store.currentUser?.nama || store.currentUser?.username || '').toLowerCase();
   
-  let myDisposisi = listDisposisi.filter(d => 
+  let myDisposisi = listDisposisi.filter((d: any) => 
     d.targetPenyidik && curNama && d.targetPenyidik.toLowerCase() === curNama
   );
 
-  let unreadCount = myDisposisi.filter(d => !d.isRead).length;
+  let unreadCount = myDisposisi.filter((d: any) => !d.isRead).length;
   let badge = document.getElementById('notifBadgeCount');
 
   if(badge) {
     if(unreadCount > 0) {
-      badge.textContent = unreadCount;
+      badge.textContent = String(unreadCount);
       badge.style.display = 'inline-block';
     } else {
       badge.style.display = 'none';
     }
   }
 
-  let brandNew = myDisposisi.filter(d => !d.toastShown);
+  let brandNew = myDisposisi.filter((d: any) => !d.toastShown);
   if(brandNew.length > 0) {
     showToast("DISPOSISI BERKAS BARU!", `Anda menerima ${brandNew.length} berkas disposisi baru untuk ditindaklanjuti.`, "warning");
-    brandNew.forEach(d => d.toastShown = true);
+    brandNew.forEach((d: any) => d.toastShown = true);
     localStorage.setItem('databaseDisposisi', JSON.stringify(listDisposisi));
   }
 }
 
-export function toggleNotificationDropdown() {
-  let dropdown = document.getElementById('notificationDropdown');
+export function toggleNotificationDropdown(): void {
+  let dropdown = document.getElementById('notificationDropdown') as HTMLElement;
   if(!dropdown) return;
   
   if(dropdown.style.display === 'none' || dropdown.style.display === '') {
@@ -913,27 +896,27 @@ export function toggleNotificationDropdown() {
   }
 }
 
-export function renderNotificationHistoryList() {
+export function renderNotificationHistoryList(): void {
   let container = document.getElementById('notificationListContent');
   if(!container || !store.currentUser) return;
 
   let listDisposisi = JSON.parse(localStorage.getItem('databaseDisposisi') || '[]');
-  let curNama = (store.currentUser.namaLengkap || store.currentUser.nama || store.currentUser.username || '').toLowerCase();
-  let myDisposisi = listDisposisi.filter(d => 
+  let curNama = (store.currentUser?.namaLengkap || store.currentUser?.nama || store.currentUser?.username || '').toLowerCase();
+  let myDisposisi = listDisposisi.filter((d: any) => 
     d.targetPenyidik && curNama && d.targetPenyidik.toLowerCase() === curNama
   );
 
-  myDisposisi.sort((a, b) => new Date(b.tanggalDisposisi) - new Date(a.tanggalDisposisi));
+  myDisposisi.sort((a: any, b: any) => new Date(b.tanggalDisposisi).getTime() - new Date(a.tanggalDisposisi).getTime());
 
   if(myDisposisi.length === 0) {
     container.innerHTML = `<div style="padding: 16px; text-align: center; color: var(--text-muted, #94a3b8); font-size: 12px;">Belum ada riwayat disposisi.</div>`;
     return;
   }
 
-  container.innerHTML = myDisposisi.map(d => {
+  container.innerHTML = myDisposisi.map((d: any) => {
     let tglFormatted = d.tanggalDisposisi ? new Date(d.tanggalDisposisi).toLocaleDateString('id-ID', {day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute:'2-digit'}) : '';
     let bgStyle = !d.isRead ? 'background: rgba(59, 130, 246, 0.08);' : '';
-    let realIndex = listDisposisi.findIndex(item => item.id === d.id);
+    let realIndex = listDisposisi.findIndex((item: any) => item.id === d.id);
     
     return `
       <div style="padding: 10px 14px; border-bottom: 1px solid var(--border-color, #334155); ${bgStyle} cursor: pointer; transition: background 0.2s;" onclick='openDisposisiModal(${realIndex})'>
@@ -948,26 +931,26 @@ export function renderNotificationHistoryList() {
   }).join('');
 }
 
-export function klikRiwayatDisposisi(dspData) {
+export function klikRiwayatDisposisi(dspData: any): void {
   let listDisposisi = JSON.parse(localStorage.getItem('databaseDisposisi') || '[]');
-  let target = listDisposisi.find(d => d.id === dspData.id);
+  let target = listDisposisi.find((d: any) => d.id === dspData.id);
   if(target) {
     target.isRead = true;
     localStorage.setItem('databaseDisposisi', JSON.stringify(listDisposisi));
   }
 
-  let dropdown = document.getElementById('notificationDropdown');
+  let dropdown = document.getElementById('notificationDropdown') as HTMLElement;
   if(dropdown) dropdown.style.display = 'none';
 
   cekNotifikasiDisposisiMasuk();
-  let realIndex = listDisposisi.findIndex(item => item.id === dspData.id);
+  let realIndex = listDisposisi.findIndex((item: any) => item.id === dspData.id);
   openDisposisiModal(realIndex >= 0 ? realIndex : -1);
 }
 
-export function markAllDisposisiAsRead() {
+export function markAllDisposisiAsRead(): void {
   let listDisposisi = JSON.parse(localStorage.getItem('databaseDisposisi') || '[]');
-  let curNama = (store.currentUser && (store.currentUser.namaLengkap || store.currentUser.nama || store.currentUser.username || '')).toLowerCase();
-  listDisposisi.forEach(d => {
+  let curNama = (store.currentUser?.namaLengkap || store.currentUser?.nama || store.currentUser?.username || '').toLowerCase();
+  listDisposisi.forEach((d: any) => {
     if(d.targetPenyidik && curNama && d.targetPenyidik.toLowerCase() === curNama) {
       d.isRead = true;
     }
@@ -977,30 +960,33 @@ export function markAllDisposisiAsRead() {
   renderNotificationHistoryList();
 }
 
-// ==========================================================================
-// EXPOSE GLOBAL KE WINDOW (AGAR SEMUA EVENT DI HTML TETAP BERFUNGSI)
-// ==========================================================================
-window.openDisposisiModal = openDisposisiModal;
-window.openModalUsulDisposisi = () => openDisposisiModal(-1);
-window.closeDisposisiModal = closeDisposisiModal;
-window.closeModalUsulDisposisi = closeDisposisiModal;
-window.simpanDraftDisposisi = simpanDraftDisposisi;
-window.kirimDisposisiBerkat = kirimDisposisiBerkat;
-window.renderDisposisiTable = renderDisposisiTable;
-window.changeDisposisiPage = changeDisposisiPage;
-window.responDisposisi = responDisposisi;
-window.terimaDisposisi = terimaDisposisi;
-window.closeAlasanTolakModal = closeAlasanTolakModal;
-window.submitTolakDisposisi = submitTolakDisposisi;
-window.checkDisposisiAccessByRole = checkDisposisiAccessByRole;
-window.cekNotifikasiDisposisiMasuk = cekNotifikasiDisposisiMasuk;
-window.toggleNotificationDropdown = toggleNotificationDropdown;
-window.klikRiwayatDisposisi = klikRiwayatDisposisi;
-window.markAllDisposisiAsRead = markAllDisposisiAsRead;
-window.syncDspJenisPerkara = syncDspJenisPerkara;
-window.toggleDspJenisDokumen = toggleDspJenisDokumen;
-window.syncDspDokumenPemberitahuan = syncDspDokumenPemberitahuan;
-window.handleDspJenisKoliChange = handleDspJenisKoliChange;
-window.handleDspJenisKoliSelectChange = handleDspJenisKoliSelectChange;
-window.generateDspUraianBarangOtomatis = generateDspUraianBarangOtomatis;
-window.updateDspCodePreviews = updateDspCodePreviews;
+export function initDisposisiModule(): void {
+  renderDisposisiTable();
+  checkDisposisiAccessByRole();
+  cekNotifikasiDisposisiMasuk();
+}
+
+(window as any).openDisposisiModal = openDisposisiModal;
+(window as any).openModalUsulDisposisi = () => openDisposisiModal(-1);
+(window as any).closeDisposisiModal = closeDisposisiModal;
+(window as any).closeModalUsulDisposisi = closeDisposisiModal;
+(window as any).simpanDraftDisposisi = simpanDraftDisposisi;
+(window as any).kirimDisposisiBerkat = kirimDisposisiBerkat;
+(window as any).renderDisposisiTable = renderDisposisiTable;
+(window as any).changeDisposisiPage = changeDisposisiPage;
+(window as any).responDisposisi = responDisposisi;
+(window as any).terimaDisposisi = terimaDisposisi;
+(window as any).closeAlasanTolakModal = closeAlasanTolakModal;
+(window as any).submitTolakDisposisi = submitTolakDisposisi;
+(window as any).checkDisposisiAccessByRole = checkDisposisiAccessByRole;
+(window as any).cekNotifikasiDisposisiMasuk = cekNotifikasiDisposisiMasuk;
+(window as any).toggleNotificationDropdown = toggleNotificationDropdown;
+(window as any).klikRiwayatDisposisi = klikRiwayatDisposisi;
+(window as any).markAllDisposisiAsRead = markAllDisposisiAsRead;
+(window as any).syncDspJenisPerkara = syncDspJenisPerkara;
+(window as any).toggleDspJenisDokumen = toggleDspJenisDokumen;
+(window as any).syncDspDokumenPemberitahuan = syncDspDokumenPemberitahuan;
+(window as any).handleDspJenisKoliChange = handleDspJenisKoliChange;
+(window as any).handleDspJenisKoliSelectChange = handleDspJenisKoliSelectChange;
+(window as any).generateDspUraianBarangOtomatis = generateDspUraianBarangOtomatis;
+(window as any).updateDspCodePreviews = updateDspCodePreviews;

@@ -1,11 +1,10 @@
 /**
  * @file database.ts
  * @description Layer basis data SQLite terpadu dengan fallback JSON storage.
- * Seluruh variabel dan tipe data didefinisikan secara eksplisit untuk mencegah error any/unknown.
  */
 
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
 import { fileURLToPath } from 'url';
 import {
   UserAccount,

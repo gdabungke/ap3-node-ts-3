@@ -9,17 +9,16 @@ import * as editor from './modules/editor.js';
 import * as laporan from './templates/laporan.js';
 import * as tindaklanjut from './templates/tindaklanjut.js';
 
-
 // Expose all modules and functions to window for seamless inline event handlers
-const allModules = [formatters, ui, auth, disposisi, perkara, editor, laporan, tindaklanjut];
+const allModules: any[] = [formatters, ui, auth, disposisi, perkara, editor, laporan, tindaklanjut];
 allModules.forEach(mod => {
   Object.keys(mod).forEach(key => {
-    window[key] = mod[key];
+    (window as any)[key] = (mod as any)[key];
   });
 });
 
 // Also expose store properties if accessed directly
-window.store = store;
+(window as any).store = store;
 Object.defineProperty(window, 'databasePerkara', {
   get: () => store.databasePerkara,
   set: (val) => { store.databasePerkara = val; }
@@ -58,7 +57,7 @@ document.addEventListener("DOMContentLoaded", function() {
   const tabPanes = document.querySelectorAll('.tab-pane');
 
   navButtons.forEach(button => {
-    button.addEventListener('click', function(e) {
+    button.addEventListener('click', function(this: HTMLElement, e: Event) {
       e.preventDefault();
       navButtons.forEach(btn => btn.classList.remove('active'));
       this.classList.add('active');
@@ -78,11 +77,11 @@ document.addEventListener("DOMContentLoaded", function() {
       if(targetId === 'dasbor') {
         perkara.updateDashboardStats();
       } else if(targetId === 'laporan') {
-        let sel = document.getElementById('docFilterSelect');
+        let sel = document.getElementById('docFilterSelect') as HTMLSelectElement;
         let selectedType = sel ? sel.value : store.currentDoc;
         editor.switchDocTab(selectedType);
       } else if(targetId === 'tindaklanjut') {
-        let selTL = document.getElementById('tlDocFilterSelect');
+        let selTL = document.getElementById('tlDocFilterSelect') as HTMLSelectElement;
         let selectedTLType = selTL ? selTL.value : store.currentTLDoc;
         editor.switchTLDocTab(selectedTLType);
       }
@@ -93,22 +92,22 @@ document.addEventListener("DOMContentLoaded", function() {
   const geminiSubPanes = document.querySelectorAll('.setting-subtab-pane');
 
   geminiNavItems.forEach(item => {
-    item.addEventListener('click', function() {
+    item.addEventListener('click', function(this: HTMLElement) {
       geminiNavItems.forEach(btn => btn.classList.remove('active'));
       this.classList.add('active');
 
       const targetSub = this.getAttribute('data-setting-tab');
       geminiSubPanes.forEach(pane => pane.classList.remove('active'));
       
-      const activePane = document.getElementById(targetSub);
+      const activePane = document.getElementById(targetSub!);
       if(activePane) activePane.classList.add('active');
     });
   });
 
-  document.addEventListener('click', function(e) {
+  document.addEventListener('click', function(e: MouseEvent) {
     let profileWrapper = document.querySelector('.user-profile-wrapper');
     let dropdownMenu = document.getElementById('userDropdownMenu');
-    if (profileWrapper && !profileWrapper.contains(e.target)) {
+    if (profileWrapper && !profileWrapper.contains(e.target as Node)) {
       if(dropdownMenu) dropdownMenu.classList.remove('show');
     }
   });
@@ -124,7 +123,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
 // Otomatis aktif saat tombol cetak ditekan atau Ctrl+P
 window.addEventListener('beforeprint', () => {
-  document.querySelectorAll('#reports .report, #tl_reports .report').forEach((card) => {
+  document.querySelectorAll('#reports .report, #tl_reports .report').forEach((card: any) => {
     card.style.display = 'block';
   });
 });
@@ -139,18 +138,17 @@ window.addEventListener('afterprint', () => {
   }
 });
 
-document.addEventListener('click', function(e) {
-  let btnTerima = e.target.closest('.btn-terima-dsp');
+document.addEventListener('click', function(e: MouseEvent) {
+  let target = e.target as HTMLElement;
+  let btnTerima = target.closest('.btn-terima-dsp');
   if (btnTerima) {
     let id = btnTerima.getAttribute('data-id');
-    disposisi.responDisposisi('terima', id);
+    if (id) disposisi.responDisposisi('terima', id);
   }
 
-  let btnTolak = e.target.closest('.btn-tolak-dsp');
+  let btnTolak = target.closest('.btn-tolak-dsp');
   if (btnTolak) {
     let id = btnTolak.getAttribute('data-id');
-    disposisi.responDisposisi('tolak', id);
+    if (id) disposisi.responDisposisi('tolak', id);
   }
 });
-
-

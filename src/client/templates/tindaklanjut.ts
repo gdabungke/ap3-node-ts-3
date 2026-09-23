@@ -1,9 +1,9 @@
 import { store, savePerkaraToStorage } from '../state/store.js';
-import { escText, getVal, tanggalKeTeks, formatDateIndo, formatTrailingDashes, formatRowTrailingDashes } from '../utils/formatters.js';
+import { escText, getVal, tanggalKeTeks, formatDateIndo, autoGenerateTeksTanggalBA, formatTrailingDashes, formatRowTrailingDashes } from '../utils/formatters.js';
 import { showToast } from '../modules/ui.js';
 import { tteBadge, buildTableKv, generateKopSurat } from './laporan.js';
 
-export function handleSingleValidationTL() {
+export function handleSingleValidationTL(): void {
   if ((typeof store.activeRecordIndex === 'undefined' || store.activeRecordIndex < 0) && store.databasePerkara.length > 0) {
     store.activeRecordIndex = 0;
   }
@@ -50,25 +50,30 @@ export function handleSingleValidationTL() {
     document.body.appendChild(toastDiv);
     existingToast = toastDiv;
   } else {
-    document.getElementById('toastMessage').innerText = "Data Tindak Lanjut berhasil divalidasi & disinkronkan dari LHP!";
+    let msgEl = document.getElementById('toastMessage');
+    if (msgEl) msgEl.innerText = "Data Tindak Lanjut berhasil divalidasi & disinkronkan dari LHP!";
   }
 
   setTimeout(() => {
-    existingToast.style.opacity = '1';
-    existingToast.style.transform = 'translateY(0)';
+    if (existingToast) {
+      existingToast.style.opacity = '1';
+      existingToast.style.transform = 'translateY(0)';
+    }
   }, 10);
 
   setTimeout(() => {
-    existingToast.style.opacity = '0';
-    existingToast.style.transform = 'translateY(20px)';
+    if (existingToast) {
+      existingToast.style.opacity = '0';
+      existingToast.style.transform = 'translateY(20px)';
+    }
   }, 3000);
 
-  if (typeof window.refreshTLTableUI === 'function') {
-    window.refreshTLTableUI();
+  if (typeof (window as any).refreshTLTableUI === 'function') {
+    (window as any).refreshTLTableUI();
   }
 }
 
-export function getTLNumFormat(type) {
+export function getTLNumFormat(type: string): string {
   if (store.activeRecordIndex < 0 || !store.databasePerkara[store.activeRecordIndex]) return '-';
   let rec = store.databasePerkara[store.activeRecordIndex];
   let fallbackNum = rec.Nomor_LHP || rec.NoLP_LP_1 || '338';
@@ -84,7 +89,7 @@ export function getTLNumFormat(type) {
   return '-';
 }
 
-export function closeTLReportTag(customSignHTML, tglStr) {
+export function closeTLReportTag(customSignHTML: string, tglStr: string): string {
   let t = tglStr || '28 September 2026';
   return `<div style="page-break-inside: avoid !important; margin-top:16px; font-family:Arial, sans-serif; font-size:10pt;">
     <div style="text-align:right; margin-bottom:8px;">Batam, ${t}</div>
@@ -92,15 +97,14 @@ export function closeTLReportTag(customSignHTML, tglStr) {
   </div></div>`;
 }
 
-export function BAST_PEMILIK() {
+export function BAST_PEMILIK(): string {
   if (store.activeRecordIndex < 0 || !store.databasePerkara[store.activeRecordIndex]) {
     return `<div class="report"><p>Data belum dipilih.</p></div>`;
   }
   let rec = store.databasePerkara[store.activeRecordIndex];
   let num = getTLNumFormat('BAST_PEMILIK');
 
-  // Helper konversi angka ke teks terbilang
-  const angkaKeTeks = (n) => {
+  const angkaKeTeks = (n: any): string => {
     let numVal = parseInt(n, 10);
     if (isNaN(numVal)) return '';
     const satuan = ['', 'satu', 'dua', 'tiga', 'empat', 'lima', 'enam', 'tujuh', 'delapan', 'sembilan', 'sepuluh', 'sebelas'];
@@ -118,12 +122,10 @@ export function BAST_PEMILIK() {
   let tglHuruf = escText(rec.TL_Tgl_Huruf_BAST || dateInfo.teksLengkap || '-');
   let tglCetakTTD = rawDate ? formatDateIndo(rawDate) : '17 September 2026';
 
-  // 1. Sarana Pengangkut
   let sarkutList = rec.TL_BAST_SarkutList || [
     { jenis: rec.TL_Nama_Sarkut || rec.Pengangkut || '-', nopol: rec.TL_No_Reg_Sarkut || '-' }
   ];
 
-  // 2. Barang
   let rawJml = rec.Jumlah_Koli || '12';
   let txtTerbilang = angkaKeTeks(rawJml) || 'dua belas';
   let jnsKoli = rec.Jenis_Koli || 'koli';
@@ -141,7 +143,6 @@ export function BAST_PEMILIK() {
     rec.TL_BAST_BarangList = barangList;
   }
 
-  // 3. Dokumen
   let dokDefault = '-';
   if (rec.TL_Dokumen_Bast) {
     dokDefault = rec.TL_Dokumen_Bast;
@@ -153,13 +154,11 @@ export function BAST_PEMILIK() {
   }
   let dokumenList = rec.TL_BAST_DokumenList || [{ uraian: dokDefault }];
 
-  // 4. Orang
   let orangList = rec.TL_BAST_OrangList || [{ nama: '-', identitas: '-' }];
 
-  const toLetter = (i) => String.fromCharCode(97 + i) + '.';
+  const toLetter = (i: number) => String.fromCharCode(97 + i) + '.';
 
-  // Render Baris Sarkut
-  let sarkutRows = sarkutList.map((s, idx) => `
+  let sarkutRows = sarkutList.map((s: any, idx: number) => `
     <tr>
       <td style="border:none !important; padding:1px 0 1px 18px; vertical-align:top; font-size:11pt;">${toLetter(idx)}</td>
       <td style="border:none !important; padding:1px 4px; vertical-align:top; font-size:11pt;">Jenis Sarana Pengangkut</td>
@@ -185,8 +184,7 @@ export function BAST_PEMILIK() {
     `;
   }
 
-  // Render Baris Barang
-  let barangRows = barangList.map((b, idx) => `
+  let barangRows = barangList.map((b: any, idx: number) => `
     <tr>
       <td style="border:none !important; padding:1px 0 1px 18px; vertical-align:top; font-size:11pt;">${toLetter(idx)}</td>
       <td style="border:none !important; padding:1px 4px; vertical-align:top; font-size:11pt;">Jml/No. Peti Kemas/Kemasan</td>
@@ -212,8 +210,7 @@ export function BAST_PEMILIK() {
     `;
   }
 
-  // Render Baris Dokumen
-  let dokumenRows = dokumenList.map((d, idx) => `
+  let dokumenRows = dokumenList.map((d: any, idx: number) => `
     <tr>
       <td style="border:none !important; padding:1px 0 1px 18px; vertical-align:top; font-size:11pt;">${toLetter(idx)}</td>
       <td style="border:none !important; padding:1px 4px; vertical-align:top; font-size:11pt;">Jenis/No. dan Tgl. Dokumen</td>
@@ -233,8 +230,7 @@ export function BAST_PEMILIK() {
     `;
   }
 
-  // Render Baris Orang
-  let orangRows = orangList.map((o, idx) => `
+  let orangRows = orangList.map((o: any, idx: number) => `
     <tr>
       <td style="border:none !important; padding:1px 0 1px 18px; vertical-align:top; font-size:11pt;">${toLetter(idx)}</td>
       <td style="border:none !important; padding:1px 4px; vertical-align:top; font-size:11pt;">Nama</td>
@@ -260,7 +256,6 @@ export function BAST_PEMILIK() {
     `;
   }
 
-  // Identitas Pihak Penerima (Dipetakan dinamis dari perkara)
   let rawNamaPenerima = (rec.TL_Nama_Pemilik || rec.Nama_Pemilik || rec.Nama_Perusahaan || rec.Nama_Pelaku || '-').trim();
   let namaPenerimaTTD = rawNamaPenerima.replace(/\.+$/, '');
 
@@ -288,10 +283,8 @@ export function BAST_PEMILIK() {
     <div style="text-align:center; font-weight:bold; font-size:11pt; margin:14px 0 2px 0;">BERITA ACARA SERAH TERIMA</div>
     <div style="text-align:center; font-size:11pt; margin-bottom:14px;">Nomor : ${num}</div>
 
-    <!-- 1. PARAGRAF PEMBUKA -->
     ${formatTrailingDashes(`Pada hari ini, ${hari} tanggal${tglHuruf}. Kami yang bertanda tangan di bawah ini bertindak untuk/atas nama Kantor Pelayanan Utama Bea dan Cukai Tipe B Batam, telah menyerahkan:`, '----------')}
 
-    <!-- TABEL 4 KOLOM TANPA BORDER -->
     <table style="width:100% !important; border-collapse:collapse !important; border:none !important; margin-bottom:10px; font-size:11pt !important; table-layout:fixed;">
       <colgroup>
         <col style="width:36px;">
@@ -300,32 +293,27 @@ export function BAST_PEMILIK() {
         <col style="width:calc(100% - 289px);">
       </colgroup>
 
-      <!-- 1. Sarana Pengangkut -->
       <tr>
         <td colspan="4" style="border:none !important; font-weight:bold; padding:4px 0 2px 0; font-size:11pt;">1. Sarana Pengangkut</td>
       </tr>
       ${sarkutRows}
 
-      <!-- 2. Barang -->
       <tr>
         <td colspan="4" style="border:none !important; font-weight:bold; padding:6px 0 2px 0; font-size:11pt;">2. Barang</td>
       </tr>
       ${barangRows}
 
-      <!-- 3. Dokumen -->
       <tr>
         <td colspan="4" style="border:none !important; font-weight:bold; padding:6px 0 2px 0; font-size:11pt;">3. Dokumen</td>
       </tr>
       ${dokumenRows}
 
-      <!-- 4. Orang -->
       <tr>
         <td colspan="4" style="border:none !important; font-weight:bold; padding:6px 0 2px 0; font-size:11pt;">4. Orang</td>
       </tr>
       ${orangRows}
     </table>
 
-    <!-- DISERAHKAN KEPADA -->
     <table style="width:100% !important; border-collapse:collapse !important; border:none !important; margin-top:8px; margin-bottom:8px; font-size:11pt !important; table-layout:fixed;">
       <colgroup>
         <col style="width:271px;">
@@ -342,12 +330,10 @@ export function BAST_PEMILIK() {
       ${formatRowTrailingDashes('Alamat', alamatPenerima, '271px')}
     </table>
 
-    <!-- PARAGRAF ATAS NAMA & RANGKA -->
     ${formatTrailingDashes(`Menerima penyerahan untuk/atas nama: ${atasNamaTeks}`)}
     ${formatTrailingDashes(`Penyerahan dilaksanakan dalam rangka: ${rangkaClean}`)}
     ${formatTrailingDashes('Demikian Berita Acara ini dibuat dengan sebenarnya.')}
 
-    <!-- AREA TANDA TANGAN -->
     <div style="page-break-inside:avoid !important; margin-top:16px; font-family:Arial, Helvetica, sans-serif; font-size:11pt;">
       <table style="width:100% !important; border-collapse:collapse !important; border:none !important; table-layout:fixed; font-size:11pt;">
         <colgroup>
@@ -361,13 +347,11 @@ export function BAST_PEMILIK() {
           </td>
         </tr>
         <tr>
-          <!-- KIRI: YANG MENERIMA -->
           <td style="border:none !important; padding:0 10px 0 0; vertical-align:top;">
             Yang menerima,
             <div style="height:55px;"></div>
             <b>${namaPenerimaTTD}</b>
           </td>
-          <!-- KANAN: PETUGAS 1 -->
           <td style="border:none !important; padding:0; vertical-align:top;">
             <div style="width:85%; margin-left:auto;">
               Yang menyerahkan,
@@ -378,12 +362,10 @@ export function BAST_PEMILIK() {
           </td>
         </tr>
         <tr>
-          <!-- KIRI: SAKSI -->
           <td style="border:none !important; padding:20px 10px 0 0; vertical-align:top;">
             <div style="height:55px;"></div>
             <b>---------------------------</b>
           </td>
-          <!-- KANAN: PETUGAS 2 -->
           <td style="border:none !important; padding:20px 0 0 0; vertical-align:top;">
             <div style="width:85%; margin-left:auto;">
               <div style="height:20px;"></div>
@@ -398,7 +380,7 @@ export function BAST_PEMILIK() {
   </div>`;
 }
 
-export function BA_SEGEL() {
+export function BA_SEGEL(): string {
   if (store.activeRecordIndex < 0) return `<div class="report"><p>Data belum dipilih.</p></div>`;
   let rec = store.databasePerkara[store.activeRecordIndex];
   let num = getTLNumFormat('BA_SEGEL');
@@ -458,7 +440,7 @@ export function BA_SEGEL() {
   </div>`;
 }
 
-export function KEP_BDN() {
+export function KEP_BDN(): string {
   if (store.activeRecordIndex < 0) return `<div class="report"><p>Data belum dipilih.</p></div>`;
   let rec = store.databasePerkara[store.activeRecordIndex];
   let num = getTLNumFormat('KEP_BDN');
@@ -470,7 +452,7 @@ export function KEP_BDN() {
     { jumlah: '189 (seratus delapan puluh sembilan) koli', uraian: 'Beras merek “Harumas” 25 Kg', kondisi: 'Kurang Baik', asal: 'Tidak Teridentifikasi', ket: '-' }
   ];
 
-  let rowsLampiranHtml = listBarang.map((item, idx) => `
+  let rowsLampiranHtml = listBarang.map((item: any, idx: number) => `
     <tr>
       <td style="border:1px solid #000; padding:5px; text-align:center;">${idx + 1}.</td>
       <td style="border:1px solid #000; padding:5px; text-align:center;">${escText(item.jumlah)}</td>
@@ -569,7 +551,7 @@ export function KEP_BDN() {
   return `${lembarSatu}<div class="pagebreak"></div>${lampiranTabelBDN}`;
 }
 
-export function SPSA() {
+export function SPSA(): string {
   if (store.activeRecordIndex < 0) return `<div class="report"><p>Data belum dipilih.</p></div>`;
   let rec = store.databasePerkara[store.activeRecordIndex];
 
@@ -614,7 +596,7 @@ export function SPSA() {
   </div>`;
 }
 
-export function BAST_LIMPAH() {
+export function BAST_LIMPAH(): string {
   if (store.activeRecordIndex < 0) return `<div class="report"><p>Data belum dipilih.</p></div>`;
   let rec = store.databasePerkara[store.activeRecordIndex];
   let num = getTLNumFormat('BAST_LIMPAH');
@@ -660,7 +642,7 @@ export function BAST_LIMPAH() {
       ['Barang', 'Jml/No. Peti Kemas/Kemasan/ Jumlah/Jenis Barang', barang],
       ['Dokumen', 'Jenis/No. dan Tgl. Dokumen', dokumen],
       ['Orang', 'Nama & No. Identitas', `${namaOrang} (No. Identitas: ${nikOrang})`],
-      ['Diserahkan kepada', 'Nama / NIP / Alamat', `${pejabatPenerima} (NIP: ${nipPenerima})`],
+      ['Diserahkan kepada', 'Nama / NIP / Alamat', `${pejabatPenerima} (NIP:${nipPenerima})`],
       ['Instansi Penerima', 'Menerima atas nama', instansi],
       ['Maksud Penyerahan', 'Rangka Kegiatan', 'Pelimpahan Penanganan Perkara Penindakan oleh KPU Bea dan Cukai Tipe B Batam agar ditindaklanjuti oleh pihak berwenang.']
     ])}
@@ -668,3 +650,12 @@ export function BAST_LIMPAH() {
     ${closeTLReportTag(ttdLimpah, tglSurat)}
   </div>`;
 }
+
+(window as any).handleSingleValidationTL = handleSingleValidationTL;
+(window as any).getTLNumFormat = getTLNumFormat;
+(window as any).closeTLReportTag = closeTLReportTag;
+(window as any).BAST_PEMILIK = BAST_PEMILIK;
+(window as any).BA_SEGEL = BA_SEGEL;
+(window as any).KEP_BDN = KEP_BDN;
+(window as any).SPSA = SPSA;
+(window as any).BAST_LIMPAH = BAST_LIMPAH;

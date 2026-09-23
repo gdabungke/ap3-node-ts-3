@@ -1,7 +1,7 @@
 import { store } from '../state/store.js';
 import { escText } from '../utils/formatters.js';
 
-export function showToast(title, desc, type = "success") {
+export function showToast(title: string, desc: string, type: string = "success"): void {
   let container = document.getElementById('toastContainer');
   if (!container) return;
 
@@ -25,7 +25,7 @@ export function showToast(title, desc, type = "success") {
   }, 3500);
 }
 
-export function showToastConfirm(title, desc, onConfirm) {
+export function showToastConfirm(title: string, desc: string, onConfirm: () => void): void {
   let container = document.getElementById('toastContainer');
   if (!container) return;
 
@@ -46,22 +46,29 @@ export function showToastConfirm(title, desc, onConfirm) {
   container.appendChild(toast);
   setTimeout(() => toast.classList.add('show'), 10);
 
-  toast.querySelector('#toastYesBtn').onclick = () => {
-    toast.classList.remove('show');
-    setTimeout(() => toast.remove(), 300);
-    onConfirm();
-  };
-  toast.querySelector('#toastNoBtn').onclick = () => {
-    toast.classList.remove('show');
-    setTimeout(() => toast.remove(), 300);
-  };
+  let yesBtn = toast.querySelector('#toastYesBtn') as HTMLButtonElement;
+  let noBtn = toast.querySelector('#toastNoBtn') as HTMLButtonElement;
+
+  if (yesBtn) {
+    yesBtn.onclick = () => {
+      toast.classList.remove('show');
+      setTimeout(() => toast.remove(), 300);
+      onConfirm();
+    };
+  }
+  if (noBtn) {
+    noBtn.onclick = () => {
+      toast.classList.remove('show');
+      setTimeout(() => toast.remove(), 300);
+    };
+  }
 }
 
-export function autoPaginateReports(containerId = 'reports') {
+export function autoPaginateReports(containerId: string = 'reports'): void {
   let container = document.getElementById(containerId);
   if (!container) return;
 
-  let reportCards = Array.from(container.querySelectorAll('.report'));
+  let reportCards = Array.from(container.querySelectorAll('.report')) as HTMLElement[];
 
   reportCards.forEach((reportEl) => {
     if (reportEl.classList.contains('landscape') || reportEl.dataset.paginated === "true") return;
@@ -84,7 +91,7 @@ export function autoPaginateReports(containerId = 'reports') {
       page2.dataset.paginated = "true";
       page2.innerHTML = '';
 
-      let children = Array.from(reportEl.children);
+      let children = Array.from(reportEl.children) as HTMLElement[];
       let moving = false;
       let currentHeight = 0;
 
@@ -95,13 +102,13 @@ export function autoPaginateReports(containerId = 'reports') {
         }
 
         if (child.tagName === 'TABLE' && !moving) {
-          let rows = Array.from(child.querySelectorAll('tr'));
+          let rows = Array.from(child.querySelectorAll('tr')) as HTMLElement[];
           let tablePage1 = child;
           
-          let firstRowCells = tablePage1.querySelectorAll('tr:first-child > td, tr:first-child > th');
+          let firstRowCells = tablePage1.querySelectorAll('tr:first-child > td, tr:first-child > th') as NodeListOf<HTMLElement>;
           let colWidths = Array.from(firstRowCells).map(td => td.style.width || td.getAttribute('width') || '');
 
-          let tablePage2 = tablePage1.cloneNode(false);
+          let tablePage2 = tablePage1.cloneNode(false) as HTMLElement;
           tablePage2.style.tableLayout = 'fixed';
           let tbodyPage2 = document.createElement('tbody');
           tablePage2.appendChild(tbodyPage2);
@@ -115,7 +122,7 @@ export function autoPaginateReports(containerId = 'reports') {
               moving = true;
 
               if (tbodyPage2.children.length === 0 && colWidths.length > 0) {
-                let cells = row.children;
+                let cells = row.children as HTMLCollectionOf<HTMLElement>;
                 for (let i = 0; i < cells.length; i++) {
                   if (colWidths[i]) cells[i].style.width = colWidths[i];
                 }
@@ -144,13 +151,13 @@ export function autoPaginateReports(containerId = 'reports') {
       let pageBreak = document.createElement('div');
       pageBreak.className = 'pagebreak';
 
-      reportEl.parentNode.insertBefore(pageBreak, reportEl.nextSibling);
-      reportEl.parentNode.insertBefore(page2, pageBreak.nextSibling);
+      reportEl.parentNode?.insertBefore(pageBreak, reportEl.nextSibling);
+      reportEl.parentNode?.insertBefore(page2, pageBreak.nextSibling);
     }
   });
 }
 
-export function renderPageSelector(totalDocs, containerId = 'pageSelectorContainer', reportContainerId = 'reports') {
+export function renderPageSelector(totalDocs: number, containerId: string = 'pageSelectorContainer', reportContainerId: string = 'reports'): void {
   let container = document.getElementById(containerId);
   if (!container) return;
 
@@ -182,17 +189,17 @@ export function renderPageSelector(totalDocs, containerId = 'pageSelectorContain
   `;
 }
 
-export function selectPreviewPage(pageIndex, reportContainerId = 'reports', clickedBtn = null) {
+export function selectPreviewPage(pageIndex: any, reportContainerId: string = 'reports', clickedBtn: HTMLElement | null = null): void {
   store.selectedViewPage = pageIndex;
   
   let reportsEl = document.getElementById(reportContainerId);
   if (!reportsEl) return;
 
-  let reportCards = reportsEl.querySelectorAll('.report');
-  let pageBreaks = reportsEl.querySelectorAll('.pagebreak');
+  let reportCards = reportsEl.querySelectorAll('.report') as NodeListOf<HTMLElement>;
+  let pageBreaks = reportsEl.querySelectorAll('.pagebreak') as NodeListOf<HTMLElement>;
 
   if (clickedBtn && clickedBtn.parentNode) {
-    clickedBtn.parentNode.querySelectorAll('.page-nav-btn').forEach(btn => btn.classList.remove('active'));
+    clickedBtn.parentNode.querySelectorAll('.page-nav-btn').forEach((btn: Element) => btn.classList.remove('active'));
     clickedBtn.classList.add('active');
   }
 
@@ -209,26 +216,26 @@ export function selectPreviewPage(pageIndex, reportContainerId = 'reports', clic
   });
 }
 
-export function applyPageNumbers(containerId = 'reports') {
+export function applyPageNumbers(containerId: string = 'reports'): void {
   let container = document.getElementById(containerId);
   if (!container) return;
 
-  container.querySelectorAll('.page-number-footer').forEach(el => el.remove());
+  container.querySelectorAll('.page-number-footer').forEach((el: Element) => el.remove());
 
   let reportCards = container.querySelectorAll('.report');
-  reportCards.forEach((card, index) => {
+  reportCards.forEach((card: Element, index: number) => {
     let footerEl = document.createElement('div');
     footerEl.className = 'page-number-footer';
-    footerEl.innerText = index + 1;
+    footerEl.innerText = String(index + 1);
     card.appendChild(footerEl);
   });
 }
 
-export function navigatePreviewPage(pageIndex, reportContainerId = 'reports') {
+export function navigatePreviewPage(pageIndex: number, reportContainerId: string = 'reports'): void {
   let reportsEl = document.getElementById(reportContainerId);
   if (!reportsEl) return;
 
-  let reportCards = Array.from(reportsEl.querySelectorAll('.report'));
+  let reportCards = Array.from(reportsEl.querySelectorAll('.report')) as HTMLElement[];
   let total = reportCards.length;
   if (total === 0) return;
 
@@ -245,11 +252,11 @@ export function navigatePreviewPage(pageIndex, reportContainerId = 'reports') {
   renderPageSelector(total, containerId, reportContainerId);
 }
 
-export function updatePreviewHeaderUI(docType) {
+export function updatePreviewHeaderUI(docType: string): void {
   let rawType = (docType || store.currentDoc || 'LPP').toString().toUpperCase().trim();
   store.currentDoc = rawType;
 
-  const docMeta = {
+  const docMeta: Record<string, { title: string; icon: string }> = {
     'ALL': { title: 'SEMUA DOKUMEN LAPORAN', icon: 'fi-rr-documents' },
     'LPP': { title: 'LEMBAR PENELITIAN PERKARA (LPP)', icon: 'fi-rr-document' },
     'LPF': { title: 'LEMBAR PENELITIAN FORMAL (LPF)', icon: 'fi-rr-document-signed' },
@@ -269,11 +276,11 @@ export function updatePreviewHeaderUI(docType) {
   if (iconEl) iconEl.className = `fi ${meta.icon}`;
 }
 
-export function updateTLPreviewHeaderUI(docType) {
+export function updateTLPreviewHeaderUI(docType: string): void {
   let rawType = (docType || store.currentTLDoc || 'BAST_PEMILIK').toString().toUpperCase().trim();
   store.currentTLDoc = rawType;
 
-  const tlDocMeta = {
+  const tlDocMeta: Record<string, { title: string; icon: string }> = {
     'ALL': { title: 'SEMUA DOKUMEN TINDAK LANJUT', icon: 'fi-rr-documents' },
     'BAST_PEMILIK': { title: 'BAST KE PEMILIK / KUASA', icon: 'fi-rr-user-check' },
     'BA_SEGEL': { title: 'BERITA ACARA BUKA SEGEL', icon: 'fi-rr-unlock' },
@@ -290,11 +297,11 @@ export function updateTLPreviewHeaderUI(docType) {
   if (iconEl) iconEl.className = `fi ${meta.icon}`;
 }
 
-export function changePaperSize(size) {
+export function changePaperSize(size: string): void {
   store.selectedPaperSize = size;
   let dynamicStyle = document.getElementById('dynamicPaperStyle');
   let paperLabel = document.getElementById('currentPaperSizeLabel');
-  let settingSelect = document.getElementById('setting_paperSize');
+  let settingSelect = document.getElementById('setting_paperSize') as HTMLSelectElement;
 
   if (settingSelect) settingSelect.value = size;
 
@@ -306,12 +313,12 @@ export function changePaperSize(size) {
     if (paperLabel) paperLabel.textContent = 'F4 / FOLIO (215 x 330 mm)';
   }
 
-  if (window.showReportView) window.showReportView(store.currentDoc);
-  if (window.showTLReportView) window.showTLReportView(store.currentTLDoc);
-  if (window.saveData) window.saveData();
+  if ((window as any).showReportView) (window as any).showReportView(store.currentDoc);
+  if ((window as any).showTLReportView) (window as any).showTLReportView(store.currentTLDoc);
+  if ((window as any).saveData) (window as any).saveData();
 }
 
-export function handleEditDocFocus(type) {
+export function handleEditDocFocus(type: string): void {
   if (store.activeRecordIndex < 0 && store.databasePerkara.length > 0) {
     store.activeRecordIndex = 0;
   }
@@ -321,15 +328,15 @@ export function handleEditDocFocus(type) {
     return;
   }
 
-  if (window.loadRecordToCurrentView) {
-    window.loadRecordToCurrentView(store.databasePerkara[store.activeRecordIndex]);
+  if ((window as any).loadRecordToCurrentView) {
+    (window as any).loadRecordToCurrentView(store.databasePerkara[store.activeRecordIndex]);
   }
 
   store.currentDoc = type;
-  let sel = document.getElementById('docFilterSelect');
+  let sel = document.getElementById('docFilterSelect') as HTMLSelectElement;
   if (sel) sel.value = type;
 
-  const docTitles = {
+  const docTitles: Record<string, string> = {
     'LPP': 'Edit Dokumen LPP',
     'LPF': 'Edit Dokumen LPF',
     'SPLIT': 'Edit Dokumen SPLIT',
@@ -341,12 +348,12 @@ export function handleEditDocFocus(type) {
   let modalTitle = document.getElementById('editDocModalTitle');
   if (modalTitle) modalTitle.textContent = docTitles[type] || 'Edit Dokumen';
 
-  if (window.renderDynamicInputs) window.renderDynamicInputs(type);
+  if ((window as any).renderDynamicInputs) (window as any).renderDynamicInputs(type);
   let modal = document.getElementById('editDocModal');
   if (modal) modal.classList.add('active');
 }
 
-export function focusEditTLDoc(docType) {
+export function focusEditTLDoc(docType: string): void {
   if (store.activeRecordIndex < 0 && store.databasePerkara.length > 0) {
     store.activeRecordIndex = 0;
   }
@@ -356,15 +363,15 @@ export function focusEditTLDoc(docType) {
     return;
   }
 
-  if (window.loadRecordToCurrentView) {
-    window.loadRecordToCurrentView(store.databasePerkara[store.activeRecordIndex]);
+  if ((window as any).loadRecordToCurrentView) {
+    (window as any).loadRecordToCurrentView(store.databasePerkara[store.activeRecordIndex]);
   }
 
   store.currentTLDoc = docType;
-  let sel = document.getElementById('tlDocFilterSelect');
+  let sel = document.getElementById('tlDocFilterSelect') as HTMLSelectElement;
   if (sel) sel.value = docType;
 
-  const tlDocTitles = {
+  const tlDocTitles: Record<string, string> = {
     'BAST_PEMILIK': 'Edit BAST Ke Pemilik / Kuasa',
     'BA_SEGEL': 'Edit Berita Acara Buka Segel',
     'KEP_BDN': 'Edit Keputusan BDN',
@@ -375,49 +382,48 @@ export function focusEditTLDoc(docType) {
   let modalTitle = document.getElementById('editTLDocModalTitle');
   if (modalTitle) modalTitle.textContent = tlDocTitles[docType] || 'Edit Dokumen Tindak Lanjut';
 
-  if (window.renderTLFormSection) window.renderTLFormSection(docType);
+  if ((window as any).renderTLFormSection) (window as any).renderTLFormSection(docType);
   let modal = document.getElementById('editTLDocModal');
   if (modal) modal.classList.add('active');
 }
 
-export function closeEditDocModal() {
+export function closeEditDocModal(): void {
   let modal = document.getElementById('editDocModal');
   if (modal) modal.classList.remove('active');
 }
 
-export function saveAndCloseEditDocModal() {
+export function saveAndCloseEditDocModal(): void {
   closeEditDocModal();
-  if (window.refreshReportTableUI) window.refreshReportTableUI();
-  if (window.updateReportLive) window.updateReportLive();
+  if ((window as any).refreshReportTableUI) (window as any).refreshReportTableUI();
+  if ((window as any).updateReportLive) (window as any).updateReportLive();
   showToast("PERUBAHAN TERSIMPAN", `Parameter ${store.currentDoc} berhasil diperbarui.`, "success");
 }
 
-export function closeEditTLDocModal() {
+export function closeEditTLDocModal(): void {
   let modal = document.getElementById('editTLDocModal');
   if (modal) modal.classList.remove('active');
 }
 
-export function saveAndCloseEditTLDocModal() {
+export function saveAndCloseEditTLDocModal(): void {
   closeEditTLDocModal();
-  if (window.refreshTLTableUI) window.refreshTLTableUI();
-  if (window.showTLReportView) window.showTLReportView(store.currentTLDoc);
+  if ((window as any).refreshTLTableUI) (window as any).refreshTLTableUI();
+  if ((window as any).showTLReportView) (window as any).showTLReportView(store.currentTLDoc);
   showToast("PERUBAHAN TERSIMPAN", `Parameter ${store.currentTLDoc} berhasil diperbarui.`, "success");
 }
 
-// Global window bindings untuk event handler HTML
-window.showToast = showToast;
-window.showToastConfirm = showToastConfirm;
-window.autoPaginateReports = autoPaginateReports;
-window.renderPageSelector = renderPageSelector;
-window.selectPreviewPage = selectPreviewPage;
-window.applyPageNumbers = applyPageNumbers;
-window.navigatePreviewPage = navigatePreviewPage;
-window.updatePreviewHeaderUI = updatePreviewHeaderUI;
-window.updateTLPreviewHeaderUI = updateTLPreviewHeaderUI;
-window.changePaperSize = changePaperSize;
-window.handleEditDocFocus = handleEditDocFocus;
-window.focusEditTLDoc = focusEditTLDoc;
-window.closeEditDocModal = closeEditDocModal;
-window.saveAndCloseEditDocModal = saveAndCloseEditDocModal;
-window.closeEditTLDocModal = closeEditTLDocModal;
-window.saveAndCloseEditTLDocModal = saveAndCloseEditTLDocModal;
+(window as any).showToast = showToast;
+(window as any).showToastConfirm = showToastConfirm;
+(window as any).autoPaginateReports = autoPaginateReports;
+(window as any).renderPageSelector = renderPageSelector;
+(window as any).selectPreviewPage = selectPreviewPage;
+(window as any).applyPageNumbers = applyPageNumbers;
+(window as any).navigatePreviewPage = navigatePreviewPage;
+(window as any).updatePreviewHeaderUI = updatePreviewHeaderUI;
+(window as any).updateTLPreviewHeaderUI = updateTLPreviewHeaderUI; // pastikan ini as any, bukan asyn
+(window as any).changePaperSize = changePaperSize;
+(window as any).handleEditDocFocus = handleEditDocFocus;
+(window as any).focusEditTLDoc = focusEditTLDoc;
+(window as any).closeEditDocModal = closeEditDocModal;
+(window as any).saveAndCloseEditDocModal = saveAndCloseEditDocModal;
+(window as any).closeEditTLDocModal = closeEditTLDocModal;
+(window as any).saveAndCloseEditTLDocModal = saveAndCloseEditTLDocModal;

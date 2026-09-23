@@ -17,8 +17,8 @@ import { refreshReportTableUI, updateReportLive } from './editor.js';
 let currentPerkaraPage = 1;
 const rowsPerPagePerkara = 5;
 
-export function populateAgeDropdown() {
-  let select = document.getElementById('Umur_Pelaku');
+export function populateAgeDropdown(): void {
+  let select = document.getElementById('Umur_Pelaku') as HTMLSelectElement;
   if(!select) return;
   
   let optionsHtml = `<option value="-">- Pilih Usia -</option>`;
@@ -28,9 +28,9 @@ export function populateAgeDropdown() {
   select.innerHTML = optionsHtml;
 }
 
-export function updateHariSBP() {
-  let tgl = document.getElementById('Tanggal_SBP') ? document.getElementById('Tanggal_SBP').value : '';
-  let hariEl = document.getElementById('Hari_SBP');
+export function updateHariSBP(): void {
+  let tgl = (document.getElementById('Tanggal_SBP') as HTMLInputElement) ? (document.getElementById('Tanggal_SBP') as HTMLInputElement).value : '';
+  let hariEl = document.getElementById('Hari_SBP') as HTMLInputElement;
   if (tgl && hariEl) {
     let d = new Date(tgl + 'T12:00:00');
     let days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
@@ -38,11 +38,11 @@ export function updateHariSBP() {
   }
 }
 
-export function updateLiveCodePreviews() {
-  let valLP = document.getElementById('NoLP_LP_1') ? document.getElementById('NoLP_LP_1').value.trim() : '';
-  let valSBP = document.getElementById('Nomor_SBP') ? document.getElementById('Nomor_SBP').value.trim() : '';
-  let valSPRIN = document.getElementById('No_SPRIN_Indak') ? document.getElementById('No_SPRIN_Indak').value.trim() : '';
-  let statusPenangkapan = document.getElementById('Status_Penangkapan_Select') ? document.getElementById('Status_Penangkapan_Select').value : '-';
+export function updateLiveCodePreviews(): void {
+  let valLP = (document.getElementById('NoLP_LP_1') as HTMLInputElement) ? (document.getElementById('NoLP_LP_1') as HTMLInputElement).value.trim() : '';
+  let valSBP = (document.getElementById('Nomor_SBP') as HTMLInputElement) ? (document.getElementById('Nomor_SBP') as HTMLInputElement).value.trim() : '';
+  let valSPRIN = (document.getElementById('No_SPRIN_Indak') as HTMLInputElement) ? (document.getElementById('No_SPRIN_Indak') as HTMLInputElement).value.trim() : '';
+  let statusPenangkapan = (document.getElementById('Status_Penangkapan_Select') as HTMLSelectElement) ? (document.getElementById('Status_Penangkapan_Select') as HTMLSelectElement).value : '-';
   
   let tipeSBP = statusPenangkapan.toUpperCase().includes('LIMPAHAN') ? 'LIMPAH' : 'MANDIRI';
 
@@ -62,11 +62,11 @@ export function updateLiveCodePreviews() {
   }
 }
 
-export function generateKronologisOtomatis() {
+export function generateKronologisOtomatis(): void {
   let hari = getVal('Hari_SBP');
   let tglIndo = formatDate('Tanggal_SBP');
   
-  let rawJam = document.getElementById('Jam_Kejadian') ? document.getElementById('Jam_Kejadian').value.trim() : '';
+  let rawJam = (document.getElementById('Jam_Kejadian') as HTMLInputElement) ? (document.getElementById('Jam_Kejadian') as HTMLInputElement).value.trim() : '';
   let jamFormatted = rawJam ? rawJam.replace(':', '.') + ' WIB' : '-';
 
   let lokasi = getVal('Lokasi_Penindakan');
@@ -79,22 +79,22 @@ export function generateKronologisOtomatis() {
 
   let text = `Pada hari ${hari}, tanggal ${tglIndo} sekira pukul ${jamFormatted} di ${lokasi} telah dilakukan penindakan oleh Petugas ${kantor} terhadap ${pelaku} yang ${cleanModus}`;
   
-  let el = document.getElementById('Kronologis');
+  let el = document.getElementById('Kronologis') as HTMLTextAreaElement;
   if (el) el.value = text;
 }
 
-export function generateKesimpulanOtomatis() {
+export function generateKesimpulanOtomatis(): void {
   let pasal = getVal('Pasal_Pelanggaran');
   let rawModus = getVal('Modus_Operandi');
   let modusVerb = formatModusVerb(rawModus);
 
   let text = (pasal !== '-' || rawModus !== '-') ? `Diduga melanggar ${pasal} karena ${modusVerb}.` : '-';
-  let el = document.getElementById('Jenis_Pelanggaran_Pasal');
+  let el = document.getElementById('Jenis_Pelanggaran_Pasal') as HTMLInputElement;
   if(el) el.value = text;
 }
 
-export function handleJenisKoliSelectChange(val) {
-  let manualInput = document.getElementById('Jenis_Koli');
+export function handleJenisKoliSelectChange(val: string): void {
+  let manualInput = document.getElementById('Jenis_Koli') as HTMLInputElement;
   if (!manualInput) return;
 
   if (val === 'LAINNYA') {
@@ -108,14 +108,14 @@ export function handleJenisKoliSelectChange(val) {
   generateUraianBarangOtomatis();
 }
 
-export function generateUraianBarangOtomatis() {
-  let jml = document.getElementById('Jumlah_Koli') ? document.getElementById('Jumlah_Koli').value.trim() : '';
-  let satuan = document.getElementById('Jenis_Koli') ? document.getElementById('Jenis_Koli').value.trim() : '';
-  let barang = document.getElementById('auto_barang') ? document.getElementById('auto_barang').value.trim() : '';
-  let akhiranTipe = document.getElementById('auto_akhiran_select') ? document.getElementById('auto_akhiran_select').value : '';
-  let kustomText = document.getElementById('auto_kustom_text') ? document.getElementById('auto_kustom_text').value.trim() : '';
+export function generateUraianBarangOtomatis(): void {
+  let jml = (document.getElementById('Jumlah_Koli') as HTMLInputElement) ? (document.getElementById('Jumlah_Koli') as HTMLInputElement).value.trim() : '';
+  let satuan = (document.getElementById('Jenis_Koli') as HTMLInputElement) ? (document.getElementById('Jenis_Koli') as HTMLInputElement).value.trim() : '';
+  let barang = (document.getElementById('auto_barang') as HTMLInputElement) ? (document.getElementById('auto_barang') as HTMLInputElement).value.trim() : '';
+  let akhiranTipe = (document.getElementById('auto_akhiran_select') as HTMLSelectElement) ? (document.getElementById('auto_akhiran_select') as HTMLSelectElement).value : '';
+  let kustomText = (document.getElementById('auto_kustom_text') as HTMLInputElement) ? (document.getElementById('auto_kustom_text') as HTMLInputElement).value.trim() : '';
 
-  let kustomContainer = document.getElementById('auto_kustom_container');
+  let kustomContainer = document.getElementById('auto_kustom_container') as HTMLElement;
   if (kustomContainer) {
     kustomContainer.style.display = (akhiranTipe === 'manual') ? 'block' : 'none';
   }
@@ -155,16 +155,16 @@ export function generateUraianBarangOtomatis() {
     }
   }
 
-  let uraianTarget = document.getElementById('Uraian_Barang');
+  let uraianTarget = document.getElementById('Uraian_Barang') as HTMLInputElement;
   if (uraianTarget) {
     uraianTarget.value = baseText;
   }
 }
 
-export function autoGenerateAndAddMasterPasal(modusText) {
+export function autoGenerateAndAddMasterPasal(modusText: string): void {
   if (!modusText || modusText === '-') return;
 
-  let newPasalList = [];
+  let newPasalList: any[] = [];
 
   if (/cukai|pita cukai|bkc|etiket|nppbkc/i.test(modusText)) {
     if (/penyediaan|penimbunan/i.test(modusText)) {
@@ -221,9 +221,9 @@ export function autoGenerateAndAddMasterPasal(modusText) {
   let customMap = JSON.parse(localStorage.getItem('customPasalMap') || '{}');
   let isNewAdded = false;
 
-  newPasalList.forEach(item => {
+  newPasalList.forEach((item: any) => {
     if (!customMap[item.cluster]) customMap[item.cluster] = [];
-    let defaultList = defaultPasalClusters[item.cluster] || [];
+    let defaultList = (defaultPasalClusters as any)[item.cluster] || [];
     if (!defaultList.includes(item.pasal) && !customMap[item.cluster].includes(item.pasal)) {
       customMap[item.cluster].push(item.pasal);
       isNewAdded = true;
@@ -236,18 +236,18 @@ export function autoGenerateAndAddMasterPasal(modusText) {
   }
 
   setTimeout(() => {
-    document.querySelectorAll('#pasal_pelanggaran_checkboxes input[type="checkbox"]').forEach(cb => cb.checked = false);
+    document.querySelectorAll('#pasal_pelanggaran_checkboxes input[type="checkbox"]').forEach((cb: any) => cb.checked = false);
     
-    newPasalList.forEach(item => {
-      let cb = document.querySelector(`#pasal_pelanggaran_checkboxes input[value="${item.pasal}"]`);
+    newPasalList.forEach((item: any) => {
+      let cb = document.querySelector(`#pasal_pelanggaran_checkboxes input[value="${item.pasal}"]`) as HTMLInputElement;
       if (cb) cb.checked = true;
     });
     syncPasalPelanggaran();
   }, 50);
 }
 
-export function toggleAsalPerkaraManual(val) {
-  let manualInput = document.getElementById('Asal_Perkara');
+export function toggleAsalPerkaraManual(val: string): void {
+  let manualInput = document.getElementById('Asal_Perkara') as HTMLInputElement;
   if (!manualInput) return;
   if(val === 'LAINNYA') {
     manualInput.style.display = 'block';
@@ -258,8 +258,8 @@ export function toggleAsalPerkaraManual(val) {
   }
 }
 
-export function togglePekerjaanManual(val) {
-  let manualInput = document.getElementById('Pekerjaan');
+export function togglePekerjaanManual(val: string): void {
+  let manualInput = document.getElementById('Pekerjaan') as HTMLInputElement;
   if (!manualInput) return;
   if(val === 'LAINNYA') {
     manualInput.style.display = 'block';
@@ -270,8 +270,8 @@ export function togglePekerjaanManual(val) {
   }
 }
 
-export function toggleUkuranKontainerManual(val) {
-  let manualInput = document.getElementById('Ukuran_Kontainer');
+export function toggleUkuranKontainerManual(val: string): void {
+  let manualInput = document.getElementById('Ukuran_Kontainer') as HTMLInputElement;
   if (!manualInput) return;
   if(val === 'LAINNYA') {
     manualInput.style.display = 'block';
@@ -282,10 +282,10 @@ export function toggleUkuranKontainerManual(val) {
   }
 }
 
-export function toggleJenisDokumen(val) {
-  let manual = document.getElementById('Jenis_Dok_Pemberitahuan_Manual');
-  let nomorInput = document.getElementById('Nomor_Dok_Pemberitahuan');
-  let dokPab = document.getElementById('Dokumen_Pemberitahuan');
+export function toggleJenisDokumen(val: string): void {
+  let manual = document.getElementById('Jenis_Dok_Pemberitahuan_Manual') as HTMLInputElement;
+  let nomorInput = document.getElementById('Nomor_Dok_Pemberitahuan') as HTMLInputElement;
+  let dokPab = document.getElementById('Dokumen_Pemberitahuan') as HTMLInputElement;
   
   if(val === 'Tanpa Dokumen') {
     if (manual) {
@@ -311,9 +311,9 @@ export function toggleJenisDokumen(val) {
   }
 }
 
-export function syncDokumenPemberitahuan() {
-  let selEl = document.getElementById('Jenis_Dok_Pemberitahuan_Select');
-  let dokPab = document.getElementById('Dokumen_Pemberitahuan');
+export function syncDokumenPemberitahuan(): void {
+  let selEl = document.getElementById('Jenis_Dok_Pemberitahuan_Select') as HTMLSelectElement;
+  let dokPab = document.getElementById('Dokumen_Pemberitahuan') as HTMLInputElement;
   if (!selEl || !dokPab) return;
 
   let sel = selEl.value;
@@ -321,22 +321,22 @@ export function syncDokumenPemberitahuan() {
     dokPab.value = 'Tanpa Dokumen';
     return;
   }
-  let manualEl = document.getElementById('Jenis_Dok_Pemberitahuan_Manual');
+  let manualEl = document.getElementById('Jenis_Dok_Pemberitahuan_Manual') as HTMLInputElement;
   let jenis = sel === 'LAINNYA' ? (manualEl ? manualEl.value : '') : (sel === '-' ? '' : sel);
-  let nomorEl = document.getElementById('Nomor_Dok_Pemberitahuan');
+  let nomorEl = document.getElementById('Nomor_Dok_Pemberitahuan') as HTMLInputElement;
   let nomor = nomorEl ? nomorEl.value : '';
   
-  let res = [];
+  let res: string[] = [];
   if(jenis.trim()) res.push(jenis.trim());
   if(nomor.trim()) res.push(nomor.trim());
   dokPab.value = res.length > 0 ? res.join(' ') : 'Tanpa Dokumen';
 }
 
-export function handleJenisDokPelengkapChange(val) {
-  let manualInput = document.getElementById('Jenis_Dok_Pelengkap_Manual');
-  let noInput = document.getElementById('Nomor_Dok_Pelengkap');
-  let tglInput = document.getElementById('Tanggal_Dok_Pelengkap');
-  let dokPelengkap = document.getElementById('Dokumen_Pelengkap');
+export function handleJenisDokPelengkapChange(val: string): void {
+  let manualInput = document.getElementById('Jenis_Dok_Pelengkap_Manual') as HTMLInputElement;
+  let noInput = document.getElementById('Nomor_Dok_Pelengkap') as HTMLInputElement;
+  let tglInput = document.getElementById('Tanggal_Dok_Pelengkap') as HTMLInputElement;
+  let dokPelengkap = document.getElementById('Dokumen_Pelengkap') as HTMLInputElement;
 
   if (val === '-') {
     if (manualInput) { manualInput.style.display = 'none'; manualInput.value = ''; }
@@ -356,9 +356,9 @@ export function handleJenisDokPelengkapChange(val) {
   }
 }
 
-export function syncDokumenPelengkap() {
-  let selEl = document.getElementById('Jenis_Dok_Pelengkap_Select');
-  let dokPelengkap = document.getElementById('Dokumen_Pelengkap');
+export function syncDokumenPelengkap(): void {
+  let selEl = document.getElementById('Jenis_Dok_Pelengkap_Select') as HTMLSelectElement;
+  let dokPelengkap = document.getElementById('Dokumen_Pelengkap') as HTMLInputElement;
   if (!selEl || !dokPelengkap) return;
 
   let sel = selEl.value;
@@ -367,17 +367,17 @@ export function syncDokumenPelengkap() {
     return;
   }
 
-  let manualEl = document.getElementById('Jenis_Dok_Pelengkap_Manual');
+  let manualEl = document.getElementById('Jenis_Dok_Pelengkap_Manual') as HTMLInputElement;
   let jenis = sel === 'LAINNYA' 
     ? (manualEl ? manualEl.value.trim() : '') 
     : sel;
-  let noEl = document.getElementById('Nomor_Dok_Pelengkap');
+  let noEl = document.getElementById('Nomor_Dok_Pelengkap') as HTMLInputElement;
   let nomor = noEl ? noEl.value.trim() : '';
-  let tglEl = document.getElementById('Tanggal_Dok_Pelengkap');
+  let tglEl = document.getElementById('Tanggal_Dok_Pelengkap') as HTMLInputElement;
   let tglRaw = tglEl ? tglEl.value : '';
   let tglIndo = tglRaw ? formatDateIndo(tglRaw) : '';
 
-  let parts = [];
+  let parts: string[] = [];
   if (jenis) parts.push(jenis);
   if (nomor) parts.push(`nomor ${nomor}`);
   if (tglIndo && tglIndo !== '-') parts.push(`tanggal ${tglIndo}`);
@@ -385,10 +385,10 @@ export function syncDokumenPelengkap() {
   dokPelengkap.value = parts.length > 0 ? parts.join(' ') : '-';
 }
 
-export function syncIdentitasValue() {
-  let jenisEl = document.getElementById('Jenis_Identitas_Select');
-  let nomorEl = document.getElementById('Nomor_Identitas_Input');
-  let hidden = document.getElementById('Nomor_Identitas');
+export function syncIdentitasValue(): void {
+  let jenisEl = document.getElementById('Jenis_Identitas_Select') as HTMLSelectElement;
+  let nomorEl = document.getElementById('Nomor_Identitas_Input') as HTMLInputElement;
+  let hidden = document.getElementById('Nomor_Identitas') as HTMLInputElement;
   if (!hidden) return;
 
   let jenis = jenisEl ? jenisEl.value : 'NIK';
@@ -400,16 +400,16 @@ export function syncIdentitasValue() {
   }
 }
 
-export function syncKondisiBarang() {
+export function syncKondisiBarang(): void {
   let checkboxes = document.querySelectorAll('#kondisi_checkboxes input[type="checkbox"]:checked');
-  let selected = Array.from(checkboxes).map(cb => cb.value);
-  let el = document.getElementById('Kondisi');
+  let selected = Array.from(checkboxes).map((cb: any) => cb.value);
+  let el = document.getElementById('Kondisi') as HTMLInputElement;
   if(el) el.value = selected.length > 0 ? selected.join(', ') : '-';
 }
 
-export function syncPasalPelanggaran() {
+export function syncPasalPelanggaran(): void {
   let checkboxes = document.querySelectorAll('#pasal_pelanggaran_checkboxes input[type="checkbox"]:checked');
-  let selected = Array.from(checkboxes).map(cb => cb.value); 
+  let selected = Array.from(checkboxes).map((cb: any) => cb.value); 
   let result = '-';
   let n = selected.length;
   
@@ -423,51 +423,51 @@ export function syncPasalPelanggaran() {
     result = selected.slice(0, n-2).join(', ') + ' dan ' + selected[n-2] + ' serta ' + selected[n-1];
   }
   
-  let el = document.getElementById('Pasal_Pelanggaran');
+  let el = document.getElementById('Pasal_Pelanggaran') as HTMLInputElement;
   if(el) el.value = result;
   generateKesimpulanOtomatis();
 }
 
-export function syncStatusPenangkapan(val) {
-  let el = document.getElementById('Status_Penangkapan');
+export function syncStatusPenangkapan(val: string): void {
+  let el = document.getElementById('Status_Penangkapan') as HTMLInputElement;
   if(el) el.value = val;
   updateLiveCodePreviews();
   refreshReportTableUI();
   updateReportLive();
 }
 
-export function syncJenisPelanggaran(val) {
-  let el = document.getElementById('Jenis_Pelanggaran');
+export function syncJenisPelanggaran(val: string): void {
+  let el = document.getElementById('Jenis_Pelanggaran') as HTMLInputElement;
   if(el) el.value = val;
 }
 
-export function syncJenisPenindakan(val) {
-  let el = document.getElementById('Jenis_Penindakan');
+export function syncJenisPenindakan(val: string): void {
+  let el = document.getElementById('Jenis_Penindakan') as HTMLInputElement;
   if(el) el.value = val;
 }
 
-export function syncJenisPerkara(val) {
-  let el = document.getElementById('Jenis_Perkara');
+export function syncJenisPerkara(val: string): void {
+  let el = document.getElementById('Jenis_Perkara') as HTMLInputElement;
   if(el) el.value = val;
 }
 
-export function syncModusOperandi(val) {
-  let el = document.getElementById('Modus_Operandi');
+export function syncModusOperandi(val: string): void {
+  let el = document.getElementById('Modus_Operandi') as HTMLInputElement;
   if(el) el.value = val;
 }
 
-export function syncKomoditi(val) {
-  let el = document.getElementById('Komoditi');
+export function syncKomoditi(val: string): void {
+  let el = document.getElementById('Komoditi') as HTMLInputElement;
   if(el) el.value = val;
 }
 
-export function syncKantor(val) {
-  let el = document.getElementById('Kantor');
+export function syncKantor(val: string): void {
+  let el = document.getElementById('Kantor') as HTMLInputElement;
   if(el) el.value = val;
 }
 
-export function addCustomKantor() {
-  let input = document.getElementById('setting_newKantor');
+export function addCustomKantor(): void {
+  let input = document.getElementById('setting_newKantor') as HTMLInputElement;
   if (!input) return;
   let val = input.value.trim();
   if(!val) return;
@@ -484,7 +484,7 @@ export function addCustomKantor() {
   }
 }
 
-export function renderPasalCheckboxes() {
+export function renderPasalCheckboxes(): void {
   let container = document.getElementById('pasal_pelanggaran_checkboxes');
   if(!container) return;
 
@@ -493,8 +493,8 @@ export function renderPasalCheckboxes() {
 
   Object.keys(defaultPasalClusters).forEach(cluster => {
     html += `<div style="grid-column: span 2; font-weight:bold; color:var(--primary); margin-top:6px; border-bottom:1px solid #334155; display:flex; align-items:center; gap:6px;"><i class="fi fi-rr-bookmark"></i> ${cluster}</div>`;
-    let items = [...defaultPasalClusters[cluster], ...(customMap[cluster] || [])];
-    items.forEach(p => {
+    let items = [...(defaultPasalClusters as any)[cluster], ...(customMap[cluster] || [])];
+    items.forEach((p: any) => {
       html += `<label class="checkbox-item"><input type="checkbox" value="${escText(p)}" onchange="syncPasalPelanggaran()"> ${escText(p)}</label>`;
     });
   });
@@ -502,22 +502,22 @@ export function renderPasalCheckboxes() {
   container.innerHTML = html;
 }
 
-export function renderCustomKomoditiOptions() {
+export function renderCustomKomoditiOptions(): void {
   let customKomoditi = JSON.parse(localStorage.getItem('customKomoditiList') || '[]');
   let komoditiGroup = document.getElementById('optgroup_custom_komoditi');
   if(komoditiGroup) {
-    komoditiGroup.innerHTML = customKomoditi.map(k => `<option value="${escText(k)}">${escText(k)}</option>`).join('');
+    komoditiGroup.innerHTML = customKomoditi.map((k: any) => `<option value="${escText(k)}">${escText(k)}</option>`).join('');
   }
 }
 
-export function renderKantorDropdown() {
+export function renderKantorDropdown(): void {
   let customKantor = JSON.parse(localStorage.getItem('customKantorList') || '[]');
   let allKantor = [...defaultKantorList, ...customKantor];
 
-  let select = document.getElementById('Kantor_Select');
-  let kantorInput = document.getElementById('Kantor');
+  let select = document.getElementById('Kantor_Select') as HTMLSelectElement;
+  let kantorInput = document.getElementById('Kantor') as HTMLInputElement;
   if(select) {
-    select.innerHTML = `<option value="-">-</option>` + allKantor.map(k => `<option value="${escText(k)}">${escText(k)}</option>`).join('');
+    select.innerHTML = `<option value="-">-</option>` + allKantor.map((k: any) => `<option value="${escText(k)}">${escText(k)}</option>`).join('');
     if(kantorInput && !kantorInput.value) {
       select.value = defaultKantorList[0];
       kantorInput.value = defaultKantorList[0];
@@ -526,20 +526,20 @@ export function renderKantorDropdown() {
 
   let listDisplay = document.getElementById('setting_kantorListDisplay');
   if(listDisplay) {
-    listDisplay.innerHTML = allKantor.map(k => `<li>${escText(k)}</li>`).join('');
+    listDisplay.innerHTML = allKantor.map((k: any) => `<li>${escText(k)}</li>`).join('');
   }
 }
 
-export function getFilteredDataForUser() {
+export function getFilteredDataForUser(): any[] {
   if (!store.currentUser) return store.databasePerkara;
   if (store.currentUser.role === 'Admin' || store.currentUser.role === 'Kepala Seksi Penyidikan') {
     return store.databasePerkara;
   } else {
-    return store.databasePerkara.filter(rec => rec.disposisiPetugas && rec.disposisiPetugas.toLowerCase() === store.currentUser.nama.toLowerCase());
+    return store.databasePerkara.filter((rec: any) => rec.disposisiPetugas && rec.disposisiPetugas.toLowerCase() === store.currentUser?.nama.toLowerCase());
   }
 }
 
-export function updateDashboardStats() {
+export function updateDashboardStats(): void {
   let filteredData = getFilteredDataForUser();
 
   let stLP = document.getElementById('statLP');
@@ -550,9 +550,9 @@ export function updateDashboardStats() {
   let cntNhiEl = document.getElementById('dash_cnt_nhi');
   let cntLimpahanEl = document.getElementById('dash_cnt_limpahan');
 
-  if (stLP) stLP.textContent = filteredData.length;
-  if (cntLpEl) cntLpEl.textContent = `${filteredData.filter(d => d.NoLP_LP_1 && d.NoLP_LP_1 !== '-').length} Dokumen`;
-  if (cntSbpEl) cntSbpEl.textContent = `${filteredData.filter(d => d.Nomor_SBP && d.Nomor_SBP !== '-').length} Dokumen`;
+  if (stLP) stLP.textContent = String(filteredData.length);
+  if (cntLpEl) cntLpEl.textContent = `${filteredData.filter((d: any) => d.NoLP_LP_1 && d.NoLP_LP_1 !== '-').length} Dokumen`;
+  if (cntSbpEl) cntSbpEl.textContent = `${filteredData.filter((d: any) => d.Nomor_SBP && d.Nomor_SBP !== '-').length} Dokumen`;
 
   let totalKerugian = 0;
   let cntBDN = 0;
@@ -565,13 +565,11 @@ export function updateDashboardStats() {
   let cntNHI = 0;
   let cntLimpahan = 0;
 
-  filteredData.forEach(rec => {
-    // Estimasi Kerugian Negara
+  filteredData.forEach((rec: any) => {
     let rawK = String(rec.Kerugian_Negara || '').replace(/[^0-9]/g, '');
-    let k = parseFloat(rawK || 0);
+    let k = parseFloat(rawK || '0');
     if (!isNaN(k)) totalKerugian += k;
 
-    // Rincian Tindak Lanjut
     let peny = rec.Penyelesaian_Perkara || '';
     if (/dikuasai negara|bdn/i.test(peny)) cntBDN++;
     else if (/spsa|denda/i.test(peny)) cntSPSA++;
@@ -579,7 +577,6 @@ export function updateDashboardStats() {
     else if (/serah terima.*instansi|limpah/i.test(peny)) cntLimpah++;
     else if (peny.trim() !== '' && peny !== '-') cntOther++;
 
-    // Klasifikasi Sumber / Jalur Penindakan
     let asal = (rec.Asal_Perkara || '').toUpperCase();
     let statusTangkap = (rec.Status_Penangkapan || '').toUpperCase();
     let sprin = (rec.No_SPRIN_Indak || '').toUpperCase();
@@ -596,21 +593,20 @@ export function updateDashboardStats() {
   if (stK) stK.textContent = 'Rp ' + totalKerugian.toLocaleString('id-ID');
 
   let elBdn = document.getElementById('tl_bdn_cnt');
-  if (elBdn) elBdn.textContent = cntBDN;
+  if (elBdn) elBdn.textContent = String(cntBDN);
   let elSpsa = document.getElementById('tl_spsa_cnt');
-  if (elSpsa) elSpsa.textContent = cntSPSA;
+  if (elSpsa) elSpsa.textContent = String(cntSPSA);
   let elBast = document.getElementById('tl_bast_cnt');
-  if (elBast) elBast.textContent = cntBAST;
+  if (elBast) elBast.textContent = String(cntBAST);
   let elLimpah = document.getElementById('tl_limpah_cnt');
-  if (elLimpah) elLimpah.textContent = cntLimpah;
+  if (elLimpah) elLimpah.textContent = String(cntLimpah);
   let elOther = document.getElementById('tl_other_cnt');
-  if (elOther) elOther.textContent = cntOther;
+  if (elOther) elOther.textContent = String(cntOther);
 
-  if (cntMandiriEl) cntMandiriEl.textContent = cntMandiri;
-  if (cntNhiEl) cntNhiEl.textContent = cntNHI;
-  if (cntLimpahanEl) cntLimpahanEl.textContent = cntLimpahan;
+  if (cntMandiriEl) cntMandiriEl.textContent = String(cntMandiri);
+  if (cntNhiEl) cntNhiEl.textContent = String(cntNHI);
+  if (cntLimpahanEl) cntLimpahanEl.textContent = String(cntLimpahan);
 
-  // Render Recent Cases (Maksimal 3 Perkara Paling Baru)
   let recentTbody = document.getElementById('dashboardRecentCasesBody');
   if (recentTbody) {
     if (filteredData.length === 0) {
@@ -618,7 +614,7 @@ export function updateDashboardStats() {
     } else {
       let recentItems = filteredData.slice(-3).reverse();
 
-      recentTbody.innerHTML = recentItems.map((rec) => {
+      recentTbody.innerHTML = recentItems.map((rec: any) => {
         let realIndex = store.databasePerkara.indexOf(rec);
 
         let statusBadgeHtml = '';
@@ -667,22 +663,22 @@ export function updateDashboardStats() {
   }
 }
 
-export function bukaPerkaraDariDashboard(realIndex) {
+export function bukaPerkaraDariDashboard(realIndex: number): void {
   if (realIndex >= 0 && store.databasePerkara[realIndex]) {
     store.activeRecordIndex = realIndex;
-    if (window.loadRecordToCurrentView) {
-      window.loadRecordToCurrentView(store.databasePerkara[realIndex]);
+    if ((window as any).loadRecordToCurrentView) {
+      (window as any).loadRecordToCurrentView(store.databasePerkara[realIndex]);
     }
-    let navBtn = document.querySelector('[data-target="#laporan"]');
+    let navBtn = document.querySelector('[data-target="#laporan"]') as HTMLElement;
     if (navBtn) navBtn.click();
   }
 }
 
-export function loadRecordToCurrentView(rec) {
+export function loadRecordToCurrentView(rec: any): void {
   if (!rec) return;
 
-  const setSafe = (id, val) => {
-    let el = document.getElementById(id);
+  const setSafe = (id: string, val: any) => {
+    let el = document.getElementById(id) as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
     if (el) el.value = (val !== undefined && val !== null) ? String(val) : '';
   };
 
@@ -692,7 +688,6 @@ export function loadRecordToCurrentView(rec) {
   setSafe('Tanggal_SBP', rec.Tanggal_SBP);
   setSafe('Jam_Kejadian', rec.Jam_Kejadian);
 
-  // 1. HARI SBP
   let calcHari = rec.Hari_SBP;
   if (!calcHari || calcHari === '-') {
     let tgl = rec.Tanggal_SBP;
@@ -715,15 +710,14 @@ export function loadRecordToCurrentView(rec) {
   setSafe('Asal_Perkara', rec.Asal_Perkara);
   setSafe('Jenis_Penindakan', rec.Jenis_Penindakan);
 
-  // 2. JENIS PERKARA (Pencocokan Dropdown Case-Insensitive)
   let jpVal = rec.Jenis_Perkara || rec.jenis_perkara || '';
   setSafe('Jenis_Perkara', jpVal);
-  let elJP = document.getElementById('Jenis_Perkara') || document.getElementById('Jenis_Perkara_Select') || document.getElementById('dsp_jenis_perkara_select');
+  let elJP = document.getElementById('Jenis_Perkara') as HTMLSelectElement || document.getElementById('Jenis_Perkara_Select') as HTMLSelectElement || document.getElementById('dsp_jenis_perkara_select') as HTMLSelectElement;
   if (elJP) {
     if (elJP.tagName === 'SELECT') {
-      let optMatch = Array.from(elJP.options).find(opt => 
+      let optMatch = Array.from(elJP.options).find((opt: HTMLOptionElement) => 
         opt.value.trim().toLowerCase() === jpVal.trim().toLowerCase() ||
-        opt.textContent.trim().toLowerCase() === jpVal.trim().toLowerCase()
+        opt.textContent!.trim().toLowerCase() === jpVal.trim().toLowerCase()
       );
       if (optMatch) elJP.value = optMatch.value;
     } else {
@@ -737,7 +731,7 @@ export function loadRecordToCurrentView(rec) {
   setSafe('Pasal_Pelanggaran', rec.Pasal_Pelanggaran);
   
   setSafe('Modus_Operandi', rec.Modus_Operandi);
-  let selModus = document.getElementById('Modus_Operandi_Select');
+  let selModus = document.getElementById('Modus_Operandi_Select') as HTMLSelectElement;
   if (selModus && rec.Modus_Operandi) {
     selModus.value = rec.Modus_Operandi;
   }
@@ -753,10 +747,12 @@ export function loadRecordToCurrentView(rec) {
   let rawIdentitas = String(rec.Nomor_Identitas || '');
   if (rawIdentitas.includes(' : ')) {
     let parts = rawIdentitas.split(' : ');
-    if (document.getElementById('Jenis_Identitas_Select')) document.getElementById('Jenis_Identitas_Select').value = parts[0];
+    let jenisIdentitasSelect = document.getElementById('Jenis_Identitas_Select') as HTMLSelectElement;
+    if (jenisIdentitasSelect) jenisIdentitasSelect.value = parts[0];
     setSafe('Nomor_Identitas_Input', parts[1]);
   } else {
-    if (document.getElementById('Jenis_Identitas_Select')) document.getElementById('Jenis_Identitas_Select').value = 'NIK';
+    let jenisIdentitasSelect = document.getElementById('Jenis_Identitas_Select') as HTMLSelectElement;
+    if (jenisIdentitasSelect) jenisIdentitasSelect.value = 'NIK';
     setSafe('Nomor_Identitas_Input', rawIdentitas);
   }
   setSafe('Nomor_Identitas', rawIdentitas);
@@ -768,7 +764,7 @@ export function loadRecordToCurrentView(rec) {
   setSafe('Pengulangan_Pelanggaran', rec.Pengulangan_Pelanggaran);
   
   setSafe('Komoditi', rec.Komoditi);
-  let selKomoditi = document.getElementById('Komoditi_Select');
+  let selKomoditi = document.getElementById('Komoditi_Select') as HTMLSelectElement;
   if (selKomoditi && rec.Komoditi) {
     selKomoditi.value = rec.Komoditi;
   }
@@ -777,8 +773,8 @@ export function loadRecordToCurrentView(rec) {
 
   setSafe('Jumlah_Koli', rec.Jumlah_Koli);
   let jenisVal = String(rec.Jenis_Koli || '');
-  let selectKoli = document.getElementById('Jenis_Koli_Select');
-  let inputKoli = document.getElementById('Jenis_Koli');
+  let selectKoli = document.getElementById('Jenis_Koli_Select') as HTMLSelectElement;
+  let inputKoli = document.getElementById('Jenis_Koli') as HTMLInputElement;
   if (selectKoli && inputKoli) {
     inputKoli.value = jenisVal;
     let matchOpt = Array.from(selectKoli.options).some(opt => opt.value.toLowerCase() === jenisVal.toLowerCase());
@@ -794,7 +790,6 @@ export function loadRecordToCurrentView(rec) {
     }
   }
 
-  // 3. NAMA BARANG / URAIAN BARANG
   let finalNamaBarang = rec.Nama_Barang || rec.Uraian_Barang || rec.Detail_Barang_LPP || rec.Komoditi || '';
   setSafe('Nama_Barang', finalNamaBarang);
   setSafe('nama_barang', finalNamaBarang);
@@ -810,10 +805,9 @@ export function loadRecordToCurrentView(rec) {
   setSafe('Ukuran_Kontainer', rec.Ukuran_Kontainer);
   setSafe('Kantor', rec.Kantor);
 
-  // 4. DOKUMEN PEMBERITAHUAN
   let dokPabVal = String(rec.Dokumen_Pemberitahuan || rec.Dokumen_Yang_Ada || '');
-  let jenisDokSelect = document.getElementById('Jenis_Dok_Pemberitahuan_Select');
-  let nomorDokInput = document.getElementById('Nomor_Dok_Pemberitahuan');
+  let jenisDokSelect = document.getElementById('Jenis_Dok_Pemberitahuan_Select') as HTMLSelectElement;
+  let nomorDokInput = document.getElementById('Nomor_Dok_Pemberitahuan') as HTMLInputElement;
 
   if (dokPabVal.toLowerCase().includes('tanpa dokumen') || !dokPabVal || dokPabVal === '-') {
     if (jenisDokSelect) jenisDokSelect.value = 'Tanpa Dokumen';
@@ -828,7 +822,7 @@ export function loadRecordToCurrentView(rec) {
     let extractedNomor = dokPabVal;
 
     if (extractedJenis) {
-      let sisa = dokPabVal.replace(match[0], '');
+      let sisa = dokPabVal.replace(match![0], '');
       extractedNomor = sisa.replace(/^[\s\-–—:]*/, '').replace(/^nomor\s*/i, '').replace(/^no\.?\s*/i, '').trim();
     }
 
@@ -854,10 +848,10 @@ export function loadRecordToCurrentView(rec) {
   setSafe('Nomor_Dok_Pelengkap', rec.Nomor_Dok_Pelengkap || '');
   setSafe('Tanggal_Dok_Pelengkap', rec.Tanggal_Dok_Pelengkap || '');
 
-  let selPelengkap = document.getElementById('Jenis_Dok_Pelengkap_Select');
-  let manualPelengkap = document.getElementById('Jenis_Dok_Pelengkap_Manual');
-  let noPelengkap = document.getElementById('Nomor_Dok_Pelengkap');
-  let tglPelengkap = document.getElementById('Tanggal_Dok_Pelengkap');
+  let selPelengkap = document.getElementById('Jenis_Dok_Pelengkap_Select') as HTMLSelectElement;
+  let manualPelengkap = document.getElementById('Jenis_Dok_Pelengkap_Manual') as HTMLInputElement;
+  let noPelengkap = document.getElementById('Nomor_Dok_Pelengkap') as HTMLInputElement;
+  let tglPelengkap = document.getElementById('Tanggal_Dok_Pelengkap') as HTMLInputElement;
 
   if (selPelengkap) {
     selPelengkap.value = rec.Jenis_Dok_Pelengkap_Select || '-';
@@ -909,7 +903,7 @@ export function loadRecordToCurrentView(rec) {
   setSafe('form_ketua_tim', rec.ketua_tim);
   setSafe('form_nip_ketua_tim', rec.nip_ketua_tim);
   setSafe('form_jabatan_ketua_tim', rec.jabatan_ketua_tim || 'Ketua Tim Peneliti');
-  setSafe('form_gol_ketua_tim', rec.gol_ketua_tim);
+  setSafe('form_gol_ketua_tim', rec.gol_gol_ketua_tim);
 
   setSafe('form_pembuat_lpp', rec.pembuat_lpp);
   setSafe('form_nip_pembuat_lpp', rec.nip_pembuat_lpp);
@@ -946,7 +940,7 @@ export function loadRecordToCurrentView(rec) {
   if (typeof updateReportLive === 'function') updateReportLive();
 }
 
-export function renderPerkaraTable() {
+export function renderPerkaraTable(): void {
   let tbody = document.getElementById('perkaraTableBody');
   if (!tbody) return;
 
@@ -965,23 +959,21 @@ export function renderPerkaraTable() {
     let pageInfo = document.getElementById('perkaraPageInfo');
     if (pageInfo) pageInfo.textContent = `Menampilkan 0 data`;
     
-    let btnPrev = document.getElementById('btnPrevPerkara');
-    let btnNext = document.getElementById('btnNextPerkara');
+    let btnPrev = document.getElementById('btnPrevPerkara') as HTMLButtonElement;
+    let btnNext = document.getElementById('btnNextPerkara') as HTMLButtonElement;
     if (btnPrev) btnPrev.disabled = true;
     if (btnNext) btnNext.disabled = true;
     return;
   }
 
-  tbody.innerHTML = paginatedData.map((rec, index) => {
+  tbody.innerHTML = paginatedData.map((rec: any, index: number) => {
     let i = startIdx + index;
     let originalIndex = filtered.indexOf(rec);
 
-    // Status Workflow Badge
     let statusBadge = `<span class="badge-status badge-draft">${escText(rec.statusAlur || 'DRAFT')}</span>`;
     if (rec.statusAlur === 'DIUSULKAN') statusBadge = `<span class="badge-status badge-proposed">DIUSULKAN</span>`;
     if (rec.statusAlur && rec.statusAlur.includes('DIVALIDASI')) statusBadge = `<span class="badge-status badge-ready">DIVALIDASI</span>`;
 
-    // Status Booking Badge
     let isBooked = (rec.No_LPP && rec.No_LPP !== '-') || (rec.No_LPF && rec.No_LPF !== '-') || (rec.Nomor_SPLIT && rec.Nomor_SPLIT !== '-');
     let bookingHtml = isBooked 
       ? `<span class="badge" style="background:rgba(16, 185, 129, 0.15); color:#10b981; border:1px solid rgba(16, 185, 129, 0.3); font-size:11px; padding:2px 6px; border-radius:4px; display:inline-flex; align-items:center; gap:4px;">
@@ -1003,22 +995,15 @@ export function renderPerkaraTable() {
 
     return `
       <tr>
-        <!-- 1. NO -->
         <td><b>${i + 1}</b></td>
-
-        <!-- 2. NO. LP -->
         <td>
           <b>LP-${escText(cleanLP)}</b><br>
           <small style="color:var(--text-muted, #94a3b8); font-size:10px;">Tgl: ${escText(rec.Tanggal_LP_LP_1 || '-')}</small>
         </td>
-
-        <!-- 3. NO. SBP -->
         <td>
           <b>SBP-${escText(cleanSBP)}</b><br>
           <small style="color:var(--text-muted, #94a3b8); font-size:10px;">Tgl: ${escText(rec.Tanggal_SBP || '-')}</small>
         </td>
-
-        <!-- 4. NAMA PELAKU / JENIS PERKARA -->
         <td>
           <div style="display:flex; flex-direction:column; gap:2px;">
             <span style="font-weight:600; font-size:12px; color:var(--text-main, #f8fafc);">${escText(rec.Nama_Pelaku || '-')}</span>
@@ -1027,8 +1012,6 @@ export function renderPerkaraTable() {
             </small>
           </div>
         </td>
-
-        <!-- 5. KOMODITI / BARANG -->
         <td>
           <div style="display:flex; flex-direction:column; gap:4px; align-items:flex-start;">
             <span class="badge" style="background:rgba(14, 165, 233, 0.15); color:#38bdf8; border:1px solid rgba(56, 189, 248, 0.3); font-size:11px; padding:2px 7px; border-radius:4px; white-space:normal; line-height:1.3; text-align:left;">
@@ -1039,21 +1022,15 @@ export function renderPerkaraTable() {
             </small>
           </div>
         </td>
-
-        <!-- 6. STATUS WORKFLOW / DISPOSISI -->
         <td>
           ${statusBadge}<br>
           <small style="color:var(--text-muted, #94a3b8); font-size:10px;">
             PJ: ${escText(rec.disposisiPetugas || rec.Petugas_Disposisi || '-')}
           </small>
         </td>
-
-        <!-- 7. STATUS BOOKING -->
         <td>
           ${bookingHtml}
         </td>
-
-        <!-- 8. AKSI -->
         <td style="text-align:right;">
           <div style="display:flex; gap:4px; justify-content:flex-end; flex-wrap:wrap;">
             ${actionButtons}
@@ -1068,61 +1045,61 @@ export function renderPerkaraTable() {
     pageInfo.textContent = `Halaman ${currentPerkaraPage} dari ${totalPages} (Total: ${filtered.length} data)`;
   }
   
-  let btnPrev = document.getElementById('btnPrevPerkara');
-  let btnNext = document.getElementById('btnNextPerkara');
+  let btnPrev = document.getElementById('btnPrevPerkara') as HTMLButtonElement;
+  let btnNext = document.getElementById('btnNextPerkara') as HTMLButtonElement;
   if (btnPrev) btnPrev.disabled = currentPerkaraPage === 1;
   if (btnNext) btnNext.disabled = currentPerkaraPage === totalPages;
 }
 
-export function addNewPerkaraModal() {
+export function addNewPerkaraModal(): void {
   let title = document.getElementById('modalTitle');
   if (title) title.textContent = "Input Data Perkara";
-  let editIdx = document.getElementById('editingRecordIndex');
+  let editIdx = document.getElementById('editingRecordIndex') as HTMLInputElement;
   if (editIdx) editIdx.value = "-1";
 
   let inputs = document.querySelectorAll('#perkaraModal input:not([readonly]), #perkaraModal textarea');
-  inputs.forEach(el => {
+  inputs.forEach((el: any) => {
     if (el.type === 'checkbox') el.checked = false;
     else el.value = '';
   });
 
   let selects = document.querySelectorAll('#perkaraModal select');
-  selects.forEach(el => {
+  selects.forEach((el: any) => {
     el.selectedIndex = 0;
   });
 
-  if (document.getElementById('Jenis_Koli')) document.getElementById('Jenis_Koli').style.display = 'none';
-  if (document.getElementById('auto_kustom_container')) document.getElementById('auto_kustom_container').style.display = 'none';
-  if (document.getElementById('Asal_Perkara')) document.getElementById('Asal_Perkara').style.display = 'none';
-  if (document.getElementById('Pekerjaan')) document.getElementById('Pekerjaan').style.display = 'none';
-  if (document.getElementById('Ukuran_Kontainer')) document.getElementById('Ukuran_Kontainer').style.display = 'none';
-  if (document.getElementById('Jenis_Dok_Pemberitahuan_Manual')) document.getElementById('Jenis_Dok_Pemberitahuan_Manual').style.display = 'none';
-  if (document.getElementById('Nomor_Dok_Pemberitahuan')) document.getElementById('Nomor_Dok_Pemberitahuan').disabled = true;
+  if (document.getElementById('Jenis_Koli')) (document.getElementById('Jenis_Koli') as HTMLElement).style.display = 'none';
+  if (document.getElementById('auto_kustom_container')) (document.getElementById('auto_kustom_container') as HTMLElement).style.display = 'none';
+  if (document.getElementById('Asal_Perkara')) (document.getElementById('Asal_Perkara') as HTMLElement).style.display = 'none';
+  if (document.getElementById('Pekerjaan')) (document.getElementById('Pekerjaan') as HTMLElement).style.display = 'none';
+  if (document.getElementById('Ukuran_Kontainer')) (document.getElementById('Ukuran_Kontainer') as HTMLElement).style.display = 'none';
+  if (document.getElementById('Jenis_Dok_Pemberitahuan_Manual')) (document.getElementById('Jenis_Dok_Pemberitahuan_Manual') as HTMLElement).style.display = 'none';
+  if (document.getElementById('Nomor_Dok_Pemberitahuan')) (document.getElementById('Nomor_Dok_Pemberitahuan') as HTMLInputElement).disabled = true;
 
-  if (document.getElementById('No_SPRIN_Indak')) document.getElementById('No_SPRIN_Indak').value = '';
-  if (document.getElementById('Tanggal_SPRIN_Indak')) document.getElementById('Tanggal_SPRIN_Indak').value = '';
+  if (document.getElementById('No_SPRIN_Indak')) (document.getElementById('No_SPRIN_Indak') as HTMLInputElement).value = '';
+  if (document.getElementById('Tanggal_SPRIN_Indak')) (document.getElementById('Tanggal_SPRIN_Indak') as HTMLInputElement).value = '';
 
-  if (document.getElementById('Jenis_Dok_Pelengkap_Select')) document.getElementById('Jenis_Dok_Pelengkap_Select').value = '-';
+  if (document.getElementById('Jenis_Dok_Pelengkap_Select')) (document.getElementById('Jenis_Dok_Pelengkap_Select') as HTMLSelectElement).value = '-';
   if (document.getElementById('Jenis_Dok_Pelengkap_Manual')) {
-    document.getElementById('Jenis_Dok_Pelengkap_Manual').value = '';
-    document.getElementById('Jenis_Dok_Pelengkap_Manual').style.display = 'none';
+    (document.getElementById('Jenis_Dok_Pelengkap_Manual') as HTMLInputElement).value = '';
+    (document.getElementById('Jenis_Dok_Pelengkap_Manual') as HTMLElement).style.display = 'none';
   }
   if (document.getElementById('Nomor_Dok_Pelengkap')) {
-    document.getElementById('Nomor_Dok_Pelengkap').value = '';
-    document.getElementById('Nomor_Dok_Pelengkap').disabled = true;
+    (document.getElementById('Nomor_Dok_Pelengkap') as HTMLInputElement).value = '';
+    (document.getElementById('Nomor_Dok_Pelengkap') as HTMLInputElement).disabled = true;
   }
   if (document.getElementById('Tanggal_Dok_Pelengkap')) {
-    document.getElementById('Tanggal_Dok_Pelengkap').value = '';
-    document.getElementById('Tanggal_Dok_Pelengkap').disabled = true;
+    (document.getElementById('Tanggal_Dok_Pelengkap') as HTMLInputElement).value = '';
+    (document.getElementById('Tanggal_Dok_Pelengkap') as HTMLInputElement).disabled = true;
   }
-  if (document.getElementById('Dokumen_Pelengkap')) document.getElementById('Dokumen_Pelengkap').value = '-';
+  if (document.getElementById('Dokumen_Pelengkap')) (document.getElementById('Dokumen_Pelengkap') as HTMLInputElement).value = '-';
 
-  if (document.getElementById('Kantor_Select') && typeof defaultKantorList !== 'undefined' && defaultKantorList.length > 0) {
-    document.getElementById('Kantor_Select').value = defaultKantorList[0];
-    document.getElementById('Kantor').value = defaultKantorList[0];
+  if (document.getElementById('Kantor_Select') && defaultKantorList.length > 0) {
+    (document.getElementById('Kantor_Select') as HTMLSelectElement).value = defaultKantorList[0];
+    (document.getElementById('Kantor') as HTMLInputElement).value = defaultKantorList[0];
   }
 
-  let catLpfEl = document.getElementById('Catatan_LPF');
+  let catLpfEl = document.getElementById('Catatan_LPF') as HTMLTextAreaElement;
   if (catLpfEl && !catLpfEl.value) {
     catLpfEl.value = "Setuju dengan usulan tim peneliti, segera tindak lanjuti proses penyusunan administrasi penanganan perkara sesuai ketentuan yang berlaku.";
   }
@@ -1132,14 +1109,14 @@ export function addNewPerkaraModal() {
   if (modal) modal.classList.add('active');
 }
 
-export function editPerkara(idx) {
+export function editPerkara(idx: number): void {
   let filtered = getFilteredDataForUser();
   let rec = filtered[idx] || store.databasePerkara[idx];
   if (!rec) return;
 
   let realIdx = store.databasePerkara.indexOf(rec);
-  let editIdx = document.getElementById('editingRecordIndex');
-  if (editIdx) editIdx.value = realIdx >= 0 ? realIdx : idx;
+  let editIdx = document.getElementById('editingRecordIndex') as HTMLInputElement;
+  if (editIdx) editIdx.value = String(realIdx >= 0 ? realIdx : idx);
 
   let title = document.getElementById('modalTitle');
   if (title) title.textContent = `Edit Data Perkara LP-${rec.NoLP_LP_1 || ''}`;
@@ -1150,7 +1127,7 @@ export function editPerkara(idx) {
   if (modal) modal.classList.add('active');
 }
 
-export function deletePerkara(idx) {
+export function deletePerkara(idx: number): void {
   showToastConfirm("KONFIRMASI HAPUS", "Apakah Anda yakin ingin menghapus data perkara ini?", () => {
     store.databasePerkara.splice(idx, 1);
     savePerkaraToStorage();
@@ -1160,15 +1137,15 @@ export function deletePerkara(idx) {
   });
 }
 
-export function closeModal() {
+export function closeModal(): void {
   let modal = document.getElementById('perkaraModal');
   if (modal) {
     modal.classList.remove('active');
   }
 }
 
-export function confirmAndSubmitPerkara() {
-  let idxEl = document.getElementById('editingRecordIndex');
+export function confirmAndSubmitPerkara(): void {
+  let idxEl = document.getElementById('editingRecordIndex') as HTMLInputElement;
   let idx = idxEl ? parseInt(idxEl.value) : -1;
   
   if (idx >= 0 && store.databasePerkara[idx] && store.databasePerkara[idx].No_LPP) {
@@ -1197,14 +1174,14 @@ export function confirmAndSubmitPerkara() {
 
   modalOverlay.style.pointerEvents = 'auto';
   modalOverlay.style.opacity = '1';
-  let innerCard = modalOverlay.querySelector('div');
+  let innerCard = modalOverlay.querySelector('div') as HTMLElement;
   if (innerCard) innerCard.style.transform = 'translateY(0)';
 
   let cancelBtn = document.getElementById('cancelConfirmBtn');
   if (cancelBtn) {
     cancelBtn.onclick = function() {
-      modalOverlay.style.opacity = '0';
-      modalOverlay.style.pointerEvents = 'none';
+      modalOverlay!.style.opacity = '0';
+      modalOverlay!.style.pointerEvents = 'none';
       if (innerCard) innerCard.style.transform = 'translateY(-20px)';
     };
   }
@@ -1212,31 +1189,29 @@ export function confirmAndSubmitPerkara() {
   let okBtn = document.getElementById('okConfirmBtn');
   if (okBtn) {
     okBtn.onclick = function() {
-      modalOverlay.style.opacity = '0';
-      modalOverlay.style.pointerEvents = 'none';
+      modalOverlay!.style.opacity = '0';
+      modalOverlay!.style.pointerEvents = 'none';
       if (innerCard) innerCard.style.transform = 'translateY(-20px)';
       executePerkaraSubmission();
     };
   }
 }
 
-export function executePerkaraSubmission() {
+export function executePerkaraSubmission(): void {
   try {
-    let idxEl = document.getElementById('editingRecordIndex');
+    let idxEl = document.getElementById('editingRecordIndex') as HTMLInputElement;
     let idx = idxEl ? parseInt(idxEl.value) : -1;
     let existingRec = (idx >= 0 && store.databasePerkara[idx]) ? store.databasePerkara[idx] : null;
     let currentRecordId = existingRec ? (existingRec.id || existingRec.recordId || null) : null;
     let linkedParentId = existingRec ? (existingRec.disposisiId || null) : null;
 
-    // 1. Dokumen Operasional Primer
-    let noSprinVal = document.getElementById('No_SPRIN_Indak') ? document.getElementById('No_SPRIN_Indak').value.trim() : '';
-    let tglSprinVal = document.getElementById('Tanggal_SPRIN_Indak') ? document.getElementById('Tanggal_SPRIN_Indak').value : '';
-    let noSbpVal = document.getElementById('Nomor_SBP') ? document.getElementById('Nomor_SBP').value.trim() : '';
-    let tglSbpVal = document.getElementById('Tanggal_SBP') ? document.getElementById('Tanggal_SBP').value : '';
-    let noLpVal = document.getElementById('NoLP_LP_1') ? document.getElementById('NoLP_LP_1').value.trim() : '1';
-    let tglLpVal = document.getElementById('Tanggal_LP_LP_1') ? document.getElementById('Tanggal_LP_LP_1').value : '';
+    let noSprinVal = ((document.getElementById('No_SPRIN_Indak') as HTMLInputElement)?.value || '').trim();
+    let tglSprinVal = (document.getElementById('Tanggal_SPRIN_Indak') as HTMLInputElement)?.value || '';
+    let noSbpVal = ((document.getElementById('Nomor_SBP') as HTMLInputElement)?.value || '').trim();
+    let tglSbpVal = (document.getElementById('Tanggal_SBP') as HTMLInputElement)?.value || '';
+    let noLpVal = ((document.getElementById('NoLP_LP_1') as HTMLInputElement)?.value || '').trim() || '1';
+    let tglLpVal = (document.getElementById('Tanggal_LP_LP_1') as HTMLInputElement)?.value || '';
 
-    // 2. Dokumen Administrasi Pokok (Auto-Booking)
     let year = new Date().getFullYear();
     let noLppVal = (existingRec && existingRec.No_LPP) ? existingRec.No_LPP : generateNextBookingNumber('LPP-', 'No_LPP', `/KBC.04/${year}`, 3);
     let tglLppVal = (existingRec && existingRec.Tanggal_LPP) ? existingRec.Tanggal_LPP : tglLpVal;
@@ -1247,18 +1222,14 @@ export function executePerkaraSubmission() {
     let noSplitVal = (existingRec && existingRec.Nomor_SPLIT) ? existingRec.Nomor_SPLIT : generateNextBookingNumber('SPLI-', 'Nomor_SPLIT', `/KBC.04/${year}`, 3);
     let tglSplitVal = (existingRec && existingRec.Tanggal_SPLIT) ? existingRec.Tanggal_SPLIT : tglLpVal;
 
-    // 3. Dokumen Pencacahan Lapangan (Situasional)
-    let noSprinCacah = document.getElementById('No_SPRIN_CACAH') ? document.getElementById('No_SPRIN_CACAH').value.trim() : '';
-    let tglSprinCacah = document.getElementById('Tanggal_SPRIN_CACAH') ? document.getElementById('Tanggal_SPRIN_CACAH').value : '';
-    let noBa = document.getElementById('Nomor_BA') ? document.getElementById('Nomor_BA').value.trim() : '';
-    let tglBa = document.getElementById('Tanggal_BA') ? document.getElementById('Tanggal_BA').value : '';
-    let noLhp = document.getElementById('Nomor_LHP') ? document.getElementById('Nomor_LHP').value.trim() : '';
-    let tglLhp = document.getElementById('Tanggal_LHP') ? document.getElementById('Tanggal_LHP').value : '';
+    let noSprinCacah = ((document.getElementById('No_SPRIN_CACAH') as HTMLInputElement)?.value || '').trim();
+    let tglSprinCacah = (document.getElementById('Tanggal_SPRIN_CACAH') as HTMLInputElement)?.value || '';
+    let noBa = ((document.getElementById('Nomor_BA') as HTMLInputElement)?.value || '').trim();
+    let tglBa = (document.getElementById('Tanggal_BA') as HTMLInputElement)?.value || '';
+    let noLhp = ((document.getElementById('Nomor_LHP') as HTMLInputElement)?.value || '').trim();
+    let tglLhp = (document.getElementById('Tanggal_LHP') as HTMLInputElement)?.value || '';
 
-    // ========================================================
-    // A. VALIDASI URUTAN KRONOLOGIS OPERASIONAL
-    // ========================================================
-    let chronoCheck = validateOperationalChronology({
+    let chronoCheck = (validateOperationalChronology as any)({
       tglSprin: tglSprinVal,
       tglSbp: tglSbpVal,
       tglLp: tglLpVal,
@@ -1275,35 +1246,32 @@ export function executePerkaraSubmission() {
       return;
     }
 
-    // ========================================================
-    // B. VALIDASI GLOBAL ANTI NOMOR GANDA
-    // ========================================================
-    let docsToValidate = [
-      { num: noSprinVal, date: tglSprinVal, numKey: 'No_SPRIN_Indak', dateKey: 'Tanggal_SPRIN_Indak', label: 'Nomor SPRIN INDAK' },
-      { num: noSbpVal, date: tglSbpVal, numKey: 'Nomor_SBP', dateKey: 'Tanggal_SBP', label: 'Nomor SBP' },
-      { num: noLpVal, date: tglLpVal, numKey: 'NoLP_LP_1', dateKey: 'Tanggal_LP_LP_1', label: 'Nomor LP' },
-      { num: noLppVal, date: tglLppVal, numKey: 'No_LPP', dateKey: 'Tanggal_LPP', label: 'Nomor LPP' },
-      { num: noLpfVal, date: tglLpfVal, numKey: 'No_LPF', dateKey: 'Tanggal_LPF', label: 'Nomor LPF' },
-      { num: noSplitVal, date: tglSplitVal, numKey: 'Nomor_SPLIT', dateKey: 'Tanggal_SPLIT', label: 'Nomor SPLIT' },
-      { num: noSprinCacah, date: tglSprinCacah, numKey: 'No_SPRIN_CACAH', dateKey: 'Tanggal_Sprin_Cacah', label: 'Nomor SPRIN Cacah' },
-      { num: noBa, date: tglBa, numKey: 'Nomor_BA', dateKey: 'Tanggal_BA', label: 'Nomor BA' },
-      { num: noLhp, date: tglLhp, numKey: 'Nomor_LHP', dateKey: 'Tanggal_LHP', label: 'Nomor LHP' }
+    let docsToValidate: any[] = [
+      { num: noSprinVal as string, date: tglSprinVal as string, numKey: 'No_SPRIN_Indak', dateKey: 'Tanggal_SPRIN_Indak', label: 'Nomor SPRIN INDAK' },
+      { num: noSbpVal as string, date: tglSbpVal as string, numKey: 'Nomor_SBP', dateKey: 'Tanggal_SBP', label: 'Nomor SBP' },
+      { num: noLpVal as string, date: tglLpVal as string, numKey: 'NoLP_LP_1', dateKey: 'Tanggal_LP_LP_1', label: 'Nomor LP' },
+      { num: noLppVal as string, date: tglLppVal as string, numKey: 'No_LPP', dateKey: 'Tanggal_LPP', label: 'Nomor LPP' },
+      { num: noLpfVal as string, date: tglLpfVal as string, numKey: 'No_LPF', dateKey: 'Tanggal_LPF', label: 'Nomor LPF' },
+      { num: noSplitVal as string, date: tglSplitVal as string, numKey: 'Nomor_SPLIT', dateKey: 'Tanggal_SPLIT', label: 'Nomor SPLIT' },
+      { num: noSprinCacah as string, date: tglSprinCacah as string, numKey: 'No_SPRIN_CACAH', dateKey: 'Tanggal_Sprin_Cacah', label: 'Nomor SPRIN Cacah' },
+      { num: noBa as string, date: tglBa as string, numKey: 'Nomor_BA', dateKey: 'Tanggal_BA', label: 'Nomor BA' },
+      { num: noLhp as string, date: tglLhp as string, numKey: 'Nomor_LHP', dateKey: 'Tanggal_LHP', label: 'Nomor LHP' }
     ];
 
-    let validationResult = validateFormDocumentNumbers(docsToValidate, currentRecordId, linkedParentId);
+    let validationResult = (validateFormDocumentNumbers as any)(docsToValidate, currentRecordId, linkedParentId);
     if (!validationResult.isValid) {
       showToast("PENOMORAN DITOLAK", validationResult.message, "danger");
       return;
     }
 
-    const valSafe = id => {
-      let el = document.getElementById(id);
+    const valSafe = (id: string) => {
+      let el = document.getElementById(id) as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
       return el ? el.value.trim() : '';
     };
 
     let uraian = valSafe('Uraian_Barang');
 
-    let rec = {
+    let rec: any = {
       id: currentRecordId || Date.now(),
       disposisiId: linkedParentId,
       No_SPRIN_Indak: noSprinVal,
@@ -1430,23 +1398,23 @@ export function executePerkaraSubmission() {
   }
 }
 
-export function submitPerkaraForm() {
+export function submitPerkaraForm(): void {
   confirmAndSubmitPerkara();
 }
 
-export function saveData() {
+export function saveData(): void {
   savePerkaraToStorage();
   showToast("DATA TERSIMPAN", "Seluruh data AP3 berhasil dicadangkan.", "success");
 }
 
-export function loadData() {
+export function loadData(): void {
   loadPerkaraFromStorage();
   renderKantorDropdown();
   renderCustomKomoditiOptions();
   renderPasalCheckboxes();
 }
 
-export function exportDataToExcel() {
+export function exportDataToExcel(): void {
   let data = getFilteredDataForUser();
   if (!data || data.length === 0) {
     showToast("DATA KOSONG", "Tidak ada data perkara untuk diekspor.", "warning");
@@ -1461,7 +1429,7 @@ export function exportDataToExcel() {
 
   let csvRows = [headers.join(";")];
 
-  data.forEach((rec, idx) => {
+  data.forEach((rec: any, idx: number) => {
     let row = [
       idx + 1,
       `"LP-${rec.NoLP_LP_1 || '-'}"`,
@@ -1493,14 +1461,14 @@ export function exportDataToExcel() {
   showToast("EKSPOR BERHASIL", "File Excel (.csv) berhasil diunduh.", "success");
 }
 
-export function exportDataToPDF() {
+export function exportDataToPDF(): void {
   let data = getFilteredDataForUser();
   if (!data || data.length === 0) {
     showToast("DATA KOSONG", "Tidak ada data perkara untuk dicetak ke PDF.", "warning");
     return;
   }
 
-  let tableRows = data.map((rec, i) => `
+  let tableRows = data.map((rec: any, i: number) => `
     <tr>
       <td style="text-align:center; padding:6px; border:1px solid #333;">${i + 1}</td>
       <td style="padding:6px; border:1px solid #333; font-weight:bold;">LP-${escText(rec.NoLP_LP_1 || '-')}</td>
@@ -1515,6 +1483,7 @@ export function exportDataToPDF() {
   `).join('');
 
   let printWindow = window.open('', '_blank');
+  if (!printWindow) return;
   printWindow.document.write(`
     <!DOCTYPE html>
     <html>
@@ -1559,44 +1528,43 @@ export function exportDataToPDF() {
   }, 300);
 }
 
-export function changePerkaraPage(direction) {
+export function changePerkaraPage(direction: number): void {
   currentPerkaraPage += direction;
   renderPerkaraTable();
 }
 
-// Window bindings untuk event handler HTML
-window.addNewPerkaraModal = addNewPerkaraModal;
-window.editPerkara = editPerkara;
-window.deletePerkara = deletePerkara;
-window.closeModal = closeModal;
-window.confirmAndSubmitPerkara = confirmAndSubmitPerkara;
-window.executePerkaraSubmission = executePerkaraSubmission;
-window.submitPerkaraForm = submitPerkaraForm;
-window.changePerkaraPage = changePerkaraPage;
-window.exportDataToExcel = exportDataToExcel;
-window.exportDataToPDF = exportDataToPDF;
-window.syncStatusPenangkapan = syncStatusPenangkapan;
-window.syncJenisPelanggaran = syncJenisPelanggaran;
-window.syncJenisPenindakan = syncJenisPenindakan;
-window.syncJenisPerkara = syncJenisPerkara;
-window.syncModusOperandi = syncModusOperandi;
-window.syncKomoditi = syncKomoditi;
-window.syncKantor = syncKantor;
-window.updateHariSBP = updateHariSBP;
-window.generateKronologisOtomatis = generateKronologisOtomatis;
-window.generateKesimpulanOtomatis = generateKesimpulanOtomatis;
-window.updateLiveCodePreviews = updateLiveCodePreviews;
-window.toggleAsalPerkaraManual = toggleAsalPerkaraManual;
-window.togglePekerjaanManual = togglePekerjaanManual;
-window.toggleUkuranKontainerManual = toggleUkuranKontainerManual;
-window.toggleJenisDokumen = toggleJenisDokumen;
-window.syncDokumenPemberitahuan = syncDokumenPemberitahuan;
-window.handleJenisDokPelengkapChange = handleJenisDokPelengkapChange;
-window.syncDokumenPelengkap = syncDokumenPelengkap;
-window.syncIdentitasValue = syncIdentitasValue;
-window.handleJenisKoliSelectChange = handleJenisKoliSelectChange;
-window.generateUraianBarangOtomatis = generateUraianBarangOtomatis;
-window.autoGenerateAndAddMasterPasal = autoGenerateAndAddMasterPasal;
-window.syncKondisiBarang = syncKondisiBarang;
-window.syncPasalPelanggaran = syncPasalPelanggaran;
-window.addCustomKantor = addCustomKantor;
+(window as any).addNewPerkaraModal = addNewPerkaraModal;
+(window as any).editPerkara = editPerkara;
+(window as any).deletePerkara = deletePerkara;
+(window as any).closeModal = closeModal;
+(window as any).confirmAndSubmitPerkara = confirmAndSubmitPerkara;
+(window as any).executePerkaraSubmission = executePerkaraSubmission;
+(window as any).submitPerkaraForm = submitPerkaraForm;
+(window as any).changePerkaraPage = changePerkaraPage;
+(window as any).exportDataToExcel = exportDataToExcel;
+(window as any).exportDataToPDF = exportDataToPDF;
+(window as any).syncStatusPenangkapan = syncStatusPenangkapan;
+(window as any).syncJenisPelanggaran = syncJenisPelanggaran;
+(window as any).syncJenisPenindakan = syncJenisPenindakan;
+(window as any).syncJenisPerkara = syncJenisPerkara;
+(window as any).syncModusOperandi = syncModusOperandi;
+(window as any).syncKomoditi = syncKomoditi;
+(window as any).syncKantor = syncKantor;
+(window as any).updateHariSBP = updateHariSBP;
+(window as any).generateKronologisOtomatis = generateKronologisOtomatis;
+(window as any).generateKesimpulanOtomatis = generateKesimpulanOtomatis;
+(window as any).updateLiveCodePreviews = updateLiveCodePreviews;
+(window as any).toggleAsalPerkaraManual = toggleAsalPerkaraManual;
+(window as any).togglePekerjaanManual = togglePekerjaanManual;
+(window as any).toggleUkuranKontainerManual = toggleUkuranKontainerManual;
+(window as any).toggleJenisDokumen = toggleJenisDokumen;
+(window as any).syncDokumenPemberitahuan = syncDokumenPemberitahuan;
+(window as any).handleJenisDokPelengkapChange = handleJenisDokPelengkapChange;
+(window as any).syncDokumenPelengkap = syncDokumenPelengkap;
+(window as any).syncIdentitasValue = syncIdentitasValue;
+(window as any).handleJenisKoliSelectChange = handleJenisKoliSelectChange;
+(window as any).generateUraianBarangOtomatis = generateUraianBarangOtomatis;
+(window as any).autoGenerateAndAddMasterPasal = autoGenerateAndAddMasterPasal;
+(window as any).syncKondisiBarang = syncKondisiBarang;
+(window as any).syncPasalPelanggaran = syncPasalPelanggaran;
+(window as any).addCustomKantor = addCustomKantor;
