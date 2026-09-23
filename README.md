@@ -1,6 +1,6 @@
 # AP3 - Aplikasi Penyusunan Penelitian Perkara (Versi Node.js & TypeScript)
 
-Aplikasi **AP3** (Aplikasi Penyusunan Penelitian Perkara) untuk Direktorat Jenderal Bea dan Cukai (DJBC) yang telah dimigrasikan dari arsitektur *client-side only* (vanilla JS & localStorage) menjadi aplikasi **Full-Stack terpadu berbasis Node.js, Express, TypeScript, dan basis data SQLite**, dengan **tampilan antarmuka (UI) dan seluruh fungsionalitas asli 100% dipertahankan persis sama**.
+Aplikasi **AP3** (Aplikasi Penyusunan Penelitian Perkara) disusun dan dikembangkan oleh salah satu pegawai secara mandiri semata-mata untuk Direktorat Jenderal Bea dan Cukai (DJBC) khususnya Kantor Vertikal. Aplikasi ini telah dimigrasikan dari arsitektur *client-side only* (vanilla JS & localStorage) menjadi aplikasi **Full-Stack terpadu berbasis Node.js, Express, TypeScript, dan basis data SQLite**, dengan **tampilan antarmuka (UI) dan seluruh fungsionalitas asli 100% dipertahankan persis sama**. Hal ini dilakukan agar memudahkan untuk dikembangkan lebih lanjut ke proyek-proyek selanjutnya.
 
 ---
 
@@ -11,15 +11,16 @@ Aplikasi **AP3** (Aplikasi Penyusunan Penelitian Perkara) untuk Direktorat Jende
    * Menghilangkan peringatan/error tipe data (`any`), sehingga kode aman, terstruktur, dan mudah dipelihara.
 2. **Komentar & Dokumentasi Lengkap:**
    * **Setiap Fungsi di TypeScript:** Dilengkapi dokumentasi JSDoc/TSDoc berbahasa Indonesia yang menjelaskan fungsi, parameter, serta nilai yang dihasilkan.
-   * **Di `index.html`:** Dilengkapi penanda seksi yang jelas (misalnya modal disposisi, modal alasan tolak, form perkara, tabel data, dan area cetak).
+   * **Di `index.html`:** Dilengkapi penanda yang jelas (misalnya modal disposisi, modal alasan tolak, form perkara, tabel data, dan area cetak).
 3. **Penyimpanan Data Terpusat (SQLite):**
    * Menggantikan ketergantungan rapuh pada `localStorage` peramban dengan basis data relasional SQLite (`data/ap3.sqlite`) yang tersimpan di server.
    * Dilengkapi *fallback* file-based JSON storage yang otomatis aktif jika dependensi native binary belum dikompilasi.
-4. **Semua Fitur Asli Tetap Utuh (100% Persis Sama):**
+4. **Beberapa Fitur Berguna bagi Pegawai:**
+    * Fitur **Penyusunan** (LPP.LPF.SPLIT,SPRIN CACAH,BA CACAH, dan LHP) tetap lengkap dan berfungsi aktif
    * Fitur **Alternatif Penyelesaian Perkara** (BDN, SPSA, Serah Terima Instansi Lain, Kembalikan ke Pemilik, Ultimum Remedium) tetap lengkap dan berfungsi aktif.
    * Fitur **Alur Disposisi Berkas Perkara** (pengiriman ke penyidik, penolakan disposisi, riwayat alur, notifikasi) berjalan normal.
    * Format cetak kedinasan presisi (LPP, LPF, SPLIT, SPRIN CACAH, BA, LHP, BAST, dll.) dengan ukuran kertas F4 dan A4 tetap aman tanpa pergeseran tata letak.
-5. **Bebas Error 404 pada Jalur Berkas:**
+6. **Bebas Error 404 pada Jalur Berkas:**
    * Seluruh jalur impor modul (`ui`, `store`, `perkara`, `auth`, dll.) telah diverifikasi oleh compiler TypeScript sehingga tidak ada lagi masalah berkas hilang (*404 Not Found*) seperti pada pengujian lokal sebelumnya.
 
 ---
@@ -111,13 +112,3 @@ Jika Anda ingin mengembangkan atau mengompilasi ulang kode TypeScript:
    ```bash
    npm run dev
    ```
-
----
-
-## Kredensial Default Sistem
-Saat pertama kali dijalankan, sistem secara otomatis menyediakan akun administrator:
-* **Email / Username:** `admin`
-* **Password:** `admin`
-* **Role:** `Admin`
-
-Anda dapat menambahkan akun petugas baru (Peneliti, Penyidik, Kasi, Kasubsi) melalui form registrasi atau panel manajemen pengguna di dalam aplikasi.
