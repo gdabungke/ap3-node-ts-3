@@ -63,6 +63,7 @@ router.get('/users', (_req, res) => {
             id: u.id,
             nama: u.nama,
             email: u.email,
+            pass: u.pass,
             role: u.role,
             createdAt: u.createdAt
         }));

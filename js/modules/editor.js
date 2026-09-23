@@ -4,287 +4,273 @@ import { autoPaginateReports, applyPageNumbers, navigatePreviewPage, updatePrevi
 import { getDocNum, fmtLP, fmtLPF, fmtSplit, fmtPrintCacah, fmtBA, fmtLHP, LPP, LPF, SPLIT, SPRIN_CACAH, BA, LHP } from '../templates/laporan.js';
 import { getTLNumFormat, BAST_PEMILIK, BA_SEGEL, KEP_BDN, SPSA, BAST_LIMPAH } from '../templates/tindaklanjut.js';
 export function saveDynamicVal(id, val) {
-  let el = document.getElementById(id);
-  if (el) el.value = val;
-  if (store.activeRecordIndex >= 0 && store.databasePerkara[store.activeRecordIndex]) {
-    store.databasePerkara[store.activeRecordIndex][id] = val;
-    savePerkaraToStorage();
-  }
-  updateReportLive();
+    let el = document.getElementById(id);
+    if (el)
+        el.value = val;
+    if (store.activeRecordIndex >= 0 && store.databasePerkara[store.activeRecordIndex]) {
+        store.databasePerkara[store.activeRecordIndex][id] = val;
+        savePerkaraToStorage();
+    }
+    updateReportLive();
 }
 export function saveDynamicValTL(key, val) {
-  if (store.activeRecordIndex >= 0 && store.databasePerkara[store.activeRecordIndex]) {
-    store.databasePerkara[store.activeRecordIndex][key] = val;
-    savePerkaraToStorage();
-    refreshTLTableUI();
-  }
+    if (store.activeRecordIndex >= 0 && store.databasePerkara[store.activeRecordIndex]) {
+        store.databasePerkara[store.activeRecordIndex][key] = val;
+        savePerkaraToStorage();
+        refreshTLTableUI();
+    }
 }
 export function refreshReportTableUI() {
-  let elNumLPP = document.getElementById('table_num_LPP');
-  if (elNumLPP) elNumLPP.textContent = fmtLP();
-  let elNumLPF = document.getElementById('table_num_LPF');
-  if (elNumLPF) elNumLPF.textContent = fmtLPF();
-  let elNumSPLIT = document.getElementById('table_num_SPLIT');
-  if (elNumSPLIT) elNumSPLIT.textContent = fmtSplit();
-  let elNumSPRIN = document.getElementById('table_num_SPRIN_CACAH');
-  if (elNumSPRIN) elNumSPRIN.textContent = fmtPrintCacah();
-  let elNumBA = document.getElementById('table_num_BA');
-  if (elNumBA) elNumBA.textContent = fmtBA();
-  let elNumLHP = document.getElementById('table_num_LHP');
-  if (elNumLHP) elNumLHP.textContent = fmtLHP();
-  let elDateLPP = document.getElementById('table_date_LPP');
-  if (elDateLPP) elDateLPP.textContent = formatDate('Tanggal_LPP') !== '-' ? formatDate('Tanggal_LPP') : formatDate('Tanggal_LP_LP_1');
-  let elDateLPF = document.getElementById('table_date_LPF');
-  if (elDateLPF) elDateLPF.textContent = formatDate('Tanggal_LPF') !== '-' ? formatDate('Tanggal_LPF') : formatDate('Tanggal_LP_LP_1');
-  let elDateSPLIT = document.getElementById('table_date_SPLIT');
-  if (elDateSPLIT) elDateSPLIT.textContent = formatDate('Tanggal_SPLIT') !== '-' ? formatDate('Tanggal_SPLIT') : formatDate('Tanggal_LP_LP_1');
-  let elDateSPRIN = document.getElementById('table_date_SPRIN_CACAH');
-  if (elDateSPRIN) elDateSPRIN.textContent = formatDate('Tanggal_Sprin_Cacah') !== '-' ? formatDate('Tanggal_Sprin_Cacah') : formatDate('Tanggal_SBP');
-  let elDateBA = document.getElementById('table_date_BA');
-  if (elDateBA) elDateBA.textContent = formatDate('Tanggal_BA') !== '-' ? formatDate('Tanggal_BA') : formatDate('Tanggal_SBP');
-  let elDateLHP = document.getElementById('table_date_LHP');
-  if (elDateLHP) elDateLHP.textContent = formatDate('Tanggal_LHP') !== '-' ? formatDate('Tanggal_LHP') : formatDate('Tanggal_LP_LP_1');
-  updateDocumentStatuses();
+    let elNumLPP = document.getElementById('table_num_LPP');
+    if (elNumLPP)
+        elNumLPP.textContent = fmtLP();
+    let elNumLPF = document.getElementById('table_num_LPF');
+    if (elNumLPF)
+        elNumLPF.textContent = fmtLPF();
+    let elNumSPLIT = document.getElementById('table_num_SPLIT');
+    if (elNumSPLIT)
+        elNumSPLIT.textContent = fmtSplit();
+    let elNumSPRIN = document.getElementById('table_num_SPRIN_CACAH');
+    if (elNumSPRIN)
+        elNumSPRIN.textContent = fmtPrintCacah();
+    let elNumBA = document.getElementById('table_num_BA');
+    if (elNumBA)
+        elNumBA.textContent = fmtBA();
+    let elNumLHP = document.getElementById('table_num_LHP');
+    if (elNumLHP)
+        elNumLHP.textContent = fmtLHP();
+    let elDateLPP = document.getElementById('table_date_LPP');
+    if (elDateLPP)
+        elDateLPP.textContent = formatDate('Tanggal_LPP') !== '-' ? formatDate('Tanggal_LPP') : formatDate('Tanggal_LP_LP_1');
+    let elDateLPF = document.getElementById('table_date_LPF');
+    if (elDateLPF)
+        elDateLPF.textContent = formatDate('Tanggal_LPF') !== '-' ? formatDate('Tanggal_LPF') : formatDate('Tanggal_LP_LP_1');
+    let elDateSPLIT = document.getElementById('table_date_SPLIT');
+    if (elDateSPLIT)
+        elDateSPLIT.textContent = formatDate('Tanggal_SPLIT') !== '-' ? formatDate('Tanggal_SPLIT') : formatDate('Tanggal_LP_LP_1');
+    let elDateSPRIN = document.getElementById('table_date_SPRIN_CACAH');
+    if (elDateSPRIN)
+        elDateSPRIN.textContent = formatDate('Tanggal_Sprin_Cacah') !== '-' ? formatDate('Tanggal_Sprin_Cacah') : formatDate('Tanggal_SBP');
+    let elDateBA = document.getElementById('table_date_BA');
+    if (elDateBA)
+        elDateBA.textContent = formatDate('Tanggal_BA') !== '-' ? formatDate('Tanggal_BA') : formatDate('Tanggal_SBP');
+    let elDateLHP = document.getElementById('table_date_LHP');
+    if (elDateLHP)
+        elDateLHP.textContent = formatDate('Tanggal_LHP') !== '-' ? formatDate('Tanggal_LHP') : formatDate('Tanggal_LP_LP_1');
+    updateDocumentStatuses();
 }
 export function updateDocumentStatuses() {
-  let docs = [{
-    type: 'LPP',
-    num: getDocNum('No_LPP'),
-    date: getVal('Tanggal_LPP'),
-    extra: getVal('Catatan_LPP')
-  }, {
-    type: 'LPF',
-    num: getDocNum('No_LPF'),
-    date: getVal('Tanggal_LPF'),
-    extra: getVal('Catatan_LPF')
-  }, {
-    type: 'SPLIT',
-    num: getDocNum('Nomor_SPLIT'),
-    date: getVal('Tanggal_SPLIT'),
-    extra: getVal('Dasar_SPLIT')
-  }, {
-    type: 'SPRIN_CACAH',
-    num: getDocNum('No_SPRIN_CACAH'),
-    date: getVal('Tanggal_Sprin_Cacah'),
-    extra: getVal('Komoditi')
-  }, {
-    type: 'BA',
-    num: getDocNum('Nomor_BA'),
-    date: getVal('Tanggal_BA'),
-    extra: getVal('Hari_Cacah')
-  }, {
-    type: 'LHP',
-    num: getDocNum('Nomor_LHP'),
-    date: getVal('Tanggal_LHP'),
-    extra: getVal('Jenis_Pelanggaran_Pasal')
-  }];
-  docs.forEach(d => {
-    let el = document.getElementById(`badge_status_${d.type}`);
-    if (!el) return;
-    let isComplete = d.num && d.num !== '-' && d.date && d.date !== '-' && d.extra && d.extra !== '-';
-    if (isComplete) {
-      el.className = 'badge-status badge-ready';
-      el.textContent = 'SIAP CETAK';
-    } else {
-      el.className = 'badge-status badge-warning';
-      el.textContent = 'BELUM LENGKAP';
-    }
-  });
+    let docs = [
+        { type: 'LPP', num: getDocNum('No_LPP'), date: getVal('Tanggal_LPP'), extra: getVal('Catatan_LPP') },
+        { type: 'LPF', num: getDocNum('No_LPF'), date: getVal('Tanggal_LPF'), extra: getVal('Catatan_LPF') },
+        { type: 'SPLIT', num: getDocNum('Nomor_SPLIT'), date: getVal('Tanggal_SPLIT'), extra: getVal('Dasar_SPLIT') },
+        { type: 'SPRIN_CACAH', num: getDocNum('No_SPRIN_CACAH'), date: getVal('Tanggal_Sprin_Cacah'), extra: getVal('Komoditi') },
+        { type: 'BA', num: getDocNum('Nomor_BA'), date: getVal('Tanggal_BA'), extra: getVal('Hari_Cacah') },
+        { type: 'LHP', num: getDocNum('Nomor_LHP'), date: getVal('Tanggal_LHP'), extra: getVal('Jenis_Pelanggaran_Pasal') }
+    ];
+    docs.forEach(d => {
+        let el = document.getElementById(`badge_status_${d.type}`);
+        if (!el)
+            return;
+        let isComplete = d.num && d.num !== '-' && d.date && d.date !== '-' && d.extra && d.extra !== '-';
+        if (isComplete) {
+            el.className = 'badge-status badge-ready';
+            el.textContent = 'SIAP CETAK';
+        }
+        else {
+            el.className = 'badge-status badge-warning';
+            el.textContent = 'BELUM LENGKAP';
+        }
+    });
 }
 export function refreshTLTableUI() {
-  if (store.activeRecordIndex < 0) return;
-  let rec = store.databasePerkara[store.activeRecordIndex];
-  let b1 = document.getElementById('tl_table_num_BAST_PEMILIK');
-  if (b1) b1.textContent = getTLNumFormat('BAST_PEMILIK');
-  let bd1 = document.getElementById('tl_table_date_BAST_PEMILIK');
-  if (bd1) bd1.textContent = formatDateIndo(rec.TL_Tanggal_Surat || rec.Tanggal_LP_LP_1);
-  let b2 = document.getElementById('tl_table_num_BA_SEGEL');
-  if (b2) b2.textContent = getTLNumFormat('BA_SEGEL');
-  let bd2 = document.getElementById('tl_table_date_BA_SEGEL');
-  if (bd2) bd2.textContent = formatDateIndo(rec.TL_Tanggal_Surat || rec.Tanggal_LP_LP_1);
-  let b3 = document.getElementById('tl_table_num_KEP_BDN');
-  if (b3) b3.textContent = getTLNumFormat('KEP_BDN');
-  let bd3 = document.getElementById('tl_table_date_KEP_BDN');
-  if (bd3) bd3.textContent = formatDateIndo(rec.KEP_Tanggal_ND || rec.Tanggal_LP_LP_1);
-  let b4 = document.getElementById('tl_table_num_SPSA');
-  if (b4) b4.textContent = getTLNumFormat('SPSA');
-  let bd4 = document.getElementById('tl_table_date_SPSA');
-  if (bd4) bd4.textContent = formatDateIndo(rec.SPSA_Tanggal || rec.Tanggal_LP_LP_1);
-  let b5 = document.getElementById('tl_table_num_BAST_LIMPAH');
-  if (b5) b5.textContent = getTLNumFormat('BAST_LIMPAH');
-  let bd5 = document.getElementById('tl_table_date_BAST_LIMPAH');
-  if (bd5) bd5.textContent = formatDateIndo(rec.Limpah_Tanggal || rec.Tanggal_LP_LP_1);
-  updateTLDocumentStatuses();
-  renderTLFormSection(store.currentTLDoc);
-  showTLReportView(store.currentTLDoc);
+    if (store.activeRecordIndex < 0)
+        return;
+    let rec = store.databasePerkara[store.activeRecordIndex];
+    let b1 = document.getElementById('tl_table_num_BAST_PEMILIK');
+    if (b1)
+        b1.textContent = getTLNumFormat('BAST_PEMILIK');
+    let bd1 = document.getElementById('tl_table_date_BAST_PEMILIK');
+    if (bd1)
+        bd1.textContent = formatDateIndo(rec.TL_Tanggal_Surat || rec.Tanggal_LP_LP_1);
+    let b2 = document.getElementById('tl_table_num_BA_SEGEL');
+    if (b2)
+        b2.textContent = getTLNumFormat('BA_SEGEL');
+    let bd2 = document.getElementById('tl_table_date_BA_SEGEL');
+    if (bd2)
+        bd2.textContent = formatDateIndo(rec.TL_Tanggal_Surat || rec.Tanggal_LP_LP_1);
+    let b3 = document.getElementById('tl_table_num_KEP_BDN');
+    if (b3)
+        b3.textContent = getTLNumFormat('KEP_BDN');
+    let bd3 = document.getElementById('tl_table_date_KEP_BDN');
+    if (bd3)
+        bd3.textContent = formatDateIndo(rec.KEP_Tanggal_ND || rec.Tanggal_LP_LP_1);
+    let b4 = document.getElementById('tl_table_num_SPSA');
+    if (b4)
+        b4.textContent = getTLNumFormat('SPSA');
+    let bd4 = document.getElementById('tl_table_date_SPSA');
+    if (bd4)
+        bd4.textContent = formatDateIndo(rec.SPSA_Tanggal || rec.Tanggal_LP_LP_1);
+    let b5 = document.getElementById('tl_table_num_BAST_LIMPAH');
+    if (b5)
+        b5.textContent = getTLNumFormat('BAST_LIMPAH');
+    let bd5 = document.getElementById('tl_table_date_BAST_LIMPAH');
+    if (bd5)
+        bd5.textContent = formatDateIndo(rec.Limpah_Tanggal || rec.Tanggal_LP_LP_1);
+    updateTLDocumentStatuses();
+    renderTLFormSection(store.currentTLDoc);
+    showTLReportView(store.currentTLDoc);
 }
 export function updateTLDocumentStatuses() {
-  if (store.activeRecordIndex < 0 || !store.databasePerkara[store.activeRecordIndex]) return;
-  let rec = store.databasePerkara[store.activeRecordIndex];
-  let docsTL = [{
-    type: 'BAST_PEMILIK',
-    num: getTLNumFormat('BAST_PEMILIK'),
-    date: rec.TL_Tanggal_Surat || rec.Tanggal_LP_LP_1,
-    extra: rec.TL_Hari_BAST && rec.TL_Tgl_Huruf_BAST
-  }, {
-    type: 'BA_SEGEL',
-    num: getTLNumFormat('BA_SEGEL'),
-    date: rec.TL_Tanggal_Surat || rec.Tanggal_LP_LP_1,
-    extra: rec.TL_Segel_No_SPLI && rec.TL_Segel_Hari
-  }, {
-    type: 'KEP_BDN',
-    num: getTLNumFormat('KEP_BDN'),
-    date: rec.KEP_Tanggal_ND || rec.Tanggal_LP_LP_1,
-    extra: rec.KEP_Nomor_ND && rec.Kepala_Kantor
-  }, {
-    type: 'SPSA',
-    num: getTLNumFormat('SPSA'),
-    date: rec.SPSA_Tanggal || rec.Tanggal_LP_LP_1,
-    extra: rec.SPSA_Denda && rec.SPSA_Pasal_Pelanggaran
-  }, {
-    type: 'BAST_LIMPAH',
-    num: getTLNumFormat('BAST_LIMPAH'),
-    date: rec.Limpah_Tanggal || rec.Tanggal_LP_LP_1,
-    extra: rec.Instansi_Penerima && rec.Limpah_Pejabat_Penerima
-  }];
-  docsTL.forEach(d => {
-    let el = document.getElementById(`badge_status_${d.type}`);
-    if (!el) return;
-    let isComplete = d.num && d.num !== '-' && d.date && d.date !== '-' && d.extra && d.extra !== '-';
-    if (isComplete) {
-      el.className = 'badge-status badge-ready';
-      el.textContent = 'SIAP CETAK';
-    } else {
-      el.className = 'badge-status badge-warning';
-      el.textContent = 'BELUM LENGKAP';
-    }
-  });
+    if (store.activeRecordIndex < 0 || !store.databasePerkara[store.activeRecordIndex])
+        return;
+    let rec = store.databasePerkara[store.activeRecordIndex];
+    let docsTL = [
+        {
+            type: 'BAST_PEMILIK',
+            num: getTLNumFormat('BAST_PEMILIK'),
+            date: rec.TL_Tanggal_Surat || rec.Tanggal_LP_LP_1,
+            extra: rec.TL_Hari_BAST && rec.TL_Tgl_Huruf_BAST
+        },
+        {
+            type: 'BA_SEGEL',
+            num: getTLNumFormat('BA_SEGEL'),
+            date: rec.TL_Tanggal_Surat || rec.Tanggal_LP_LP_1,
+            extra: rec.TL_Segel_No_SPLI && rec.TL_Segel_Hari
+        },
+        {
+            type: 'KEP_BDN',
+            num: getTLNumFormat('KEP_BDN'),
+            date: rec.KEP_Tanggal_ND || rec.Tanggal_LP_LP_1,
+            extra: rec.KEP_Nomor_ND && rec.Kepala_Kantor
+        },
+        {
+            type: 'SPSA',
+            num: getTLNumFormat('SPSA'),
+            date: rec.SPSA_Tanggal || rec.Tanggal_LP_LP_1,
+            extra: rec.SPSA_Denda && rec.SPSA_Pasal_Pelanggaran
+        },
+        {
+            type: 'BAST_LIMPAH',
+            num: getTLNumFormat('BAST_LIMPAH'),
+            date: rec.Limpah_Tanggal || rec.Tanggal_LP_LP_1,
+            extra: rec.Instansi_Penerima && rec.Limpah_Pejabat_Penerima
+        }
+    ];
+    docsTL.forEach(d => {
+        let el = document.getElementById(`badge_status_${d.type}`);
+        if (!el)
+            return;
+        let isComplete = d.num && d.num !== '-' && d.date && d.date !== '-' && d.extra && d.extra !== '-';
+        if (isComplete) {
+            el.className = 'badge-status badge-ready';
+            el.textContent = 'SIAP CETAK';
+        }
+        else {
+            el.className = 'badge-status badge-warning';
+            el.textContent = 'BELUM LENGKAP';
+        }
+    });
 }
 export function switchDocTab(type) {
-  store.currentDoc = type;
-  let sel = document.getElementById('docFilterSelect');
-  if (sel) sel.value = type;
-  let tlContainer = document.getElementById('tl_reports');
-  if (tlContainer) tlContainer.innerHTML = '';
-  renderDynamicInputs(type);
-  showReportView(type);
-  refreshReportTableUI();
+    store.currentDoc = type;
+    let sel = document.getElementById('docFilterSelect');
+    if (sel)
+        sel.value = type;
+    let tlContainer = document.getElementById('tl_reports');
+    if (tlContainer)
+        tlContainer.innerHTML = '';
+    renderDynamicInputs(type);
+    showReportView(type);
+    refreshReportTableUI();
 }
 export function switchTLDocTab(type) {
-  store.currentTLDoc = type;
-  let sel = document.getElementById('tlDocFilterSelect');
-  if (sel) sel.value = type;
-  let repContainer = document.getElementById('reports');
-  if (repContainer) repContainer.innerHTML = '';
-  updateTLPreviewHeaderUI(type);
-  renderTLFormSection(type);
-  showTLReportView(type);
+    store.currentTLDoc = type;
+    let sel = document.getElementById('tlDocFilterSelect');
+    if (sel)
+        sel.value = type;
+    let repContainer = document.getElementById('reports');
+    if (repContainer)
+        repContainer.innerHTML = '';
+    updateTLPreviewHeaderUI(type);
+    renderTLFormSection(type);
+    showTLReportView(type);
 }
 export function updateReportLive() {
-  let sel = document.getElementById('docFilterSelect');
-  let activeType = sel ? sel.value : store.currentDoc || 'LPP';
-  refreshReportTableUI();
-  showReportView(activeType);
+    let sel = document.getElementById('docFilterSelect');
+    let activeType = sel ? sel.value : (store.currentDoc || 'LPP');
+    refreshReportTableUI();
+    showReportView(activeType);
 }
 export function showReportView(type) {
-  let el = document.getElementById('reports');
-  if (!el) return;
-  if (typeof updatePreviewHeaderUI === 'function') updatePreviewHeaderUI(type);
-  if (store.activeRecordIndex < 0) {
-    el.innerHTML = `<div class="report"><p>Data Perkara belum divalidasi. Klik "Validasi Data Perkara" untuk mulai mencetak.</p></div>`;
-    renderPageSelector(0, 'pageSelectorContainer', 'reports');
-    return;
-  }
-  if (type === 'ALL') {
-    let docs = [{
-      fn: LPP,
-      type: 'LPP'
-    }, {
-      fn: LPF,
-      type: 'LPF'
-    }, {
-      fn: SPLIT,
-      type: 'SPLIT'
-    }, {
-      fn: SPRIN_CACAH,
-      type: 'SPRIN_CACAH'
-    }, {
-      fn: BA,
-      type: 'BA'
-    }, {
-      fn: LHP,
-      type: 'LHP'
-    }];
-    // Panggil d.fn() saja tanpa menyisipkan generateKopSurat lagi di depan
-    el.innerHTML = docs.map(d => d.fn()).join('<div class="pagebreak"></div>');
-  } else {
-    let f = {
-      LPP,
-      LPF,
-      SPLIT,
-      SPRIN_CACAH,
-      BA,
-      LHP
-    }[type];
-    if (f) {
-      // Panggil fungsinya langsung tanpa tambahan kopHtml
-      el.innerHTML = f();
+    let el = document.getElementById('reports');
+    if (!el)
+        return;
+    if (typeof updatePreviewHeaderUI === 'function')
+        updatePreviewHeaderUI(type);
+    if (store.activeRecordIndex < 0) {
+        el.innerHTML = `<div class="report"><p>Data Perkara belum divalidasi. Klik "Validasi Data Perkara" untuk mulai mencetak.</p></div>`;
+        renderPageSelector(0, 'pageSelectorContainer', 'reports');
+        return;
     }
-  }
-  autoPaginateReports('reports');
-  applyPageNumbers('reports');
-  navigatePreviewPage(0, 'reports');
+    if (type === 'ALL') {
+        let docs = [
+            { fn: LPP, type: 'LPP' },
+            { fn: LPF, type: 'LPF' },
+            { fn: SPLIT, type: 'SPLIT' },
+            { fn: SPRIN_CACAH, type: 'SPRIN_CACAH' },
+            { fn: BA, type: 'BA' },
+            { fn: LHP, type: 'LHP' }
+        ];
+        el.innerHTML = docs.map(d => d.fn()).join('<div class="pagebreak"></div>');
+    }
+    else {
+        let f = { LPP, LPF, SPLIT, SPRIN_CACAH, BA, LHP }[type];
+        if (f) {
+            el.innerHTML = f();
+        }
+    }
+    autoPaginateReports('reports');
+    applyPageNumbers('reports');
+    navigatePreviewPage(0, 'reports');
 }
 export function showTLReportView(type) {
-  let el = document.getElementById('tl_reports');
-  if (!el) return;
-  if (typeof updateTLPreviewHeaderUI === 'function') updateTLPreviewHeaderUI(type);
-  if (store.activeRecordIndex < 0) {
-    el.innerHTML = `<div class="report"><p>Silakan validasi SBP & LP untuk mencetak Dokumen Tindak Lanjut.</p></div>`;
-    renderPageSelector(0, 'tlPageSelectorContainer', 'tl_reports');
-    return;
-  }
-  if (type === 'ALL') {
-    let docsTL = [{
-      fn: BAST_PEMILIK,
-      type: 'BAST_PEMILIK'
-    }, {
-      fn: BA_SEGEL,
-      type: 'BA_SEGEL'
-    }, {
-      fn: KEP_BDN,
-      type: 'KEP_BDN'
-    }, {
-      fn: SPSA,
-      type: 'SPSA'
-    }, {
-      fn: BAST_LIMPAH,
-      type: 'BAST_LIMPAH'
-    }];
-    // Panggil d.fn() saja tanpa menyisipkan generateKopSurat lagi di depan
-    el.innerHTML = docsTL.map(d => d.fn()).join('<div class="pagebreak"></div>');
-  } else {
-    let f = {
-      BAST_PEMILIK,
-      BA_SEGEL,
-      KEP_BDN,
-      SPSA,
-      BAST_LIMPAH
-    }[type];
-    if (f) {
-      // Panggil fungsinya langsung tanpa tambahan kopHtml
-      el.innerHTML = f();
+    let el = document.getElementById('tl_reports');
+    if (!el)
+        return;
+    if (typeof updateTLPreviewHeaderUI === 'function')
+        updateTLPreviewHeaderUI(type);
+    if (store.activeRecordIndex < 0) {
+        el.innerHTML = `<div class="report"><p>Silakan validasi SBP & LP untuk mencetak Dokumen Tindak Lanjut.</p></div>`;
+        renderPageSelector(0, 'tlPageSelectorContainer', 'tl_reports');
+        return;
     }
-  }
-  autoPaginateReports('tl_reports');
-  applyPageNumbers('tl_reports');
-  navigatePreviewPage(0, 'tl_reports');
+    if (type === 'ALL') {
+        let docsTL = [
+            { fn: BAST_PEMILIK, type: 'BAST_PEMILIK' },
+            { fn: BA_SEGEL, type: 'BA_SEGEL' },
+            { fn: KEP_BDN, type: 'KEP_BDN' },
+            { fn: SPSA, type: 'SPSA' },
+            { fn: BAST_LIMPAH, type: 'BAST_LIMPAH' }
+        ];
+        el.innerHTML = docsTL.map(d => d.fn()).join('<div class="pagebreak"></div>');
+    }
+    else {
+        let f = { BAST_PEMILIK, BA_SEGEL, KEP_BDN, SPSA, BAST_LIMPAH }[type];
+        if (f) {
+            el.innerHTML = f();
+        }
+    }
+    autoPaginateReports('tl_reports');
+    applyPageNumbers('tl_reports');
+    navigatePreviewPage(0, 'tl_reports');
 }
 export function renderDynamicInputs(type) {
-  let container = document.getElementById('modalDynamicInputBody');
-  if (!container) return;
-  let recordOptions = store.databasePerkara.map((rec, idx) => `<option value="${idx}" ${idx === store.activeRecordIndex ? 'selected' : ''}>LP-${escText(rec.NoLP_LP_1 || '-')} / SBP-${escText(rec.Nomor_SBP || '-')} (${escText(rec.Nama_Pelaku || 'Tanpa Nama')})</option>`).join('');
-  let recordSelectorHtml = `
+    let container = document.getElementById('modalDynamicInputBody');
+    if (!container)
+        return;
+    let recordOptions = store.databasePerkara.map((rec, idx) => `<option value="${idx}" ${idx === store.activeRecordIndex ? 'selected' : ''}>LP-${escText(rec.NoLP_LP_1 || '-')} / SBP-${escText(rec.Nomor_SBP || '-')} (${escText(rec.Nama_Pelaku || 'Tanpa Nama')})</option>`).join('');
+    let recordSelectorHtml = `
     <div style="background:#1e293b; border:1px solid var(--border-color); padding:10px; border-radius:6px; margin-bottom:14px;">
       <label style="color:var(--primary); margin-bottom:4px; font-weight:700;"><i class="fi fi-rr-folder"></i> Pilih Perkara Aktif (LP & SBP)</label>
       <select id="modalRecordSelector" onchange="store.activeRecordIndex = parseInt(this.value); renderDynamicInputs('${type}'); refreshReportTableUI(); updateReportLive();" style="width:100%; padding:8px; background:#0f172a; color:#fff; border:1px solid var(--border-color); border-radius:4px; font-size:12px; font-weight:600; cursor:pointer;">
@@ -293,24 +279,26 @@ export function renderDynamicInputs(type) {
       </select>
     </div>
   `;
-  if (store.activeRecordIndex < 0) {
-    container.innerHTML = recordSelectorHtml + `<p class="small" style="color:#ef4444; text-align:center; padding:10px;">Silakan pilih data perkara terlebih dahulu dari dropdown di atas.</p>`;
-    return;
-  }
-  let autoInfoBanner = `
+    if (store.activeRecordIndex < 0) {
+        container.innerHTML = recordSelectorHtml + `<p class="small" style="color:#ef4444; text-align:center; padding:10px;">Silakan pilih data perkara terlebih dahulu dari dropdown di atas.</p>`;
+        return;
+    }
+    let autoInfoBanner = `
     <div style="background:#eff6ff; border-left:3px solid #3b82f6; padding:8px 12px; border-radius:4px; margin-bottom:12px; font-size:12px; color:#1e40af; line-height:1.4;">
       <i class="fi fi-rr-info" style="margin-right:4px;"></i> 
       Nomor & tanggal terisi otomatis dari data perkara. Anda tetap dapat mengubahnya secara fleksibel jika diperlukan.
     </div>
   `;
-  if (type === 'LPP') {
-    let catLpp = getVal('Catatan_LPP');
-    let detBarang = getVal('Detail_Barang_LPP') !== '-' ? getVal('Detail_Barang_LPP') : getVal('Uraian_Barang');
-    if (!catLpp || catLpp === '-' || catLpp === '') {
-      catLpp = "Laporan penerimaan perkara diterima, segera lanjutkan dengan penelitian formal dan pengumpulan bahan keterangan lebih lanjut.";
-    }
-    if (!detBarang || detBarang === '') detBarang = '-';
-    container.innerHTML = recordSelectorHtml + autoInfoBanner + `
+    let activeRec = store.databasePerkara[store.activeRecordIndex];
+    if (type === 'LPP') {
+        let catLpp = getVal('Catatan_LPP');
+        let detBarang = getVal('Detail_Barang_LPP') !== '-' ? getVal('Detail_Barang_LPP') : getVal('Uraian_Barang');
+        if (!catLpp || catLpp === '-' || catLpp === '') {
+            catLpp = "Laporan penerimaan perkara diterima, segera lanjutkan dengan penelitian formal dan pengumpulan bahan keterangan lebih lanjut.";
+        }
+        if (!detBarang || detBarang === '')
+            detBarang = '-';
+        container.innerHTML = recordSelectorHtml + autoInfoBanner + `
       <div class="grid" style="margin-bottom:10px;">
         <div>
           <label>Nomor LPP (Cukup Angka)</label>
@@ -318,7 +306,7 @@ export function renderDynamicInputs(type) {
         </div>
         <div>
           <label>Tanggal LPP</label>
-          <input type="date" id="input_Tgl_LPP" value="${getVal('Tanggal_LPP') !== '-' ? getVal('Tanggal_LPP') : document.getElementById('Tanggal_LP_LP_1') ? document.getElementById('Tanggal_LP_LP_1').value : ''}" onchange="saveDynamicVal('Tanggal_LPP', this.value); refreshReportTableUI();">
+          <input type="date" id="input_Tgl_LPP" value="${getVal('Tanggal_LPP') !== '-' ? getVal('Tanggal_LPP') : (document.getElementById('Tanggal_LP_LP_1')?.value || '')}" onchange="saveDynamicVal('Tanggal_LPP', this.value); refreshReportTableUI();">
         </div>
       </div>
       <div style="margin-bottom:10px;">
@@ -330,12 +318,13 @@ export function renderDynamicInputs(type) {
         <textarea id="Detail_Barang_LPP" oninput="saveDynamicVal('Detail_Barang_LPP', this.value)">${escText(detBarang)}</textarea>
       </div>
     `;
-  } else if (type === 'LPF') {
-    let catLpf = getVal('Catatan_LPF');
-    if (!catLpf || catLpf === '-' || catLpf === '') {
-      catLpf = "Setuju dengan usulan tim peneliti, segera tindak lanjuti proses penyusunan administrasi penanganan perkara sesuai ketentuan yang berlaku.";
     }
-    container.innerHTML = recordSelectorHtml + autoInfoBanner + `
+    else if (type === 'LPF') {
+        let catLpf = getVal('Catatan_LPF');
+        if (!catLpf || catLpf === '-' || catLpf === '') {
+            catLpf = "Setuju dengan usulan tim peneliti, segera tindak lanjuti proses penyusunan administrasi penanganan perkara sesuai ketentuan yang berlaku.";
+        }
+        container.innerHTML = recordSelectorHtml + autoInfoBanner + `
       <div class="grid" style="margin-bottom:10px;">
         <div>
           <label>Nomor LPF (Cukup Angka)</label>
@@ -343,7 +332,7 @@ export function renderDynamicInputs(type) {
         </div>
         <div>
           <label>Tanggal LPF</label>
-          <input type="date" id="input_Tgl_LPF" value="${getVal('Tanggal_LPF') !== '-' ? getVal('Tanggal_LPF') : document.getElementById('Tanggal_LP_LP_1') ? document.getElementById('Tanggal_LP_LP_1').value : ''}" onchange="saveDynamicVal('Tanggal_LPF', this.value); refreshReportTableUI();">
+          <input type="date" id="input_Tgl_LPF" value="${getVal('Tanggal_LPF') !== '-' ? getVal('Tanggal_LPF') : (document.getElementById('Tanggal_LP_LP_1')?.value || '')}" onchange="saveDynamicVal('Tanggal_LPF', this.value); refreshReportTableUI();">
         </div>
       </div>
       <div>
@@ -351,10 +340,12 @@ export function renderDynamicInputs(type) {
         <textarea id="Catatan_LPF" oninput="saveDynamicVal('Catatan_LPF', this.value)">${escText(catLpf)}</textarea>
       </div>
     `;
-  } else if (type === 'SPLIT') {
-    let dasarSplit = getVal('Dasar_SPLIT');
-    if (!dasarSplit || dasarSplit === '') dasarSplit = '-';
-    container.innerHTML = recordSelectorHtml + autoInfoBanner + `
+    }
+    else if (type === 'SPLIT') {
+        let dasarSplit = getVal('Dasar_SPLIT');
+        if (!dasarSplit || dasarSplit === '')
+            dasarSplit = '-';
+        container.innerHTML = recordSelectorHtml + autoInfoBanner + `
       <div class="grid" style="margin-bottom:10px;">
         <div>
           <label>Nomor SPLIT (Cukup Angka)</label>
@@ -362,7 +353,7 @@ export function renderDynamicInputs(type) {
         </div>
         <div>
           <label>Tanggal SPLIT</label>
-          <input type="date" id="input_Tgl_SPLIT" value="${getVal('Tanggal_SPLIT') !== '-' ? getVal('Tanggal_SPLIT') : document.getElementById('Tanggal_LP_LP_1') ? document.getElementById('Tanggal_LP_LP_1').value : ''}" onchange="saveDynamicVal('Tanggal_SPLIT', this.value); refreshReportTableUI();">
+          <input type="date" id="input_Tgl_SPLIT" value="${getVal('Tanggal_SPLIT') !== '-' ? getVal('Tanggal_SPLIT') : (document.getElementById('Tanggal_LP_LP_1')?.value || '')}" onchange="saveDynamicVal('Tanggal_SPLIT', this.value); refreshReportTableUI();">
         </div>
       </div>
       <div>
@@ -375,9 +366,10 @@ export function renderDynamicInputs(type) {
         <i class="fi fi-rr-plus"></i> Tambah Pegawai Ke SPLIT
       </button>
     `;
-    renderSplitPegawaiList();
-  } else if (type === 'SPRIN_CACAH') {
-    container.innerHTML = recordSelectorHtml + `
+        renderSplitPegawaiList();
+    }
+    else if (type === 'SPRIN_CACAH') {
+        container.innerHTML = recordSelectorHtml + `
       <div class="grid" style="margin-bottom:10px;">
         <div>
           <label>Nomor SPRIN CACAH (Cukup Angka)</label>
@@ -385,7 +377,7 @@ export function renderDynamicInputs(type) {
         </div>
         <div>
           <label>Tanggal SPRIN CACAH</label>
-          <input type="date" id="input_Tgl_SPRIN" value="${getVal('Tanggal_Sprin_Cacah') !== '-' ? getVal('Tanggal_Sprin_Cacah') : document.getElementById('Tanggal_SBP') ? document.getElementById('Tanggal_SBP').value : ''}" onchange="saveDynamicVal('Tanggal_Sprin_Cacah', this.value); refreshReportTableUI();">
+          <input type="date" id="input_Tgl_SPRIN" value="${getVal('Tanggal_Sprin_Cacah') !== '-' ? getVal('Tanggal_Sprin_Cacah') : (document.getElementById('Tanggal_SBP')?.value || '')}" onchange="saveDynamicVal('Tanggal_Sprin_Cacah', this.value); refreshReportTableUI();">
         </div>
       </div>
       <p class="small" style="margin-top:0;">Daftar petugas pelaksana pencacahan barang hasil penindakan:</p>
@@ -394,10 +386,11 @@ export function renderDynamicInputs(type) {
         <i class="fi fi-rr-plus"></i> Tambah Pegawai Ke SPRIN CACAH
       </button>
     `;
-    renderSprinPegawaiList();
-  } else if (type === 'BA') {
-    let items = JSON.parse(localStorage.getItem('cacahItems') || '[]');
-    container.innerHTML = recordSelectorHtml + `
+        renderSprinPegawaiList();
+    }
+    else if (type === 'BA') {
+        let items = activeRec.cacahItems || [];
+        container.innerHTML = recordSelectorHtml + `
       <div class="grid3" style="margin-bottom:10px;">
         <div>
           <label>Nomor BA (Cukup Angka)</label>
@@ -405,7 +398,7 @@ export function renderDynamicInputs(type) {
         </div>
         <div>
           <label>Tanggal BA Cacah</label>
-          <input type="date" id="input_Tgl_BA" value="${getVal('Tanggal_BA') !== '-' ? getVal('Tanggal_BA') : document.getElementById('Tanggal_SBP') ? document.getElementById('Tanggal_SBP').value : ''}" onchange="saveDynamicVal('Tanggal_BA', this.value); if(this.value){ const r = autoGenerateTeksTanggalBA(this.value); saveDynamicVal('Hari_Cacah', r.hari.toLowerCase()); saveDynamicVal('TeksTanggal', r.teksLengkap.toLowerCase()); document.getElementById('Hari_Cacah').value = r.hari.toLowerCase(); document.getElementById('TeksTanggal').value = r.teksLengkap.toLowerCase(); } refreshReportTableUI();">
+          <input type="date" id="input_Tgl_BA" value="${getVal('Tanggal_BA') !== '-' ? getVal('Tanggal_BA') : (document.getElementById('Tanggal_SBP')?.value || '')}" onchange="saveDynamicVal('Tanggal_BA', this.value); if(this.value){ const r = autoGenerateTeksTanggalBA(this.value); saveDynamicVal('Hari_Cacah', r.hari.toLowerCase()); saveDynamicVal('TeksTanggal', r.teksLengkap.toLowerCase()); (document.getElementById('Hari_Cacah') as HTMLInputElement).value = r.hari.toLowerCase(); (document.getElementById('TeksTanggal') as HTMLInputElement).value = r.teksLengkap.toLowerCase(); } refreshReportTableUI();">
         </div>
         <div>
           <label>Hari Cacah (Huruf Kecil)</label>
@@ -422,10 +415,11 @@ export function renderDynamicInputs(type) {
         <i class="fi fi-rr-plus"></i> Tambah Barang Cacah
       </button>
     `;
-    renderItems(items);
-  } else if (type === 'LHP') {
-    let penyelesaianVal = getVal('Penyelesaian_Perkara') !== '-' ? getVal('Penyelesaian_Perkara') : getVal('Alternatif_Penyelesaian_Perkara') !== '-' ? getVal('Alternatif_Penyelesaian_Perkara') : '';
-    container.innerHTML = recordSelectorHtml + `
+        renderItems(items);
+    }
+    else if (type === 'LHP') {
+        let penyelesaianVal = getVal('Penyelesaian_Perkara') !== '-' ? getVal('Penyelesaian_Perkara') : (getVal('Alternatif_Penyelesaian_Perkara') !== '-' ? getVal('Alternatif_Penyelesaian_Perkara') : '');
+        container.innerHTML = recordSelectorHtml + `
       <div class="grid" style="margin-bottom:10px;">
         <div>
           <label>Nomor LHP (Cukup Angka)</label>
@@ -433,7 +427,7 @@ export function renderDynamicInputs(type) {
         </div>
         <div>
           <label>Tanggal LHP</label>
-          <input type="date" id="input_Tgl_LHP" value="${getVal('Tanggal_LHP') !== '-' ? getVal('Tanggal_LHP') : document.getElementById('Tanggal_LP_LP_1') ? document.getElementById('Tanggal_LP_LP_1').value : ''}" onchange="saveDynamicVal('Tanggal_LHP', this.value); refreshReportTableUI();">
+          <input type="date" id="input_Tgl_LHP" value="${getVal('Tanggal_LHP') !== '-' ? getVal('Tanggal_LHP') : (document.getElementById('Tanggal_LP_LP_1')?.value || '')}" onchange="saveDynamicVal('Tanggal_LHP', this.value); refreshReportTableUI();">
         </div>
       </div>
 
@@ -493,82 +487,80 @@ export function renderDynamicInputs(type) {
           <textarea id="input_Penyelesaian_Perkara" rows="5" class="form-control" style="width:100%; font-size:12px; line-height:1.5; resize:vertical;" placeholder="Uraian otomatis akan terbentuk di sini berdasarkan opsi yang dicentang..." oninput="saveDynamicVal('Penyelesaian_Perkara', this.value); saveDynamicVal('Alternatif_Penyelesaian_Perkara', this.value);">${escText(penyelesaianVal)}</textarea>
         </div>
     `;
-  }
+    }
 }
-
-// ==========================================================================
-// FUNGSI SINKRONISASI KOMBINASI OPSI LHP (DI LUAR BLOK RENDER)
-// ==========================================================================
 export function syncUraianKombinasiLHP() {
-  const active = {};
-  document.querySelectorAll('.chk-lhp-opsi:checked').forEach(c => {
-    active[c.value] = true;
-  });
-  let hasil = [];
-
-  // 1. KOMBINASI: BDN + SPSA
-  if (active.bdn && active.spsa && !active.kembali) {
-    hasil.push("Terhadap barang hasil penindakan yang melanggar ketentuan ditetapkan sebagai Barang yang Dikuasai Negara (BDN) untuk diproses menjadi Barang Milik Negara (BMN).");
-    hasil.push("Terhadap pihak yang bertanggung jawab dikenakan sanksi administrasi berupa denda dengan menerbitkan Surat Penetapan Sanksi Administrasi (SPSA).");
-  }
-  // 2. KOMBINASI: BDN + BARANG DIKEMBALIKAN
-  else if (active.bdn && active.kembali) {
-    hasil.push("Terhadap barang bukti hasil penindakan yang terbukti melanggar ketentuan perundang-undangan ditetapkan sebagai Barang yang Dikuasai Negara (BDN) untuk selanjutnya diusulkan menjadi Barang Milik Negara (BMN).");
-    hasil.push("Terhadap barang dan/atau sarana pengangkut yang telah diteliti dan tidak terbukti melanggar ketentuan peraturan perundang-undangan dikembalikan kepada pemilik yang sah.");
-    if (active.spsa) {
-      hasil.push("Terhadap pelanggaran administratif yang timbul dikenakan sanksi administrasi berupa denda (SPSA).");
+    const active = {};
+    document.querySelectorAll('.chk-lhp-opsi:checked').forEach((c) => {
+        active[c.value] = true;
+    });
+    let hasil = [];
+    if (active.bdn && active.spsa && !active.kembali) {
+        hasil.push("Terhadap barang hasil penindakan yang melanggar ketentuan ditetapkan sebagai Barang yang Dikuasai Negara (BDN) untuk diproses menjadi Barang Milik Negara (BMN).");
+        hasil.push("Terhadap pihak yang bertanggung jawab dikenakan sanksi administrasi berupa denda dengan menerbitkan Surat Penetapan Sanksi Administrasi (SPSA).");
     }
-  }
-  // 3. KOMBINASI: SPSA + DIKEMBALIKAN
-  else if (active.spsa && active.kembali && !active.bdn) {
-    hasil.push("Terhadap pihak yang bertanggung jawab dikenakan sanksi administrasi berupa denda dengan menerbitkan Surat Penetapan Sanksi Administrasi (SPSA) dan penagihan pungutan negara.");
-    hasil.push("Terhadap barang hasil penindakan dapat disetujui pengeluarannya / dikembalikan kepada pemilik setelah seluruh kewajiban pungutan negara dan sanksi denda (SPSA) dilunasi.");
-  }
-  // 4. KOMBINASI: ULTIMUM REMEDIUM (UR) + PEMUSNAHAN (BMN)
-  else if (active.ur || active.ur && active.musnah) {
-    hasil.push("Memberikan rekomendasi penyelesaian perkara melalui asas Ultimum Remedium (Pasal 40B UU Cukai jo. UU HPP) dengan mewajibkan pembayaran sanksi denda sebesar 4 (empat) kali nilai cukai.");
-    hasil.push("Terhadap Barang Kena Cukai (BKC) hasil penindakan dirampas untuk negara, ditetapkan sebagai Barang Milik Negara (BMN), dan selanjutnya diusulkan untuk dilakukan pemusnahan.");
-    hasil.push("Apabila sanksi denda tidak diselesaikan dalam jangka waktu yang ditentukan, proses perkara segera ditingkatkan ke tahap Penyidikan.");
-  }
-  // 5. KOMBINASI: RE-EKSPOR + PENGELUARAN SEBAGIAN / BDN
-  else if (active.reekspor && active.keluar_sebagian) {
-    hasil.push("Terhadap barang impor yang terkena ketentuan larangan dan pembatasan (lartas) direkomendasikan untuk diekspor kembali (re-ekspor) ke negara asal dalam batas waktu yang ditentukan.");
-    hasil.push("Terhadap barang impor yang telah memenuhi dokumen perizinan disetujui untuk dilakukan pengeluaran barang sebagian (parsial release).");
-    if (active.bdn) {
-      hasil.push("Apabila barang yang dire-ekspor tidak dikeluarkan dalam batas waktu yang ditetapkan, maka diproses penetapannya menjadi Barang yang Dikuasai Negara (BDN).");
+    else if (active.bdn && active.kembali) {
+        hasil.push("Terhadap barang bukti hasil penindakan yang terbukti melanggar ketentuan perundang-undangan ditetapkan sebagai Barang yang Dikuasai Negara (BDN) untuk selanjutnya diusulkan menjadi Barang Milik Negara (BMN).");
+        hasil.push("Terhadap barang dan/atau sarana pengangkut yang telah diteliti dan tidak terbukti melanggar ketentuan peraturan perundang-undangan dikembalikan kepada pemilik yang sah.");
+        if (active.spsa) {
+            hasil.push("Terhadap pelanggaran administratif yang timbul dikenakan sanksi administrasi berupa denda (SPSA).");
+        }
     }
-  }
-  // 6. OPSIONAL TUNGGAL ATAU STANDAR LAINNYA
-  else {
-    if (active.bdn) hasil.push("Terhadap seluruh barang hasil penindakan ditetapkan sebagai Barang yang Dikuasai Negara (BDN) untuk diproses pengadministrasiannya menjadi BMN.");
-    if (active.spsa) hasil.push("Dikenakan sanksi administrasi berupa denda sesuai ketentuan dengan menerbitkan Surat Penetapan Sanksi Administrasi (SPSA).");
-    if (active.kembali) hasil.push("Terhadap barang hasil penindakan yang telah memenuhi ketentuan peraturan perundang-undangan dikembalikan kepada pemilik yang sah.");
-    if (active.reekspor) hasil.push("Terhadap barang impor yang tidak memenuhi ketentuan perizinan direkomendasikan untuk diekspor kembali (re-ekspor) ke negara asal.");
-    if (active.keluar_sebagian) hasil.push("Terhadap barang impor yang telah memenuhi persyaratan disetujui untuk dilakukan pengeluaran barang sebagian.");
-    if (active.musnah) hasil.push("Terhadap barang hasil penindakan yang tidak laik atau dilarang diusulkan untuk dilakukan pemusnahan sesuai prosedur yang berlaku.");
-    if (active.sidik) hasil.push("Telah terpenuhi bukti permulaan yang cukup sehingga penanganan perkara direkomendasikan untuk Ditingkatkan ke Tahap Penyidikan (menerbitkan SPRIN-DIK dan SPDP).");
-    if (active.pelimpahan) hasil.push("Melakukan serah terima berkas perkara beserta barang bukti kepada instansi yang berwenang.");
-    if (active.batal_dok) hasil.push("Dilakukan pembatalan terhadap dokumen pemberitahuan pabean sesuai tata laksana kepabeanan yang berlaku.");
-    if (active.henti) hasil.push("Proses penelitian dihentikan karena tidak ditemukan bukti permulaan yang cukup adanya pelanggaran peraturan perundang-undangan.");
-  }
-  const textHasil = hasil.map((txt, idx) => `${idx + 1}. ${txt}`).join('\n\n');
-  const textarea = document.getElementById('input_Penyelesaian_Perkara');
-  if (textarea) {
-    textarea.value = textHasil;
-    textarea.dispatchEvent(new Event('input', {
-      bubbles: true
-    }));
-    if (typeof saveDynamicVal === 'function') {
-      saveDynamicVal('Penyelesaian_Perkara', textHasil);
-      saveDynamicVal('Alternatif_Penyelesaian_Perkara', textHasil);
+    else if (active.spsa && active.kembali && !active.bdn) {
+        hasil.push("Terhadap pihak yang bertanggung jawab dikenakan sanksi administrasi berupa denda dengan menerbitkan Surat Penetapan Sanksi Administrasi (SPSA) dan penagihan pungutan negara.");
+        hasil.push("Terhadap barang hasil penindakan dapat disetujui pengeluarannya / dikembalikan kepada pemilik setelah seluruh kewajiban pungutan negara dan sanksi denda (SPSA) dilunasi.");
     }
-  }
+    else if (active.ur || (active.ur && active.musnah)) {
+        hasil.push("Memberikan rekomendasi penyelesaian perkara melalui asas Ultimum Remedium (Pasal 40B UU Cukai jo. UU HPP) dengan mewajibkan pembayaran sanksi denda sebesar 4 (empat) kali nilai cukai.");
+        hasil.push("Terhadap Barang Kena Cukai (BKC) hasil penindakan dirampas untuk negara, ditetapkan sebagai Barang Milik Negara (BMN), dan selanjutnya diusulkan untuk dilakukan pemusnahan.");
+        hasil.push("Apabila sanksi denda tidak diselesaikan dalam jangka waktu yang ditentukan, proses perkara segera ditingkatkan ke tahap Penyidikan.");
+    }
+    else if (active.reekspor && active.keluar_sebagian) {
+        hasil.push("Terhadap barang impor yang terkena ketentuan larangan dan pembatasan (lartas) direkomendasikan untuk diekspor kembali (re-ekspor) ke negara asal dalam batas waktu yang ditentukan.");
+        hasil.push("Terhadap barang impor yang telah memenuhi dokumen perizinan disetujui untuk dilakukan pengeluaran barang sebagian (parsial release).");
+        if (active.bdn) {
+            hasil.push("Apabila barang yang dire-ekspor tidak dikeluarkan dalam batas waktu yang ditetapkan, maka diproses penetapannya menjadi Barang yang Dikuasai Negara (BDN).");
+        }
+    }
+    else {
+        if (active.bdn)
+            hasil.push("Terhadap seluruh barang hasil penindakan ditetapkan sebagai Barang yang Dikuasai Negara (BDN) untuk diproses pengadministrasiannya menjadi BMN.");
+        if (active.spsa)
+            hasil.push("Dikenakan sanksi administrasi berupa denda sesuai ketentuan dengan menerbitkan Surat Penetapan Sanksi Administrasi (SPSA).");
+        if (active.kembali)
+            hasil.push("Terhadap barang hasil penindakan yang telah memenuhi ketentuan peraturan perundang-undangan dikembalikan kepada pemilik yang sah.");
+        if (active.reekspor)
+            hasil.push("Terhadap barang impor yang tidak memenuhi ketentuan perizinan direkomendasikan untuk diekspor kembali (re-ekspor) ke negara asal.");
+        if (active.keluar_sebagian)
+            hasil.push("Terhadap barang impor yang telah memenuhi persyaratan disetujui untuk dilakukan pengeluaran barang sebagian.");
+        if (active.musnah)
+            hasil.push("Terhadap barang hasil penindakan yang tidak laik atau dilarang diusulkan untuk dilakukan pemusnahan sesuai prosedur yang berlaku.");
+        if (active.sidik)
+            hasil.push("Telah terpenuhi bukti permulaan yang cukup sehingga penanganan perkara direkomendasikan untuk Ditingkatkan ke Tahap Penyidikan (menerbitkan SPRIN-DIK dan SPDP).");
+        if (active.pelimpahan)
+            hasil.push("Melakukan serah terima berkas perkara beserta barang bukti kepada instansi yang berwenang.");
+        if (active.batal_dok)
+            hasil.push("Dilakukan pembatalan terhadap dokumen pemberitahuan pabean sesuai tata laksana kepabeanan yang berlaku.");
+        if (active.henti)
+            hasil.push("Proses penelitian dihentikan karena tidak ditemukan bukti permulaan yang cukup adanya pelanggaran peraturan perundang-undangan.");
+    }
+    const textHasil = hasil.map((txt, idx) => `${idx + 1}. ${txt}`).join('\n\n');
+    const textarea = document.getElementById('input_Penyelesaian_Perkara');
+    if (textarea) {
+        textarea.value = textHasil;
+        textarea.dispatchEvent(new Event('input', { bubbles: true }));
+        if (typeof saveDynamicVal === 'function') {
+            saveDynamicVal('Penyelesaian_Perkara', textHasil);
+            saveDynamicVal('Alternatif_Penyelesaian_Perkara', textHasil);
+        }
+    }
 }
 window.syncUraianKombinasiLHP = syncUraianKombinasiLHP;
 export function renderItems(items) {
-  let c = document.getElementById('items');
-  if (!c) return;
-  c.innerHTML = items.map((x, i) => `
+    let c = document.getElementById('items');
+    if (!c)
+        return;
+    c.innerHTML = items.map((x, i) => `
     <div class="item">
       <div class="grid5">
         <div><label>Komoditi</label><input value="${escText(x.komoditi || '')}" data-i="${i}" data-k="komoditi"></div>
@@ -582,94 +574,73 @@ export function renderItems(items) {
       </button>
     </div>
   `).join('');
-  c.querySelectorAll('input[data-i]').forEach(inp => {
-    inp.oninput = () => {
-      let arr = JSON.parse(localStorage.getItem('cacahItems') || '[]');
-      arr[inp.dataset.i][inp.dataset.k] = inp.value;
-      localStorage.setItem('cacahItems', JSON.stringify(arr));
-      updateReportLive();
-    };
-  });
+    c.querySelectorAll('input[data-i]').forEach((inp) => {
+        inp.oninput = () => {
+            if (store.activeRecordIndex >= 0 && store.databasePerkara[store.activeRecordIndex]) {
+                let rec = store.databasePerkara[store.activeRecordIndex];
+                if (!rec.cacahItems)
+                    rec.cacahItems = [];
+                rec.cacahItems[inp.dataset.i][inp.dataset.k] = inp.value;
+                savePerkaraToStorage();
+                updateReportLive();
+            }
+        };
+    });
 }
 export function addItem() {
-  let items = JSON.parse(localStorage.getItem('cacahItems') || '[]');
-  items.push({
-    komoditi: '',
-    uraian: '',
-    jumlah: '',
-    kondisi: '',
-    keterangan: '',
-    asal: '-'
-  });
-  localStorage.setItem('cacahItems', JSON.stringify(items));
-  renderItems(items);
-  updateReportLive();
+    if (store.activeRecordIndex >= 0 && store.databasePerkara[store.activeRecordIndex]) {
+        let rec = store.databasePerkara[store.activeRecordIndex];
+        if (!rec.cacahItems)
+            rec.cacahItems = [];
+        rec.cacahItems.push({ komoditi: '', uraian: '', jumlah: '', kondisi: '', keterangan: '', asal: '-' });
+        savePerkaraToStorage();
+        renderItems(rec.cacahItems);
+        updateReportLive();
+    }
 }
 export function delItem(i) {
-  let items = JSON.parse(localStorage.getItem('cacahItems') || '[]');
-  items.splice(i, 1);
-  localStorage.setItem('cacahItems', JSON.stringify(items));
-  renderItems(items);
-  updateReportLive();
+    if (store.activeRecordIndex >= 0 && store.databasePerkara[store.activeRecordIndex]) {
+        let rec = store.databasePerkara[store.activeRecordIndex];
+        if (!rec.cacahItems)
+            rec.cacahItems = [];
+        rec.cacahItems.splice(i, 1);
+        savePerkaraToStorage();
+        renderItems(rec.cacahItems);
+        updateReportLive();
+    }
 }
 export function addSplitPegawai() {
-  let list = JSON.parse(localStorage.getItem('splitPegawaiList') || '[]');
-  if (list.length === 0) {
-    list = [{
-      nama: getVal('form_nama_seksi'),
-      nip: getVal('form_nip_seksi'),
-      jabatan: getVal('form_jabatan_seksi') || 'Kepala Seksi Penyidikan'
-    }, {
-      nama: getVal('form_ketua_tim'),
-      nip: getVal('form_nip_ketua_tim'),
-      jabatan: getVal('form_jabatan_ketua_tim') || 'Ketua Tim Peneliti'
-    }, {
-      nama: getVal('form_petugas_lpf'),
-      nip: getVal('form_nip_petugas_lpf'),
-      jabatan: getVal('form_jabatan_petugas_lpf') || 'Petugas LPF'
-    }, {
-      nama: getVal('form_pembuat_lpp'),
-      nip: getVal('form_nip_pembuat_lpp'),
-      jabatan: getVal('form_jabatan_pembuat_lpp') || 'Petugas LPP'
-    }];
-  }
-  list.push({
-    nama: '',
-    nip: '',
-    jabatan: ''
-  });
-  localStorage.setItem('splitPegawaiList', JSON.stringify(list));
-  if (store.activeRecordIndex >= 0 && store.databasePerkara[store.activeRecordIndex]) {
-    store.databasePerkara[store.activeRecordIndex].splitPegawaiList = list;
+    if (store.activeRecordIndex < 0)
+        return;
+    let rec = store.databasePerkara[store.activeRecordIndex];
+    if (!rec.splitPegawaiList || rec.splitPegawaiList.length === 0) {
+        rec.splitPegawaiList = [
+            { nama: getVal('form_nama_seksi'), nip: getVal('form_nip_seksi'), jabatan: getVal('form_jabatan_seksi') || 'Kepala Seksi Penyidikan' },
+            { nama: getVal('form_ketua_tim'), nip: getVal('form_nip_ketua_tim'), jabatan: getVal('form_jabatan_ketua_tim') || 'Ketua Tim Peneliti' },
+            { nama: getVal('form_petugas_lpf'), nip: getVal('form_nip_petugas_lpf'), jabatan: getVal('form_jabatan_petugas_lpf') || 'Petugas LPF' },
+            { nama: getVal('form_pembuat_lpp'), nip: getVal('form_nip_pembuat_lpp'), jabatan: getVal('form_jabatan_pembuat_lpp') || 'Petugas LPP' }
+        ];
+    }
+    rec.splitPegawaiList.push({ nama: '', nip: '', jabatan: '' });
     savePerkaraToStorage();
-  }
-  renderSplitPegawaiList();
-  updateReportLive();
+    renderSplitPegawaiList();
+    updateReportLive();
 }
 export function renderSplitPegawaiList() {
-  let container = document.getElementById('splitPegawaiContainer');
-  if (!container) return;
-  let list = JSON.parse(localStorage.getItem('splitPegawaiList') || '[]');
-  if (list.length === 0) {
-    list = [{
-      nama: getVal('form_nama_seksi'),
-      nip: getVal('form_nip_seksi'),
-      jabatan: getVal('form_jabatan_seksi') || 'Kepala Seksi Penyidikan'
-    }, {
-      nama: getVal('form_ketua_tim'),
-      nip: getVal('form_nip_ketua_tim'),
-      jabatan: getVal('form_jabatan_ketua_tim') || 'Ketua Tim Peneliti'
-    }, {
-      nama: getVal('form_petugas_lpf'),
-      nip: getVal('form_nip_petugas_lpf'),
-      jabatan: getVal('form_jabatan_petugas_lpf') || 'Petugas LPF'
-    }, {
-      nama: getVal('form_pembuat_lpp'),
-      nip: getVal('form_nip_pembuat_lpp'),
-      jabatan: getVal('form_jabatan_pembuat_lpp') || 'Petugas LPP'
-    }];
-  }
-  container.innerHTML = list.map((p, i) => `
+    let container = document.getElementById('splitPegawaiContainer');
+    if (!container || store.activeRecordIndex < 0)
+        return;
+    let rec = store.databasePerkara[store.activeRecordIndex];
+    if (!rec.splitPegawaiList || rec.splitPegawaiList.length === 0) {
+        rec.splitPegawaiList = [
+            { nama: getVal('form_nama_seksi'), nip: getVal('form_nip_seksi'), jabatan: getVal('form_jabatan_seksi') || 'Kepala Seksi Penyidikan' },
+            { nama: getVal('form_ketua_tim'), nip: getVal('form_nip_ketua_tim'), jabatan: getVal('form_jabatan_ketua_tim') || 'Ketua Tim Peneliti' },
+            { nama: getVal('form_petugas_lpf'), nip: getVal('form_nip_petugas_lpf'), jabatan: getVal('form_jabatan_petugas_lpf') || 'Petugas LPF' },
+            { nama: getVal('form_pembuat_lpp'), nip: getVal('form_nip_pembuat_lpp'), jabatan: getVal('form_jabatan_pembuat_lpp') || 'Petugas LPP' }
+        ];
+    }
+    let list = rec.splitPegawaiList;
+    container.innerHTML = list.map((p, i) => `
     <div class="item">
       <div class="grid3">
         <div><label>Nama Pegawai #${i + 1}</label><input value="${escText(p.nama || '')}" data-pi="${i}" data-pk="nama"></div>
@@ -681,136 +652,66 @@ export function renderSplitPegawaiList() {
       </button>
     </div>
   `).join('');
-  container.querySelectorAll('input[data-pi]').forEach(inp => {
-    inp.oninput = () => {
-      let arr = JSON.parse(localStorage.getItem('splitPegawaiList') || '[]');
-      if (arr.length === 0) {
-        arr = [{
-          nama: getVal('form_nama_seksi'),
-          nip: getVal('form_nip_seksi'),
-          jabatan: getVal('form_jabatan_seksi') || 'Kepala Seksi Penyidikan'
-        }, {
-          nama: getVal('form_ketua_tim'),
-          nip: getVal('form_nip_ketua_tim'),
-          jabatan: getVal('form_jabatan_ketua_tim') || 'Ketua Tim Peneliti'
-        }, {
-          nama: getVal('form_petugas_lpf'),
-          nip: getVal('form_nip_petugas_lpf'),
-          jabatan: getVal('form_jabatan_petugas_lpf') || 'Petugas LPF'
-        }, {
-          nama: getVal('form_pembuat_lpp'),
-          nip: getVal('form_nip_pembuat_lpp'),
-          jabatan: getVal('form_jabatan_pembuat_lpp') || 'Petugas LPP'
-        }];
-      }
-      arr[inp.dataset.pi][inp.dataset.pk] = inp.value;
-      localStorage.setItem('splitPegawaiList', JSON.stringify(arr));
-      if (store.activeRecordIndex >= 0 && store.databasePerkara[store.activeRecordIndex]) {
-        store.databasePerkara[store.activeRecordIndex].splitPegawaiList = arr;
-        savePerkaraToStorage();
-      }
-      updateReportLive();
-    };
-  });
+    container.querySelectorAll('input[data-pi]').forEach((inp) => {
+        inp.oninput = () => {
+            if (store.activeRecordIndex >= 0 && store.databasePerkara[store.activeRecordIndex]) {
+                let r = store.databasePerkara[store.activeRecordIndex];
+                if (!r.splitPegawaiList)
+                    r.splitPegawaiList = [];
+                r.splitPegawaiList[inp.dataset.pi][inp.dataset.pk] = inp.value;
+                savePerkaraToStorage();
+                updateReportLive();
+            }
+        };
+    });
 }
 export function delSplitPegawai(i) {
-  let list = JSON.parse(localStorage.getItem('splitPegawaiList') || '[]');
-  list.splice(i, 1);
-  localStorage.setItem('splitPegawaiList', JSON.stringify(list));
-  if (store.activeRecordIndex >= 0 && store.databasePerkara[store.activeRecordIndex]) {
-    store.databasePerkara[store.activeRecordIndex].splitPegawaiList = list;
-    savePerkaraToStorage();
-  }
-  renderSplitPegawaiList();
-  updateReportLive();
+    if (store.activeRecordIndex >= 0 && store.databasePerkara[store.activeRecordIndex]) {
+        let rec = store.databasePerkara[store.activeRecordIndex];
+        if (rec.splitPegawaiList) {
+            rec.splitPegawaiList.splice(i, 1);
+            savePerkaraToStorage();
+            renderSplitPegawaiList();
+            updateReportLive();
+        }
+    }
 }
 export function addSprinPegawai() {
-  let list = JSON.parse(localStorage.getItem('sprinPegawaiList') || '[]');
-  if (list.length === 0) {
-    list = [{
-      nama: getVal('form_ketua_tim'),
-      nip: getVal('form_nip_ketua_tim'),
-      pangkat: getVal('form_gol_ketua_tim'),
-      jabatan: getVal('form_jabatan_ketua_tim') || 'Ketua Tim Peneliti'
-    }, {
-      nama: getVal('form_pembuat_lpp'),
-      nip: getVal('form_nip_pembuat_lpp'),
-      pangkat: getVal('form_gol_pembuat_lpp'),
-      jabatan: getVal('form_jabatan_pembuat_lpp') || 'Petugas LPP'
-    }, {
-      nama: getVal('form_petugas_lpf'),
-      nip: getVal('form_nip_petugas_lpf'),
-      pangkat: getVal('form_gol_petugas_lpf'),
-      jabatan: getVal('form_jabatan_petugas_lpf') || 'Petugas LPF'
-    }, {
-      nama: getVal('form_indak_1'),
-      nip: getVal('form_nip_indak_1'),
-      pangkat: getVal('form_gol_indak_1'),
-      jabatan: getVal('form_jabatan_indak_1') || 'Petugas Penindakan 1'
-    }, {
-      nama: getVal('form_indak_2'),
-      nip: getVal('form_nip_indak_2'),
-      pangkat: getVal('form_gol_indak_2'),
-      jabatan: getVal('form_jabatan_indak_2') || 'Petugas Penindakan 2'
-    }, {
-      nama: getVal('form_indak_lainnya'),
-      nip: getVal('form_nip_indak_lainnya'),
-      pangkat: getVal('form_gol_indak_lainnya'),
-      jabatan: getVal('form_jabatan_indak_lainnya') || 'Petugas Penindakan 3'
-    }];
-  }
-  list.push({
-    nama: '',
-    nip: '',
-    pangkat: '',
-    jabatan: ''
-  });
-  localStorage.setItem('sprinPegawaiList', JSON.stringify(list));
-  if (store.activeRecordIndex >= 0 && store.databasePerkara[store.activeRecordIndex]) {
-    store.databasePerkara[store.activeRecordIndex].sprinPegawaiList = list;
+    if (store.activeRecordIndex < 0)
+        return;
+    let rec = store.databasePerkara[store.activeRecordIndex];
+    if (!rec.sprinPegawaiList || rec.sprinPegawaiList.length === 0) {
+        rec.sprinPegawaiList = [
+            { nama: getVal('form_ketua_tim'), nip: getVal('form_nip_ketua_tim'), pangkat: getVal('form_gol_ketua_tim'), jabatan: getVal('form_jabatan_ketua_tim') || 'Ketua Tim Peneliti' },
+            { nama: getVal('form_pembuat_lpp'), nip: getVal('form_nip_pembuat_lpp'), pangkat: getVal('form_gol_pembuat_lpp'), jabatan: getVal('form_jabatan_pembuat_lpp') || 'Petugas LPP' },
+            { nama: getVal('form_petugas_lpf'), nip: getVal('form_nip_petugas_lpf'), pangkat: getVal('form_gol_petugas_lpf'), jabatan: getVal('form_jabatan_petugas_lpf') || 'Petugas LPF' },
+            { nama: getVal('form_indak_1'), nip: getVal('form_nip_indak_1'), pangkat: getVal('form_gol_indak_1'), jabatan: getVal('form_jabatan_indak_1') || 'Petugas Penindakan 1' },
+            { nama: getVal('form_indak_2'), nip: getVal('form_nip_indak_2'), pangkat: getVal('form_gol_indak_2'), jabatan: getVal('form_jabatan_indak_2') || 'Petugas Penindakan 2' },
+            { nama: getVal('form_indak_lainnya'), nip: getVal('form_nip_indak_lainnya'), pangkat: getVal('form_gol_indak_lainnya'), jabatan: getVal('form_jabatan_indak_lainnya') || 'Petugas Penindakan 3' }
+        ];
+    }
+    rec.sprinPegawaiList.push({ nama: '', nip: '', pangkat: '', jabatan: '' });
     savePerkaraToStorage();
-  }
-  renderSprinPegawaiList();
-  updateReportLive();
+    renderSprinPegawaiList();
+    updateReportLive();
 }
 export function renderSprinPegawaiList() {
-  let container = document.getElementById('sprinPegawaiContainer');
-  if (!container) return;
-  let list = JSON.parse(localStorage.getItem('sprinPegawaiList') || '[]');
-  if (list.length === 0) {
-    list = [{
-      nama: getVal('form_ketua_tim'),
-      nip: getVal('form_nip_ketua_tim'),
-      pangkat: getVal('form_gol_ketua_tim'),
-      jabatan: getVal('form_jabatan_ketua_tim') || 'Ketua Tim Peneliti'
-    }, {
-      nama: getVal('form_pembuat_lpp'),
-      nip: getVal('form_nip_pembuat_lpp'),
-      pangkat: getVal('form_gol_pembuat_lpp'),
-      jabatan: getVal('form_jabatan_pembuat_lpp') || 'Petugas LPP'
-    }, {
-      nama: getVal('form_petugas_lpf'),
-      nip: getVal('form_nip_petugas_lpf'),
-      pangkat: getVal('form_gol_petugas_lpf'),
-      jabatan: getVal('form_jabatan_petugas_lpf') || 'Petugas LPF'
-    }, {
-      nama: getVal('form_indak_1'),
-      nip: getVal('form_nip_indak_1'),
-      pangkat: getVal('form_gol_indak_1'),
-      jabatan: getVal('form_jabatan_indak_1') || 'Petugas Penindakan 1'
-    }, {
-      nama: getVal('form_indak_2'),
-      nip: getVal('form_nip_indak_2'),
-      pangkat: getVal('form_gol_indak_2'),
-      jabatan: getVal('form_jabatan_indak_2') || 'Petugas Penindakan 2'
-    }, {
-      nama: getVal('form_indak_lainnya'),
-      nip: getVal('form_nip_indak_lainnya'),
-      pangkat: getVal('form_gol_indak_lainnya'),
-      jabatan: getVal('form_jabatan_indak_lainnya') || 'Petugas Penindakan 3'
-    }];
-  }
-  container.innerHTML = list.map((p, i) => `
+    let container = document.getElementById('sprinPegawaiContainer');
+    if (!container || store.activeRecordIndex < 0)
+        return;
+    let rec = store.databasePerkara[store.activeRecordIndex];
+    if (!rec.sprinPegawaiList || rec.sprinPegawaiList.length === 0) {
+        rec.sprinPegawaiList = [
+            { nama: getVal('form_ketua_tim'), nip: getVal('form_nip_ketua_tim'), pangkat: getVal('form_gol_ketua_tim'), jabatan: getVal('form_jabatan_ketua_tim') || 'Ketua Tim Peneliti' },
+            { nama: getVal('form_pembuat_lpp'), nip: getVal('form_nip_pembuat_lpp'), pangkat: getVal('form_gol_pembuat_lpp'), jabatan: getVal('form_jabatan_pembuat_lpp') || 'Petugas LPP' },
+            { nama: getVal('form_petugas_lpf'), nip: getVal('form_nip_petugas_lpf'), pangkat: getVal('form_gol_petugas_lpf'), jabatan: getVal('form_jabatan_petugas_lpf') || 'Petugas LPF' },
+            { nama: getVal('form_indak_1'), nip: getVal('form_nip_indak_1'), pangkat: getVal('form_gol_indak_1'), jabatan: getVal('form_jabatan_indak_1') || 'Petugas Penindakan 1' },
+            { nama: getVal('form_indak_2'), nip: getVal('form_nip_indak_2'), pangkat: getVal('form_gol_indak_2'), jabatan: getVal('form_jabatan_indak_2') || 'Petugas Penindakan 2' },
+            { nama: getVal('form_indak_lainnya'), nip: getVal('form_nip_indak_lainnya'), pangkat: getVal('form_gol_indak_lainnya'), jabatan: getVal('form_jabatan_indak_lainnya') || 'Petugas Penindakan 3' }
+        ];
+    }
+    let list = rec.sprinPegawaiList;
+    container.innerHTML = list.map((p, i) => `
     <div class="item">
       <div class="grid4">
         <div><label>Nama Pegawai #${i + 1}</label><input value="${escText(p.nama || '')}" data-spi="${i}" data-spk="nama"></div>
@@ -823,158 +724,119 @@ export function renderSprinPegawaiList() {
       </button>
     </div>
   `).join('');
-  container.querySelectorAll('input[data-spi]').forEach(inp => {
-    inp.oninput = () => {
-      let arr = JSON.parse(localStorage.getItem('sprinPegawaiList') || '[]');
-      if (arr.length === 0) {
-        arr = [{
-          nama: getVal('form_ketua_tim'),
-          nip: getVal('form_nip_ketua_tim'),
-          pangkat: getVal('form_gol_ketua_tim'),
-          jabatan: getVal('form_jabatan_ketua_tim') || 'Ketua Tim Peneliti'
-        }, {
-          nama: getVal('form_pembuat_lpp'),
-          nip: getVal('form_nip_pembuat_lpp'),
-          pangkat: getVal('form_gol_pembuat_lpp'),
-          jabatan: getVal('form_jabatan_pembuat_lpp') || 'Petugas LPP'
-        }, {
-          nama: getVal('form_petugas_lpf'),
-          nip: getVal('form_nip_petugas_lpf'),
-          pangkat: getVal('form_gol_petugas_lpf'),
-          jabatan: getVal('form_jabatan_petugas_lpf') || 'Petugas LPF'
-        }, {
-          nama: getVal('form_indak_1'),
-          nip: getVal('form_nip_indak_1'),
-          pangkat: getVal('form_gol_indak_1'),
-          jabatan: getVal('form_jabatan_indak_1') || 'Petugas Penindakan 1'
-        }, {
-          nama: getVal('form_indak_2'),
-          nip: getVal('form_nip_indak_2'),
-          pangkat: getVal('form_gol_indak_2'),
-          jabatan: getVal('form_jabatan_indak_2') || 'Petugas Penindakan 2'
-        }, {
-          nama: getVal('form_indak_lainnya'),
-          nip: getVal('form_nip_indak_lainnya'),
-          pangkat: getVal('form_gol_indak_lainnya'),
-          jabatan: getVal('form_jabatan_indak_lainnya') || 'Petugas Penindakan 3'
-        }];
-      }
-      arr[inp.dataset.spi][inp.dataset.spk] = inp.value;
-      localStorage.setItem('sprinPegawaiList', JSON.stringify(arr));
-      if (store.activeRecordIndex >= 0 && store.databasePerkara[store.activeRecordIndex]) {
-        store.databasePerkara[store.activeRecordIndex].sprinPegawaiList = arr;
-        savePerkaraToStorage();
-      }
-      updateReportLive();
-    };
-  });
+    container.querySelectorAll('input[data-spi]').forEach((inp) => {
+        inp.oninput = () => {
+            if (store.activeRecordIndex >= 0 && store.databasePerkara[store.activeRecordIndex]) {
+                let r = store.databasePerkara[store.activeRecordIndex];
+                if (!r.sprinPegawaiList)
+                    r.sprinPegawaiList = [];
+                r.sprinPegawaiList[inp.dataset.spi][inp.dataset.spk] = inp.value;
+                savePerkaraToStorage();
+                updateReportLive();
+            }
+        };
+    });
 }
 export function delSprinPegawai(i) {
-  let list = JSON.parse(localStorage.getItem('sprinPegawaiList') || '[]');
-  list.splice(i, 1);
-  localStorage.setItem('sprinPegawaiList', JSON.stringify(list));
-  if (store.activeRecordIndex >= 0 && store.databasePerkara[store.activeRecordIndex]) {
-    store.databasePerkara[store.activeRecordIndex].sprinPegawaiList = list;
-    savePerkaraToStorage();
-  }
-  renderSprinPegawaiList();
-  updateReportLive();
+    if (store.activeRecordIndex >= 0 && store.databasePerkara[store.activeRecordIndex]) {
+        let rec = store.databasePerkara[store.activeRecordIndex];
+        if (rec.sprinPegawaiList) {
+            rec.sprinPegawaiList.splice(i, 1);
+            savePerkaraToStorage();
+            renderSprinPegawaiList();
+            updateReportLive();
+        }
+    }
 }
 export function renderTLFormSection(type) {
-  let container = document.getElementById('modalDynamicInputBodyTL');
-  if (!container) return;
-  if (store.activeRecordIndex < 0) {
-    container.innerHTML = `<h4>PILIH PERKARA DULU</h4><p class="small">Silakan gunakan tombol Validasi Data LHP untuk mulai.</p>`;
-    return;
-  }
-  let rec = store.databasePerkara[store.activeRecordIndex];
-  if (type === 'BAST_PEMILIK') {
-    // Pastikan list array diinisialisasi
-    if (!rec.TL_BAST_SarkutList) {
-      rec.TL_BAST_SarkutList = [{
-        jenis: rec.TL_Nama_Sarkut || rec.Pengangkut || '-',
-        nopol: rec.TL_No_Reg_Sarkut || '-'
-      }];
+    let container = document.getElementById('modalDynamicInputBodyTL');
+    if (!container)
+        return;
+    if (store.activeRecordIndex < 0) {
+        container.innerHTML = `<h4>PILIH PERKARA DULU</h4><p class="small">Silakan gunakan tombol Validasi Data LHP untuk mulai.</p>`;
+        return;
     }
-    if (!rec.TL_BAST_BarangList) {
-      let jmlKoli = rec.Jumlah_Koli || '12';
-      let teksJml = tanggalKeTeks ? tanggalKeTeks(jmlKoli) : 'dua belas';
-      let jenisKoli = rec.Jenis_Koli || 'koli';
-      let komoditi = rec.Komoditi || rec.Uraian_Barang || 'Sepatu';
-      let defKemasan = rec.No_Kontainer && rec.No_Kontainer !== '-' ? `${rec.No_Kontainer} / ${rec.Ukuran_Kontainer || ''}` : `${jmlKoli} ${jenisKoli}`;
-      let defBarang = `${jmlKoli} (${teksJml}) ${jenisKoli} ${komoditi}`;
-      rec.TL_BAST_BarangList = [{
-        kemasan: defKemasan,
-        uraian: defBarang
-      }];
-    }
-    if (!rec.TL_BAST_DokumenList) {
-      let jns = rec.Dokumen_Pemberitahuan || 'BC 2.0';
-      let no = rec.Nomor_Dok_Pemberitahuan || '12345';
-      let tgl = rec.Tanggal_Dokumen_Pemberitahuan ? formatDateIndo(rec.Tanggal_Dokumen_Pemberitahuan) : '12 Januari 2026';
-      rec.TL_BAST_DokumenList = [{
-        uraian: `Eks. ${jns} nomor ${no} tanggal ${tgl}`
-      }];
-    }
-    if (!rec.TL_BAST_OrangList) {
-      rec.TL_BAST_OrangList = [{
-        nama: '-',
-        identitas: '-'
-      }];
-    }
-    let defaultNoBast = rec.TL_BAST_Num || rec.NoLP_LP_1 || '';
-    let defaultTglBast = rec.TL_Tanggal_Surat || rec.Tanggal_LP_LP_1 || '';
-    let opsiRangka = ['Penyelesaian kewajiban pabean dalam bentuk berupa SPSA', 'Tidak ditemukan pelanggaran', 'Penyelesaian kewajiban pabean dalam bentuk pembuatan dokumen pemberitahuan pabean', 'Penyelesaian pemenuhan larangan dan/atau pembatasan', 'Pengeluaran barang sebagian atas barang yang tidak terkena larangan dan/atau pembatasan', 'Penyelesaian lainnya'];
-    let selectedRangka = rec.TL_Rangka_Penyerahan || opsiRangka[0];
-    let isManualRangka = !opsiRangka.slice(0, 5).includes(selectedRangka);
-    let optionsHtml = opsiRangka.map(o => `<option value="${o}" ${isManualRangka && o === 'Penyelesaian lainnya' || selectedRangka === o ? 'selected' : ''}>${o}</option>`).join('');
-
-    // Trigger Kalender
-    window.onTanggalBastChange = function (val) {
-      saveDynamicValTL('TL_Tanggal_Surat', val);
-      if (!val) return;
-      if (typeof autoGenerateTeksTanggalBA === 'function') {
-        const res = autoGenerateTeksTanggalBA(val);
-        saveDynamicValTL('TL_Hari_BAST', res.hari);
-        saveDynamicValTL('TL_Tgl_Huruf_BAST', res.teksLengkap);
-        let elHari = document.getElementById('input_TL_Hari_BAST');
-        if (elHari) elHari.value = res.hari;
-        let elTeks = document.getElementById('input_TL_Tgl_Huruf_BAST');
-        if (elTeks) elTeks.value = res.teksLengkap;
-      }
-      showTLReportView('BAST_PEMILIK');
-    };
-    window.addBastItem = function (category) {
-      if (category === 'sarkut') rec.TL_BAST_SarkutList.push({
-        jenis: '',
-        nopol: ''
-      });
-      if (category === 'barang') rec.TL_BAST_BarangList.push({
-        kemasan: '',
-        uraian: ''
-      });
-      if (category === 'dokumen') rec.TL_BAST_DokumenList.push({
-        uraian: ''
-      });
-      if (category === 'orang') rec.TL_BAST_OrangList.push({
-        nama: '',
-        identitas: ''
-      });
-      savePerkaraToStorage();
-      renderTLFormSection('BAST_PEMILIK');
-      showTLReportView('BAST_PEMILIK');
-    };
-    window.delBastItem = function (category, idx) {
-      if (category === 'sarkut' && rec.TL_BAST_SarkutList.length > 1) rec.TL_BAST_SarkutList.splice(idx, 1);
-      if (category === 'barang' && rec.TL_BAST_BarangList.length > 1) rec.TL_BAST_BarangList.splice(idx, 1);
-      if (category === 'dokumen' && rec.TL_BAST_DokumenList.length > 1) rec.TL_BAST_DokumenList.splice(idx, 1);
-      if (category === 'orang' && rec.TL_BAST_OrangList.length > 1) rec.TL_BAST_OrangList.splice(idx, 1);
-      savePerkaraToStorage();
-      renderTLFormSection('BAST_PEMILIK');
-      showTLReportView('BAST_PEMILIK');
-    };
-    const toLetter = i => String.fromCharCode(97 + i) + '.';
-    container.innerHTML = `
+    let rec = store.databasePerkara[store.activeRecordIndex];
+    if (type === 'BAST_PEMILIK') {
+        if (!rec.TL_BAST_SarkutList) {
+            rec.TL_BAST_SarkutList = [{ jenis: rec.TL_Nama_Sarkut || rec.Pengangkut || '-', nopol: rec.TL_No_Reg_Sarkut || '-' }];
+        }
+        if (!rec.TL_BAST_BarangList) {
+            let jmlKoli = rec.Jumlah_Koli || '12';
+            let teksJml = window.tanggalKeTeks ? window.tanggalKeTeks(jmlKoli) : 'dua belas';
+            let jenisKoli = rec.Jenis_Koli || 'koli';
+            let komoditi = rec.Komoditi || rec.Uraian_Barang || 'Sepatu';
+            let defKemasan = (rec.No_Kontainer && rec.No_Kontainer !== '-') ? `${rec.No_Kontainer} / ${rec.Ukuran_Kontainer || ''}` : `${jmlKoli} ${jenisKoli}`;
+            let defBarang = `${jmlKoli} (${teksJml}) ${jenisKoli} ${komoditi}`;
+            rec.TL_BAST_BarangList = [{ kemasan: defKemasan, uraian: defBarang }];
+        }
+        if (!rec.TL_BAST_DokumenList) {
+            let jns = rec.Dokumen_Pemberitahuan || 'BC 2.0';
+            let no = rec.Nomor_Dok_Pemberitahuan || '12345';
+            let tgl = rec.Tanggal_Dokumen_Pemberitahuan ? formatDateIndo(rec.Tanggal_Dokumen_Pemberitahuan) : '12 Januari 2026';
+            rec.TL_BAST_DokumenList = [{ uraian: `Eks. ${jns} nomor ${no} tanggal ${tgl}` }];
+        }
+        if (!rec.TL_BAST_OrangList) {
+            rec.TL_BAST_OrangList = [{ nama: '-', identitas: '-' }];
+        }
+        let defaultNoBast = rec.TL_BAST_Num || rec.NoLP_LP_1 || '';
+        let defaultTglBast = rec.TL_Tanggal_Surat || rec.Tanggal_LP_LP_1 || '';
+        let opsiRangka = [
+            'Penyelesaian kewajiban pabean dalam bentuk berupa SPSA',
+            'Tidak ditemukan pelanggaran',
+            'Penyelesaian kewajiban pabean dalam bentuk pembuatan dokumen pemberitahuan pabean',
+            'Penyelesaian pemenuhan larangan dan/atau pembatasan',
+            'Pengeluaran barang sebagian atas barang yang tidak terkena larangan dan/atau pembatasan',
+            'Penyelesaian lainnya'
+        ];
+        let selectedRangka = rec.TL_Rangka_Penyerahan || opsiRangka[0];
+        let isManualRangka = !opsiRangka.slice(0, 5).includes(selectedRangka);
+        let optionsHtml = opsiRangka.map(o => `<option value="${o}" ${(isManualRangka && o === 'Penyelesaian lainnya') || selectedRangka === o ? 'selected' : ''}>${o}</option>`).join('');
+        window.onTanggalBastChange = function (val) {
+            saveDynamicValTL('TL_Tanggal_Surat', val);
+            if (!val)
+                return;
+            if (typeof autoGenerateTeksTanggalBA === 'function') {
+                const res = autoGenerateTeksTanggalBA(val);
+                saveDynamicValTL('TL_Hari_BAST', res.hari);
+                saveDynamicValTL('TL_Tgl_Huruf_BAST', res.teksLengkap);
+                let elHari = document.getElementById('input_TL_Hari_BAST');
+                if (elHari)
+                    elHari.value = res.hari;
+                let elTeks = document.getElementById('input_TL_Tgl_Huruf_BAST');
+                if (elTeks)
+                    elTeks.value = res.teksLengkap;
+            }
+            showTLReportView('BAST_PEMILIK');
+        };
+        window.addBastItem = function (category) {
+            if (category === 'sarkut')
+                rec.TL_BAST_SarkutList.push({ jenis: '', nopol: '' });
+            if (category === 'barang')
+                rec.TL_BAST_BarangList.push({ kemasan: '', uraian: '' });
+            if (category === 'dokumen')
+                rec.TL_BAST_DokumenList.push({ uraian: '' });
+            if (category === 'orang')
+                rec.TL_BAST_OrangList.push({ nama: '', identitas: '' });
+            savePerkaraToStorage();
+            renderTLFormSection('BAST_PEMILIK');
+            showTLReportView('BAST_PEMILIK');
+        };
+        window.delBastItem = function (category, idx) {
+            if (category === 'sarkut' && rec.TL_BAST_SarkutList.length > 1)
+                rec.TL_BAST_SarkutList.splice(idx, 1);
+            if (category === 'barang' && rec.TL_BAST_BarangList.length > 1)
+                rec.TL_BAST_BarangList.splice(idx, 1);
+            if (category === 'dokumen' && rec.TL_BAST_DokumenList.length > 1)
+                rec.TL_BAST_DokumenList.splice(idx, 1);
+            if (category === 'orang' && rec.TL_BAST_OrangList.length > 1)
+                rec.TL_BAST_OrangList.splice(idx, 1);
+            savePerkaraToStorage();
+            renderTLFormSection('BAST_PEMILIK');
+            showTLReportView('BAST_PEMILIK');
+        };
+        const toLetter = (i) => String.fromCharCode(97 + i) + '.';
+        container.innerHTML = `
       <div style="background:#0f172a; border:1px solid var(--border-color); padding:10px; border-radius:6px; margin-bottom:12px;">
         <span style="font-size:11px; font-weight:700; color:var(--primary);"><i class="fi fi-rr-document"></i> NOMOR & TANGGAL BAST</span>
         <div class="grid" style="margin-top:8px;">
@@ -999,7 +861,6 @@ export function renderTLFormSection(type) {
         </div>
       </div>
 
-      <!-- SARKUT -->
       <div style="border:1px solid var(--border-color); padding:10px; border-radius:6px; margin-bottom:10px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
           <span style="font-size:11px; font-weight:700; color:#cbd5e1;">1. SARANA PENGANGKUT</span>
@@ -1017,7 +878,6 @@ export function renderTLFormSection(type) {
         `).join('')}
       </div>
 
-      <!-- BARANG -->
       <div style="border:1px solid var(--border-color); padding:10px; border-radius:6px; margin-bottom:10px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
           <span style="font-size:11px; font-weight:700; color:#cbd5e1;">2. BARANG</span>
@@ -1045,7 +905,6 @@ export function renderTLFormSection(type) {
         `).join('')}
       </div>
 
-      <!-- DOKUMEN -->
       <div style="border:1px solid var(--border-color); padding:10px; border-radius:6px; margin-bottom:10px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
           <span style="font-size:11px; font-weight:700; color:#cbd5e1;">3. DOKUMEN</span>
@@ -1060,7 +919,6 @@ export function renderTLFormSection(type) {
         `).join('')}
       </div>
 
-      <!-- ORANG -->
       <div style="border:1px solid var(--border-color); padding:10px; border-radius:6px; margin-bottom:10px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
           <span style="font-size:11px; font-weight:700; color:#cbd5e1;">4. ORANG</span>
@@ -1078,7 +936,6 @@ export function renderTLFormSection(type) {
         `).join('')}
       </div>
 
-      <!-- PENERIMA -->
       <div style="border:1px solid var(--border-color); padding:10px; border-radius:6px; margin-bottom:12px;">
         <span style="font-size:11px; font-weight:700; color:#cbd5e1;">PENERIMA & RANGKA PENYERAHAN</span>
         <div class="grid">
@@ -1097,9 +954,9 @@ export function renderTLFormSection(type) {
           <label>Penyerahan Dilaksanakan Dalam Rangka:</label>
           <select style="width:100%; padding:7px; margin-bottom:6px;" onchange="
             if (this.value === 'Penyelesaian lainnya') {
-              document.getElementById('wrapper_manual_rangka').style.display = 'block';
+              (document.getElementById('wrapper_manual_rangka') as HTMLElement).style.display = 'block';
             } else {
-              document.getElementById('wrapper_manual_rangka').style.display = 'none';
+              (document.getElementById('wrapper_manual_rangka') as HTMLElement).style.display = 'none';
               saveDynamicValTL('TL_Rangka_Penyerahan', this.value);
             }
             showTLReportView('BAST_PEMILIK');
@@ -1112,7 +969,6 @@ export function renderTLFormSection(type) {
         </div>
       </div>
 
-      <!-- PETUGAS & SAKSI -->
       <div style="border:1px solid var(--border-color); padding:10px; border-radius:6px;">
         <span style="font-size:11px; font-weight:700; color:#cbd5e1;">PETUGAS PENYERAH & SAKSI</span>
         <div class="grid" style="margin-top:8px;">
@@ -1133,8 +989,9 @@ export function renderTLFormSection(type) {
         </div>
       </div>
     `;
-  } else if (type === 'BA_SEGEL') {
-    container.innerHTML = `
+    }
+    else if (type === 'BA_SEGEL') {
+        container.innerHTML = `
       <div class="grid" style="margin-bottom:10px;">
         <div><label>Hari Pembukaan Segel</label><input value="${escText(rec.TL_Segel_Hari || '')}" oninput="saveDynamicValTL('TL_Segel_Hari', this.value)"></div>
         <div><label>Tanggal Surat</label><input value="${escText(rec.TL_Tanggal_Surat || '')}" oninput="saveDynamicValTL('TL_Tanggal_Surat', this.value)"></div>
@@ -1152,8 +1009,9 @@ export function renderTLFormSection(type) {
         <div style="grid-column: span 2;"><label>Alamat Saksi</label><textarea oninput="saveDynamicValTL('TL_Alamat_Pemilik', this.value)">${escText(rec.TL_Alamat_Pemilik || '')}</textarea></div>
       </div>
     `;
-  } else if (type === 'KEP_BDN') {
-    container.innerHTML = `
+    }
+    else if (type === 'KEP_BDN') {
+        container.innerHTML = `
       <div class="grid" style="margin-bottom:10px;">
         <div><label>Nomor Keputusan KEP</label><input value="${escText(rec.KEP_Nomor_ND || '')}" oninput="saveDynamicValTL('KEP_Nomor_ND', this.value)"></div>
         <div><label>Tanggal Keputusan KEP</label><input value="${escText(rec.KEP_Tanggal_ND || '')}" oninput="saveDynamicValTL('KEP_Tanggal_ND', this.value)"></div>
@@ -1161,8 +1019,9 @@ export function renderTLFormSection(type) {
         <div><label>NIP Kepala Kantor</label><input value="${escText(rec.NIP_Kepala_Kantor || '')}" oninput="saveDynamicValTL('NIP_Kepala_Kantor', this.value)"></div>
       </div>
     `;
-  } else if (type === 'SPSA') {
-    container.innerHTML = `
+    }
+    else if (type === 'SPSA') {
+        container.innerHTML = `
       <div class="grid" style="margin-bottom:10px;">
         <div><label>Nomor SPSA</label><input value="${escText(rec.SPSA_Nomor || '')}" oninput="saveDynamicValTL('SPSA_Nomor', this.value)"></div>
         <div><label>Tanggal SPSA</label><input value="${escText(rec.SPSA_Tanggal || '')}" oninput="saveDynamicValTL('SPSA_Tanggal', this.value)"></div>
@@ -1172,8 +1031,9 @@ export function renderTLFormSection(type) {
         <div style="grid-column: span 2;"><label>Alasan Penetapan Denda</label><textarea oninput="saveDynamicValTL('SPSA_Alasan', this.value)">${escText(rec.SPSA_Alasan || '')}</textarea></div>
       </div>
     `;
-  } else if (type === 'BAST_LIMPAH') {
-    container.innerHTML = `
+    }
+    else if (type === 'BAST_LIMPAH') {
+        container.innerHTML = `
       <div class="grid" style="margin-bottom:10px;">
         <div><label>Hari Pelimpahan</label><input value="${escText(rec.Limpah_Hari || '')}" oninput="saveDynamicValTL('Limpah_Hari', this.value)"></div>
         <div><label>Tanggal Surat</label><input value="${escText(rec.Limpah_Tanggal || '')}" oninput="saveDynamicValTL('Limpah_Tanggal', this.value)"></div>
@@ -1184,10 +1044,8 @@ export function renderTLFormSection(type) {
         <div><label>Petugas Pelimpah (Bea Cukai)</label><input value="${escText(rec.Limpah_Petugas_1 || rec.ketua_tim || '')}" oninput="saveDynamicValTL('Limpah_Petugas_1', this.value)"></div>
       </div>
     `;
-  }
+    }
 }
-
-// Expose fungsi ke lingkup global agar dapat diakses oleh event inline HTML (oninput, onchange, onclick)
 window.saveDynamicVal = saveDynamicVal;
 window.saveDynamicValTL = saveDynamicValTL;
 window.showReportView = showReportView;
@@ -1202,3 +1060,4 @@ window.addSplitPegawai = addSplitPegawai;
 window.delSplitPegawai = delSplitPegawai;
 window.addSprinPegawai = addSprinPegawai;
 window.delSprinPegawai = delSprinPegawai;
+//# sourceMappingURL=editor.js.map

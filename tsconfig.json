@@ -9,7 +9,9 @@
     "noImplicitAny": true,
     "skipLibCheck": true,
     "sourceMap": true,
-    "declaration": true
+    "declaration": true,
+    "outDir": "./js",
+    "rootDir": "./src/client"
   },
-  "include": ["src/**/*"]
+  "include": ["src/client/**/*"]
 }

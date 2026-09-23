@@ -2,18 +2,32 @@ import { store, savePerkaraToStorage } from '../state/store.js';
 import { escText } from '../utils/formatters.js';
 import { showToast, showToastConfirm } from './ui.js';
 
-export function initUserAccounts(): void {
-  store.userAccounts = JSON.parse(localStorage.getItem('userAccounts') || '[]');
+export async function initUserAccounts(): Promise<void> {
+  try {
+    let response = await fetch('/api/auth/users');
+    let result = await response.json();
+    if (result.success) {
+      store.userAccounts = result.data || [];
+    }
+  } catch (e) {
+    console.error("Gagal memuat akun dari server:", e);
+    store.userAccounts = [];
+  }
   
-  let hasAdminSimple = store.userAccounts.some((u: any) => u.email.toLowerCase() === "admin");
-  if (!hasAdminSimple) {
-    store.userAccounts.push({
-      nama: "Admin System",
-      email: "admin",
-      pass: "admin",
-      role: "Admin"
-    });
-    localStorage.setItem('userAccounts', JSON.stringify(store.userAccounts));
+  let adminUser = store.userAccounts.find((u: any) => u && u.email && u.email.toLowerCase() === "admin");
+  
+  if (!adminUser) {
+    let newAdmin = { nama: "Admin System", email: "admin", pass: "admin", role: "Admin" };
+    try {
+      await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newAdmin)
+      });
+      store.userAccounts.push(newAdmin);
+    } catch (err) {
+      console.error("Gagal menginisialisasi akun admin ke server:", err);
+    }
   }
 }
 
@@ -51,7 +65,7 @@ export function switchAuthTab(tab: string): void {
   }
 }
 
-export function handleLoginSubmit(e: Event): void {
+export async function handleLoginSubmit(e: Event): Promise<void> {
   e.preventDefault();
   let emailInput = document.getElementById('login_email') as HTMLInputElement;
   let passInput = document.getElementById('login_password') as HTMLInputElement;
@@ -59,25 +73,34 @@ export function handleLoginSubmit(e: Event): void {
 
   if (!emailInput || !passInput) return;
 
-  let email = emailInput.value.trim().toLowerCase();
-  let pass = passInput.value.trim().toLowerCase();
+  let email = emailInput.value.trim();
+  let pass = passInput.value.trim();
 
-  let user = store.userAccounts.find((u: any) => u.email.toLowerCase() === email && u.pass.toLowerCase() === pass);
+  try {
+    let response = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, pass })
+    });
+    let result = await response.json();
 
-  if (user) {
-    store.currentUser = user;
-    localStorage.setItem('currentUserSession', JSON.stringify(user));
-    if (overlay) overlay.style.display = 'none';
-    applyUserProfile();
-    if ((window as any).renderPerkaraTable) (window as any).renderPerkaraTable();
-    if ((window as any).updateDashboardStats) (window as any).updateDashboardStats();
-    showToast("LOGIN BERHASIL", `Selamat datang, ${user.nama} (${user.role})`, "success");
-  } else {
-    showToast("LOGIN GAGAL", "Email/Username atau kata sandi tidak cocok!", "danger");
+    if (result.success) {
+      store.currentUser = result.user;
+      localStorage.setItem('currentUserSession', JSON.stringify(result.user));
+      if (overlay) overlay.style.display = 'none';
+      applyUserProfile();
+      if ((window as any).renderPerkaraTable) (window as any).renderPerkaraTable();
+      if ((window as any).updateDashboardStats) (window as any).updateDashboardStats();
+      showToast("LOGIN BERHASIL", `Selamat datang, ${result.user.nama} (${result.user.role})`, "success");
+    } else {
+      showToast("LOGIN GAGAL", result.error || "Email/Username atau kata sandi tidak cocok!", "danger");
+    }
+  } catch (err) {
+    showToast("KESALAHAN SISTEM", "Gagal terhubung ke server backend.", "danger");
   }
 }
 
-export function handleRegisterSubmit(e: Event): void {
+export async function handleRegisterSubmit(e: Event): Promise<void> {
   e.preventDefault();
   let namaInput = document.getElementById('reg_nama') as HTMLInputElement;
   let emailInput = document.getElementById('reg_email') as HTMLInputElement;
@@ -89,24 +112,32 @@ export function handleRegisterSubmit(e: Event): void {
   let nama = namaInput.value.trim();
   let email = emailInput.value.trim().toLowerCase();
   let role = roleInput.value;
-  let pass = passInput.value.trim().toLowerCase();
+  let pass = passInput.value.trim();
 
-  if (store.userAccounts.some((u: any) => u.email.toLowerCase() === email)) {
-    showToast("REGISTRASI GAGAL", "Email/Username sudah terdaftar!", "warning");
-    return;
+  try {
+    let response = await fetch('/api/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nama, email, role, pass })
+    });
+    let result = await response.json();
+
+    if (result.success) {
+      showToast("REGISTRASI BERHASIL", "Silakan login menggunakan akun baru Anda.", "success");
+      switchAuthTab('login');
+      
+      let loginEmail = document.getElementById('login_email') as HTMLInputElement;
+      let loginPass = document.getElementById('login_password') as HTMLInputElement;
+      if (loginEmail) loginEmail.value = email;
+      if (loginPass) loginPass.value = '';
+      
+      await initUserAccounts();
+    } else {
+      showToast("REGISTRASI GAGAL", result.error || "Gagal mendaftarkan akun.", "warning");
+    }
+  } catch (err) {
+    showToast("KESALAHAN SISTEM", "Gagal terhubung ke server backend.", "danger");
   }
-
-  let newUser = { nama, email, pass, role };
-  store.userAccounts.push(newUser);
-  localStorage.setItem('userAccounts', JSON.stringify(store.userAccounts));
-
-  showToast("REGISTRASI BERHASIL", "Silakan login menggunakan akun baru Anda.", "success");
-  switchAuthTab('login');
-  
-  let loginEmail = document.getElementById('login_email') as HTMLInputElement;
-  let loginPass = document.getElementById('login_password') as HTMLInputElement;
-  if (loginEmail) loginEmail.value = email;
-  if (loginPass) loginPass.value = '';
 }
 
 export function applyUserProfile(): void {
@@ -191,21 +222,22 @@ export function renderRegisteredUsersTable(): void {
 
   tbody.innerHTML = store.userAccounts.map((u: any, i: number) => {
     let isPasswordShown = ((store as any).visiblePasswordIndex === i);
-    let passDisplay = isPasswordShown ? `<span class="password-preview-box">${escText(u.pass)}</span>` : `••••••••`;
+    let passVal = u && u.pass ? u.pass : '';
+    let passDisplay = isPasswordShown ? `<span class="password-preview-box">${escText(passVal)}</span>` : `••••••••`;
     let eyeIcon = isPasswordShown ? `<i class="fi fi-rr-eye-crossed"></i>` : `<i class="fi fi-rr-eye"></i>`;
 
     return `
       <tr>
         <td><b>${i + 1}</b></td>
-        <td><b>${escText(u.nama)}</b></td>
-        <td>${escText(u.email)}</td>
+        <td><b>${escText(u?.nama || '-')}</b></td>
+        <td>${escText(u?.email || '-')}</td>
         <td>
           <div style="display:flex; align-items:center; gap:6px;">
             ${passDisplay}
             <button type="button" class="btn secondary" style="padding:2px 6px; font-size:10px;" onclick="togglePasswordPreview(${i})">${eyeIcon}</button>
           </div>
         </td>
-        <td><span class="role-badge-pill">${escText(u.role)}</span></td>
+        <td><span class="role-badge-pill">${escText(u?.role || '-')}</span></td>
         <td style="text-align:center;">
           <div style="display:flex; gap:4px; justify-content:center;">
             <button type="button" class="btn danger" style="padding:2px 6px; font-size:10px;" onclick="deleteUserAccount(${i})">
@@ -227,7 +259,7 @@ export function deleteUserAccount(index: number): void {
   let user = store.userAccounts[index];
   if (!user) return;
 
-  if (store.currentUser && store.currentUser.email.toLowerCase() === user.email.toLowerCase()) {
+  if (store.currentUser && user.email && store.currentUser.email.toLowerCase() === user.email.toLowerCase()) {
     showToast("TIDAK DAPAT MENGHAPUS", "Anda tidak dapat menghapus akun Anda sendiri yang sedang aktif!", "warning");
     return;
   }
@@ -235,9 +267,19 @@ export function deleteUserAccount(index: number): void {
   showToastConfirm(
     "KONFIRMASI HAPUS AKUN",
     `Apakah Anda yakin ingin menghapus akun user "${user.nama}" (${user.email})?`,
-    () => {
+    async () => {
       store.userAccounts.splice(index, 1);
-      localStorage.setItem('userAccounts', JSON.stringify(store.userAccounts));
+      
+      try {
+        await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'sync_users', list: store.userAccounts })
+        });
+      } catch (e) {
+        console.error("Gagal memperbarui data user di server:", e);
+      }
+
       renderRegisteredUsersTable();
       populateDisposisiUserDropdown();
       showToast("AKUN TERHAPUS", "Akun pengguna telah berhasil dihapus dari sistem.", "danger");
@@ -249,7 +291,7 @@ export function populateDisposisiUserDropdown(): void {
   let select = document.getElementById('val_disposisi_user');
   if (!select) return;
 
-  let penyidikList = store.userAccounts.filter((u: any) => u.role === 'Penyidik / Ketua Tim Peneliti');
+  let penyidikList = store.userAccounts.filter((u: any) => u && u.role && u.role.toLowerCase().includes('penyidik'));
   select.innerHTML = `<option value="-">- Pilih Penyidik -</option>` + penyidikList.map((u: any) => `<option value="${escText(u.nama)}">${escText(u.nama)}</option>`).join('');
 }
 
@@ -304,7 +346,13 @@ export function confirmResetAllData(): void {
     return;
   }
 
-  showToastConfirm("RESET SEMUA DATABASE", "Apakah Anda yakin ingin menghapus seluruh database perkara dan disposisi secara permanen?", () => {
+  showToastConfirm("RESET SEMUA DATABASE", "Apakah Anda yakin ingin menghapus seluruh database perkara dan disposisi secara permanen?", async () => {
+    try {
+      await fetch('/api/perkara/reset', { method: 'POST' });
+    } catch (e) {
+      console.error("Gagal mereset database perkara di server:", e);
+    }
+
     localStorage.removeItem('databasePerkara');
     localStorage.removeItem('databaseDisposisi');
     localStorage.removeItem('databaseDraftDisposisi');
@@ -312,6 +360,7 @@ export function confirmResetAllData(): void {
     if (typeof store !== 'undefined' && store) {
       store.databasePerkara = [];
       if (typeof savePerkaraToStorage === 'function') savePerkaraToStorage();
+      if ((store as any).databaseDisposisi) (store as any).databaseDisposisi = [];
       store.activeRecordIndex = -1;
     }
 
@@ -320,3 +369,10 @@ export function confirmResetAllData(): void {
 }
 
 (window as any).confirmResetAllData = confirmResetAllData;
+(window as any).handleLoginSubmit = handleLoginSubmit;
+(window as any).handleRegisterSubmit = handleRegisterSubmit;
+(window as any).togglePasswordPreview = togglePasswordPreview;
+(window as any).deleteUserAccount = deleteUserAccount;
+(window as any).toggleUserDropdown = toggleUserDropdown;
+(window as any).handleLogout = handleLogout;
+(window as any).openProfileSettingTab = openProfileSettingTab;

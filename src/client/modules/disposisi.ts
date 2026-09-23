@@ -154,7 +154,37 @@ function cloneDropdown(masterId: string, dspId: string): void {
   }
 }
 
-export function openDisposisiModal(editIndex: number = -1): void {
+// Helper untuk mengambil data disposisi dari server via API
+async function fetchDisposisiList(): Promise<any[]> {
+  try {
+    let res = await fetch('/api/disposisi');
+    let json = await res.json();
+    if (json.success) {
+      return json.data || [];
+    }
+  } catch (e) {
+    console.error("Gagal mengambil disposisi dari server:", e);
+  }
+  // Fallback ke localStorage jika server gagal
+  return JSON.parse(localStorage.getItem('databaseDisposisi') || '[]');
+}
+
+// Helper untuk menyimpan data disposisi ke server via API
+async function saveDisposisiListToServer(list: any[]): Promise<void> {
+  // Simpan juga ke localStorage sebagai cache lokal
+  localStorage.setItem('databaseDisposisi', JSON.stringify(list));
+  try {
+    await fetch('/api/disposisi', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(list)
+    });
+  } catch (e) {
+    console.error("Gagal menyimpan disposisi ke server:", e);
+  }
+}
+
+export async function openDisposisiModal(editIndex: number = -1): Promise<void> {
   let modal = document.getElementById('disposisiModal') || document.getElementById('modalDisposisi') || document.getElementById('modalUsulDisposisi');
   let modalTitle = document.getElementById('disposisiModalTitle') || document.getElementById('modalDisposisiTitle');
   let editingIndexInput = document.getElementById('editingDisposisiIndex') as HTMLInputElement || document.getElementById('editingDisposisiId') as HTMLInputElement;
@@ -217,7 +247,7 @@ export function openDisposisiModal(editIndex: number = -1): void {
 
   let isReadOnly = false;
   if (editIndex >= 0) {
-    let listDisposisi = JSON.parse(localStorage.getItem('databaseDisposisi') || '[]');
+    let listDisposisi = await fetchDisposisiList();
     let dspData = listDisposisi[editIndex];
     
     if (dspData) {
@@ -355,7 +385,7 @@ export function populatePenyidikDropdownForDisposisi(): void {
   }
 }
 
-export function simpanDraftDisposisi(): void {
+export async function simpanDraftDisposisi(): Promise<void> {
   let pelaku = (document.getElementById('dsp_nama_pelaku') as HTMLInputElement) ? (document.getElementById('dsp_nama_pelaku') as HTMLInputElement).value.trim() : '';
   
   let jenisIdentitasSelect = document.getElementById('dsp_jenis_identitas') as HTMLSelectElement;
@@ -403,7 +433,7 @@ export function simpanDraftDisposisi(): void {
   let editIndexInput = document.getElementById('editingDisposisiIndex') as HTMLInputElement || document.getElementById('editingDisposisiId') as HTMLInputElement;
   let editIndex = editIndexInput ? parseInt(editIndexInput.value) : -1;
 
-  let listDisposisi = JSON.parse(localStorage.getItem('databaseDisposisi') || '[]');
+  let listDisposisi = await fetchDisposisiList();
   let targetId = (editIndex >= 0 && listDisposisi[editIndex]) ? listDisposisi[editIndex].id : Date.now();
 
   let dspDataObj = {
@@ -440,13 +470,13 @@ export function simpanDraftDisposisi(): void {
     listDisposisi.push(dspDataObj);
   }
   
-  localStorage.setItem('databaseDisposisi', JSON.stringify(listDisposisi));
+  await saveDisposisiListToServer(listDisposisi);
   renderDisposisiTable();
   closeDisposisiModal();
   showToast("BERHASIL", "Draf disposisi berhasil disimpan.", "success");
 }
 
-export function kirimDisposisiBerkat(): void {
+export async function kirimDisposisiBerkat(): Promise<void> {
   let pelaku = (document.getElementById('dsp_nama_pelaku') as HTMLInputElement) ? (document.getElementById('dsp_nama_pelaku') as HTMLInputElement).value.trim() : '';
   
   let jenisIdentitasSelect = document.getElementById('dsp_jenis_identitas') as HTMLSelectElement;
@@ -494,7 +524,7 @@ export function kirimDisposisiBerkat(): void {
   let editIndexInput = document.getElementById('editingDisposisiIndex') as HTMLInputElement || document.getElementById('editingDisposisiId') as HTMLInputElement;
   let editIndex = editIndexInput ? parseInt(editIndexInput.value) : -1;
 
-  let listDisposisi = JSON.parse(localStorage.getItem('databaseDisposisi') || '[]');
+  let listDisposisi = await fetchDisposisiList();
   let targetId = (editIndex >= 0 && listDisposisi[editIndex]) ? listDisposisi[editIndex].id : Date.now();
 
   let dspDataObj = {
@@ -531,17 +561,17 @@ export function kirimDisposisiBerkat(): void {
     listDisposisi.push(dspDataObj);
   }
   
-  localStorage.setItem('databaseDisposisi', JSON.stringify(listDisposisi));
+  await saveDisposisiListToServer(listDisposisi);
   renderDisposisiTable();
   closeDisposisiModal();
   showToast("BERHASIL", `Berkas LP-${noLp} berhasil didisposisikan kepada ${targetPenyidik}.`, "success");
 }
 
-export function renderDisposisiTable(): void {
+export async function renderDisposisiTable(): Promise<void> {
   let tbody = document.getElementById('disposisiTableBody');
   if(!tbody) return;
 
-  let listDisposisi = JSON.parse(localStorage.getItem('databaseDisposisi') || '[]');
+  let listDisposisi = await fetchDisposisiList();
   let filtered = listDisposisi;
   
   let isPenyidik = store.currentUser && (
@@ -668,7 +698,7 @@ export function renderDisposisiTable(): void {
 }
 
 function renderDisposisiPagination(totalPages: number, totalItems: number = 0): void {
-  let paginationContainer = document.getElementById('disposisiPaginationContainer');
+  let paginationContainer = document.getElementById('disposisiPaginationContainer') || document.getElementById('perkaraPageInfo')?.parentElement;
   if (!paginationContainer) {
     let cardBodyEl = document.querySelector('#disposisi .panel-body, #disposisi .data-table-container, #disposisi');
     if (cardBodyEl) {
@@ -703,8 +733,8 @@ export function terimaDisposisi(dspData: any): void {
   responDisposisi('terima', dspData.id || dspData.noLp);
 }
 
-export function responDisposisi(aksi: string, idDisposisi: any): void {
-  let listDisposisi = JSON.parse(localStorage.getItem('databaseDisposisi') || '[]');
+export async function responDisposisi(aksi: string, idDisposisi: any): Promise<void> {
+  let listDisposisi = await fetchDisposisiList();
   let target = listDisposisi.find((d: any) => String(d.id) === String(idDisposisi) || String(d.noLp) === String(idDisposisi));
   
   if (aksi === 'terima') {
@@ -716,7 +746,7 @@ export function responDisposisi(aksi: string, idDisposisi: any): void {
     target.status = "Disposisi Diterima";
     target.statusDisposisi = "Disposisi Diterima";
     target.waktuRespon = new Date().toISOString();
-    localStorage.setItem('databaseDisposisi', JSON.stringify(listDisposisi));
+    await saveDisposisiListToServer(listDisposisi);
 
     let cleanTargetLP = String(target.noLp || '').replace(/^LP-?/i, '').trim();
 
@@ -813,7 +843,7 @@ export function closeAlasanTolakModal(): void {
   if(modal) modal.classList.remove('active');
 }
 
-export function submitTolakDisposisi(): void {
+export async function submitTolakDisposisi(): Promise<void> {
   let rawId = (document.getElementById('currentTolakDspData') as HTMLInputElement) ? (document.getElementById('currentTolakDspData') as HTMLInputElement).value : '';
   let alasan = (document.getElementById('inputAlasanTolak') as HTMLInputElement) ? (document.getElementById('inputAlasanTolak') as HTMLInputElement).value.trim() : '';
 
@@ -822,14 +852,14 @@ export function submitTolakDisposisi(): void {
     return;
   }
 
-  let listDisposisi = JSON.parse(localStorage.getItem('databaseDisposisi') || '[]');
+  let listDisposisi = await fetchDisposisiList();
   let target = listDisposisi.find((d: any) => String(d.id) === String(rawId) || String(d.noLp) === String(rawId));
   
   if(target) {
     target.status = "Disposisi Ditolak: " + (alasan || "Tanpa alasan");
     target.statusDisposisi = "Disposisi Ditolak: " + (alasan || "Tanpa alasan");
     target.waktuRespon = new Date().toISOString();
-    localStorage.setItem('databaseDisposisi', JSON.stringify(listDisposisi));
+    await saveDisposisiListToServer(listDisposisi);
 
     closeAlasanTolakModal();
     renderDisposisiTable();
@@ -850,14 +880,14 @@ export function checkDisposisiAccessByRole(): void {
   }
 }
 
-export function cekNotifikasiDisposisiMasuk(): void {
+export async function cekNotifikasiDisposisiMasuk(): Promise<void> {
   if (!store.currentUser || store.currentUser.role !== 'Penyidik / Ketua Tim Peneliti') {
     let wrapper = document.querySelector('.notification-wrapper') as HTMLElement;
     if(wrapper) wrapper.style.display = 'none';
     return;
   }
 
-  let listDisposisi = JSON.parse(localStorage.getItem('databaseDisposisi') || '[]');
+  let listDisposisi = await fetchDisposisiList();
   let curNama = (store.currentUser?.namaLengkap || store.currentUser?.nama || store.currentUser?.username || '').toLowerCase();
   
   let myDisposisi = listDisposisi.filter((d: any) => 
@@ -880,7 +910,7 @@ export function cekNotifikasiDisposisiMasuk(): void {
   if(brandNew.length > 0) {
     showToast("DISPOSISI BERKAS BARU!", `Anda menerima ${brandNew.length} berkas disposisi baru untuk ditindaklanjuti.`, "warning");
     brandNew.forEach((d: any) => d.toastShown = true);
-    localStorage.setItem('databaseDisposisi', JSON.stringify(listDisposisi));
+    await saveDisposisiListToServer(listDisposisi);
   }
 }
 
@@ -896,11 +926,11 @@ export function toggleNotificationDropdown(): void {
   }
 }
 
-export function renderNotificationHistoryList(): void {
+export async function renderNotificationHistoryList(): Promise<void> {
   let container = document.getElementById('notificationListContent');
   if(!container || !store.currentUser) return;
 
-  let listDisposisi = JSON.parse(localStorage.getItem('databaseDisposisi') || '[]');
+  let listDisposisi = await fetchDisposisiList();
   let curNama = (store.currentUser?.namaLengkap || store.currentUser?.nama || store.currentUser?.username || '').toLowerCase();
   let myDisposisi = listDisposisi.filter((d: any) => 
     d.targetPenyidik && curNama && d.targetPenyidik.toLowerCase() === curNama
@@ -931,12 +961,12 @@ export function renderNotificationHistoryList(): void {
   }).join('');
 }
 
-export function klikRiwayatDisposisi(dspData: any): void {
-  let listDisposisi = JSON.parse(localStorage.getItem('databaseDisposisi') || '[]');
+export async function klikRiwayatDisposisi(dspData: any): Promise<void> {
+  let listDisposisi = await fetchDisposisiList();
   let target = listDisposisi.find((d: any) => d.id === dspData.id);
   if(target) {
     target.isRead = true;
-    localStorage.setItem('databaseDisposisi', JSON.stringify(listDisposisi));
+    await saveDisposisiListToServer(listDisposisi);
   }
 
   let dropdown = document.getElementById('notificationDropdown') as HTMLElement;
@@ -947,15 +977,15 @@ export function klikRiwayatDisposisi(dspData: any): void {
   openDisposisiModal(realIndex >= 0 ? realIndex : -1);
 }
 
-export function markAllDisposisiAsRead(): void {
-  let listDisposisi = JSON.parse(localStorage.getItem('databaseDisposisi') || '[]');
+export async function markAllDisposisiAsRead(): Promise<void> {
+  let listDisposisi = await fetchDisposisiList();
   let curNama = (store.currentUser?.namaLengkap || store.currentUser?.nama || store.currentUser?.username || '').toLowerCase();
   listDisposisi.forEach((d: any) => {
     if(d.targetPenyidik && curNama && d.targetPenyidik.toLowerCase() === curNama) {
       d.isRead = true;
     }
   });
-  localStorage.setItem('databaseDisposisi', JSON.stringify(listDisposisi));
+  await saveDisposisiListToServer(listDisposisi);
   cekNotifikasiDisposisiMasuk();
   renderNotificationHistoryList();
 }

@@ -3,14 +3,18 @@ import { escText } from '../utils/formatters.js';
 import { showToast, showToastConfirm } from './ui.js';
 export function initUserAccounts() {
     store.userAccounts = JSON.parse(localStorage.getItem('userAccounts') || '[]');
-    let hasAdminSimple = store.userAccounts.some((u) => u.email.toLowerCase() === "admin");
-    if (!hasAdminSimple) {
+    let adminUser = store.userAccounts.find((u) => u && u.email && u.email.toLowerCase() === "admin");
+    if (!adminUser) {
         store.userAccounts.push({
             nama: "Admin System",
             email: "admin",
             pass: "admin",
             role: "Admin"
         });
+        localStorage.setItem('userAccounts', JSON.stringify(store.userAccounts));
+    }
+    else if (!adminUser.pass) {
+        adminUser.pass = "admin";
         localStorage.setItem('userAccounts', JSON.stringify(store.userAccounts));
     }
 }
@@ -63,7 +67,13 @@ export function handleLoginSubmit(e) {
         return;
     let email = emailInput.value.trim().toLowerCase();
     let pass = passInput.value.trim().toLowerCase();
-    let user = store.userAccounts.find((u) => u.email.toLowerCase() === email && u.pass.toLowerCase() === pass);
+    let user = store.userAccounts.find((u) => {
+        if (!u)
+            return false;
+        let uEmail = String(u.email || '').trim().toLowerCase();
+        let uPass = String(u.pass || u.password || '').trim().toLowerCase();
+        return uEmail === email && uPass === pass;
+    });
     if (user) {
         store.currentUser = user;
         localStorage.setItem('currentUserSession', JSON.stringify(user));
@@ -92,7 +102,7 @@ export function handleRegisterSubmit(e) {
     let email = emailInput.value.trim().toLowerCase();
     let role = roleInput.value;
     let pass = passInput.value.trim().toLowerCase();
-    if (store.userAccounts.some((u) => u.email.toLowerCase() === email)) {
+    if (store.userAccounts.some((u) => u && u.email && u.email.toLowerCase() === email)) {
         showToast("REGISTRASI GAGAL", "Email/Username sudah terdaftar!", "warning");
         return;
     }
@@ -190,20 +200,21 @@ export function renderRegisteredUsersTable() {
         return;
     tbody.innerHTML = store.userAccounts.map((u, i) => {
         let isPasswordShown = (store.visiblePasswordIndex === i);
-        let passDisplay = isPasswordShown ? `<span class="password-preview-box">${escText(u.pass)}</span>` : `••••••••`;
+        let passVal = u && u.pass ? u.pass : '';
+        let passDisplay = isPasswordShown ? `<span class="password-preview-box">${escText(passVal)}</span>` : `••••••••`;
         let eyeIcon = isPasswordShown ? `<i class="fi fi-rr-eye-crossed"></i>` : `<i class="fi fi-rr-eye"></i>`;
         return `
       <tr>
         <td><b>${i + 1}</b></td>
-        <td><b>${escText(u.nama)}</b></td>
-        <td>${escText(u.email)}</td>
+        <td><b>${escText(u?.nama || '-')}</b></td>
+        <td>${escText(u?.email || '-')}</td>
         <td>
           <div style="display:flex; align-items:center; gap:6px;">
             ${passDisplay}
             <button type="button" class="btn secondary" style="padding:2px 6px; font-size:10px;" onclick="togglePasswordPreview(${i})">${eyeIcon}</button>
           </div>
         </td>
-        <td><span class="role-badge-pill">${escText(u.role)}</span></td>
+        <td><span class="role-badge-pill">${escText(u?.role || '-')}</span></td>
         <td style="text-align:center;">
           <div style="display:flex; gap:4px; justify-content:center;">
             <button type="button" class="btn danger" style="padding:2px 6px; font-size:10px;" onclick="deleteUserAccount(${i})">
@@ -223,7 +234,7 @@ export function deleteUserAccount(index) {
     let user = store.userAccounts[index];
     if (!user)
         return;
-    if (store.currentUser && store.currentUser.email.toLowerCase() === user.email.toLowerCase()) {
+    if (store.currentUser && user.email && store.currentUser.email.toLowerCase() === user.email.toLowerCase()) {
         showToast("TIDAK DAPAT MENGHAPUS", "Anda tidak dapat menghapus akun Anda sendiri yang sedang aktif!", "warning");
         return;
     }
@@ -239,7 +250,8 @@ export function populateDisposisiUserDropdown() {
     let select = document.getElementById('val_disposisi_user');
     if (!select)
         return;
-    let penyidikList = store.userAccounts.filter((u) => u.role === 'Penyidik / Ketua Tim Peneliti');
+    // Filter fleksibel untuk semua role penyidik
+    let penyidikList = store.userAccounts.filter((u) => u && u.role && u.role.toLowerCase().includes('penyidik'));
     select.innerHTML = `<option value="-">- Pilih Penyidik -</option>` + penyidikList.map((u) => `<option value="${escText(u.nama)}">${escText(u.nama)}</option>`).join('');
 }
 export function toggleDropdown(event) {
@@ -299,6 +311,8 @@ export function confirmResetAllData() {
             store.databasePerkara = [];
             if (typeof savePerkaraToStorage === 'function')
                 savePerkaraToStorage();
+            if (store.databaseDisposisi)
+                store.databaseDisposisi = [];
             store.activeRecordIndex = -1;
         }
         location.reload();

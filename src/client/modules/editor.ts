@@ -293,6 +293,8 @@ export function renderDynamicInputs(type: string): void {
     </div>
   `;
 
+  let activeRec = store.databasePerkara[store.activeRecordIndex];
+
   if (type === 'LPP') {
     let catLpp = getVal('Catatan_LPP');
     let detBarang = getVal('Detail_Barang_LPP') !== '-' ? getVal('Detail_Barang_LPP') : getVal('Uraian_Barang');
@@ -389,7 +391,7 @@ export function renderDynamicInputs(type: string): void {
     `;
     renderSprinPegawaiList();
   } else if (type === 'BA') {
-    let items = JSON.parse(localStorage.getItem('cacahItems') || '[]');
+    let items = activeRec.cacahItems || [];
     container.innerHTML = recordSelectorHtml + `
       <div class="grid3" style="margin-bottom:10px;">
         <div>
@@ -572,65 +574,71 @@ export function renderItems(items: any[]): void {
 
   c.querySelectorAll('input[data-i]').forEach((inp: any) => {
     inp.oninput = () => {
-      let arr = JSON.parse(localStorage.getItem('cacahItems') || '[]');
-      arr[inp.dataset.i][inp.dataset.k] = inp.value;
-      localStorage.setItem('cacahItems', JSON.stringify(arr));
-      updateReportLive();
+      if (store.activeRecordIndex >= 0 && store.databasePerkara[store.activeRecordIndex]) {
+        let rec = store.databasePerkara[store.activeRecordIndex];
+        if (!rec.cacahItems) rec.cacahItems = [];
+        rec.cacahItems[inp.dataset.i][inp.dataset.k] = inp.value;
+        savePerkaraToStorage();
+        updateReportLive();
+      }
     };
   });
 }
 
 export function addItem(): void {
-  let items = JSON.parse(localStorage.getItem('cacahItems') || '[]');
-  items.push({ komoditi: '', uraian: '', jumlah: '', kondisi: '', keterangan: '', asal: '-' });
-  localStorage.setItem('cacahItems', JSON.stringify(items));
-  renderItems(items);
-  updateReportLive();
+  if (store.activeRecordIndex >= 0 && store.databasePerkara[store.activeRecordIndex]) {
+    let rec = store.databasePerkara[store.activeRecordIndex];
+    if (!rec.cacahItems) rec.cacahItems = [];
+    rec.cacahItems.push({ komoditi: '', uraian: '', jumlah: '', kondisi: '', keterangan: '', asal: '-' });
+    savePerkaraToStorage();
+    renderItems(rec.cacahItems);
+    updateReportLive();
+  }
 }
 
 export function delItem(i: number): void {
-  let items = JSON.parse(localStorage.getItem('cacahItems') || '[]');
-  items.splice(i, 1);
-  localStorage.setItem('cacahItems', JSON.stringify(items));
-  renderItems(items);
-  updateReportLive();
+  if (store.activeRecordIndex >= 0 && store.databasePerkara[store.activeRecordIndex]) {
+    let rec = store.databasePerkara[store.activeRecordIndex];
+    if (!rec.cacahItems) rec.cacahItems = [];
+    rec.cacahItems.splice(i, 1);
+    savePerkaraToStorage();
+    renderItems(rec.cacahItems);
+    updateReportLive();
+  }
 }
 
 export function addSplitPegawai(): void {
-  let list = JSON.parse(localStorage.getItem('splitPegawaiList') || '[]');
-  if (list.length === 0) {
-    list = [
+  if (store.activeRecordIndex < 0) return;
+  let rec = store.databasePerkara[store.activeRecordIndex];
+  if (!rec.splitPegawaiList || rec.splitPegawaiList.length === 0) {
+    rec.splitPegawaiList = [
       { nama: getVal('form_nama_seksi'), nip: getVal('form_nip_seksi'), jabatan: getVal('form_jabatan_seksi') || 'Kepala Seksi Penyidikan' },
       { nama: getVal('form_ketua_tim'), nip: getVal('form_nip_ketua_tim'), jabatan: getVal('form_jabatan_ketua_tim') || 'Ketua Tim Peneliti' },
       { nama: getVal('form_petugas_lpf'), nip: getVal('form_nip_petugas_lpf'), jabatan: getVal('form_jabatan_petugas_lpf') || 'Petugas LPF' },
       { nama: getVal('form_pembuat_lpp'), nip: getVal('form_nip_pembuat_lpp'), jabatan: getVal('form_jabatan_pembuat_lpp') || 'Petugas LPP' }
     ];
   }
-  list.push({ nama: '', nip: '', jabatan: '' });
-  localStorage.setItem('splitPegawaiList', JSON.stringify(list));
-  
-  if (store.activeRecordIndex >= 0 && store.databasePerkara[store.activeRecordIndex]) {
-    store.databasePerkara[store.activeRecordIndex].splitPegawaiList = list;
-    savePerkaraToStorage();
-  }
-
+  rec.splitPegawaiList.push({ nama: '', nip: '', jabatan: '' });
+  savePerkaraToStorage();
   renderSplitPegawaiList();
   updateReportLive();
 }
 
 export function renderSplitPegawaiList(): void {
   let container = document.getElementById('splitPegawaiContainer');
-  if (!container) return;
+  if (!container || store.activeRecordIndex < 0) return;
 
-  let list = JSON.parse(localStorage.getItem('splitPegawaiList') || '[]');
-  if (list.length === 0) {
-    list = [
+  let rec = store.databasePerkara[store.activeRecordIndex];
+  if (!rec.splitPegawaiList || rec.splitPegawaiList.length === 0) {
+    rec.splitPegawaiList = [
       { nama: getVal('form_nama_seksi'), nip: getVal('form_nip_seksi'), jabatan: getVal('form_jabatan_seksi') || 'Kepala Seksi Penyidikan' },
       { nama: getVal('form_ketua_tim'), nip: getVal('form_nip_ketua_tim'), jabatan: getVal('form_jabatan_ketua_tim') || 'Ketua Tim Peneliti' },
       { nama: getVal('form_petugas_lpf'), nip: getVal('form_nip_petugas_lpf'), jabatan: getVal('form_jabatan_petugas_lpf') || 'Petugas LPF' },
       { nama: getVal('form_pembuat_lpp'), nip: getVal('form_nip_pembuat_lpp'), jabatan: getVal('form_jabatan_pembuat_lpp') || 'Petugas LPP' }
     ];
   }
+
+  let list = rec.splitPegawaiList;
 
   container.innerHTML = list.map((p: any, i: number) => `
     <div class="item">
@@ -647,46 +655,34 @@ export function renderSplitPegawaiList(): void {
 
   container.querySelectorAll('input[data-pi]').forEach((inp: any) => {
     inp.oninput = () => {
-      let arr = JSON.parse(localStorage.getItem('splitPegawaiList') || '[]');
-      if (arr.length === 0) {
-        arr = [
-          { nama: getVal('form_nama_seksi'), nip: getVal('form_nip_seksi'), jabatan: getVal('form_jabatan_seksi') || 'Kepala Seksi Penyidikan' },
-          { nama: getVal('form_ketua_tim'), nip: getVal('form_nip_ketua_tim'), jabatan: getVal('form_jabatan_ketua_tim') || 'Ketua Tim Peneliti' },
-          { nama: getVal('form_petugas_lpf'), nip: getVal('form_nip_petugas_lpf'), jabatan: getVal('form_jabatan_petugas_lpf') || 'Petugas LPF' },
-          { nama: getVal('form_pembuat_lpp'), nip: getVal('form_nip_pembuat_lpp'), jabatan: getVal('form_jabatan_pembuat_lpp') || 'Petugas LPP' }
-        ];
-      }
-      arr[inp.dataset.pi][inp.dataset.pk] = inp.value;
-      localStorage.setItem('splitPegawaiList', JSON.stringify(arr));
-
       if (store.activeRecordIndex >= 0 && store.databasePerkara[store.activeRecordIndex]) {
-        store.databasePerkara[store.activeRecordIndex].splitPegawaiList = arr;
+        let r = store.databasePerkara[store.activeRecordIndex];
+        if (!r.splitPegawaiList) r.splitPegawaiList = [];
+        r.splitPegawaiList[inp.dataset.pi][inp.dataset.pk] = inp.value;
         savePerkaraToStorage();
+        updateReportLive();
       }
-
-      updateReportLive();
     };
   });
 }
 
 export function delSplitPegawai(i: number): void {
-  let list = JSON.parse(localStorage.getItem('splitPegawaiList') || '[]');
-  list.splice(i, 1);
-  localStorage.setItem('splitPegawaiList', JSON.stringify(list));
-
   if (store.activeRecordIndex >= 0 && store.databasePerkara[store.activeRecordIndex]) {
-    store.databasePerkara[store.activeRecordIndex].splitPegawaiList = list;
-    savePerkaraToStorage();
+    let rec = store.databasePerkara[store.activeRecordIndex];
+    if (rec.splitPegawaiList) {
+      rec.splitPegawaiList.splice(i, 1);
+      savePerkaraToStorage();
+      renderSplitPegawaiList();
+      updateReportLive();
+    }
   }
-
-  renderSplitPegawaiList();
-  updateReportLive();
 }
 
 export function addSprinPegawai(): void {
-  let list = JSON.parse(localStorage.getItem('sprinPegawaiList') || '[]');
-  if (list.length === 0) {
-    list = [
+  if (store.activeRecordIndex < 0) return;
+  let rec = store.databasePerkara[store.activeRecordIndex];
+  if (!rec.sprinPegawaiList || rec.sprinPegawaiList.length === 0) {
+    rec.sprinPegawaiList = [
       { nama: getVal('form_ketua_tim'), nip: getVal('form_nip_ketua_tim'), pangkat: getVal('form_gol_ketua_tim'), jabatan: getVal('form_jabatan_ketua_tim') || 'Ketua Tim Peneliti' },
       { nama: getVal('form_pembuat_lpp'), nip: getVal('form_nip_pembuat_lpp'), pangkat: getVal('form_gol_pembuat_lpp'), jabatan: getVal('form_jabatan_pembuat_lpp') || 'Petugas LPP' },
       { nama: getVal('form_petugas_lpf'), nip: getVal('form_nip_petugas_lpf'), pangkat: getVal('form_gol_petugas_lpf'), jabatan: getVal('form_jabatan_petugas_lpf') || 'Petugas LPF' },
@@ -695,25 +691,19 @@ export function addSprinPegawai(): void {
       { nama: getVal('form_indak_lainnya'), nip: getVal('form_nip_indak_lainnya'), pangkat: getVal('form_gol_indak_lainnya'), jabatan: getVal('form_jabatan_indak_lainnya') || 'Petugas Penindakan 3' }
     ];
   }
-  list.push({ nama: '', nip: '', pangkat: '', jabatan: '' });
-  localStorage.setItem('sprinPegawaiList', JSON.stringify(list));
-
-  if (store.activeRecordIndex >= 0 && store.databasePerkara[store.activeRecordIndex]) {
-    store.databasePerkara[store.activeRecordIndex].sprinPegawaiList = list;
-    savePerkaraToStorage();
-  }
-
+  rec.sprinPegawaiList.push({ nama: '', nip: '', pangkat: '', jabatan: '' });
+  savePerkaraToStorage();
   renderSprinPegawaiList();
   updateReportLive();
 }
 
 export function renderSprinPegawaiList(): void {
   let container = document.getElementById('sprinPegawaiContainer');
-  if (!container) return;
+  if (!container || store.activeRecordIndex < 0) return;
 
-  let list = JSON.parse(localStorage.getItem('sprinPegawaiList') || '[]');
-  if (list.length === 0) {
-    list = [
+  let rec = store.databasePerkara[store.activeRecordIndex];
+  if (!rec.sprinPegawaiList || rec.sprinPegawaiList.length === 0) {
+    rec.sprinPegawaiList = [
       { nama: getVal('form_ketua_tim'), nip: getVal('form_nip_ketua_tim'), pangkat: getVal('form_gol_ketua_tim'), jabatan: getVal('form_jabatan_ketua_tim') || 'Ketua Tim Peneliti' },
       { nama: getVal('form_pembuat_lpp'), nip: getVal('form_nip_pembuat_lpp'), pangkat: getVal('form_gol_pembuat_lpp'), jabatan: getVal('form_jabatan_pembuat_lpp') || 'Petugas LPP' },
       { nama: getVal('form_petugas_lpf'), nip: getVal('form_nip_petugas_lpf'), pangkat: getVal('form_gol_petugas_lpf'), jabatan: getVal('form_jabatan_petugas_lpf') || 'Petugas LPF' },
@@ -722,6 +712,8 @@ export function renderSprinPegawaiList(): void {
       { nama: getVal('form_indak_lainnya'), nip: getVal('form_nip_indak_lainnya'), pangkat: getVal('form_gol_indak_lainnya'), jabatan: getVal('form_jabatan_indak_lainnya') || 'Petugas Penindakan 3' }
     ];
   }
+
+  let list = rec.sprinPegawaiList;
 
   container.innerHTML = list.map((p: any, i: number) => `
     <div class="item">
@@ -739,42 +731,27 @@ export function renderSprinPegawaiList(): void {
 
   container.querySelectorAll('input[data-spi]').forEach((inp: any) => {
     inp.oninput = () => {
-      let arr = JSON.parse(localStorage.getItem('sprinPegawaiList') || '[]');
-      if (arr.length === 0) {
-        arr = [
-          { nama: getVal('form_ketua_tim'), nip: getVal('form_nip_ketua_tim'), pangkat: getVal('form_gol_ketua_tim'), jabatan: getVal('form_jabatan_ketua_tim') || 'Ketua Tim Peneliti' },
-          { nama: getVal('form_pembuat_lpp'), nip: getVal('form_nip_pembuat_lpp'), pangkat: getVal('form_gol_pembuat_lpp'), jabatan: getVal('form_jabatan_pembuat_lpp') || 'Petugas LPP' },
-          { nama: getVal('form_petugas_lpf'), nip: getVal('form_nip_petugas_lpf'), pangkat: getVal('form_gol_petugas_lpf'), jabatan: getVal('form_jabatan_petugas_lpf') || 'Petugas LPF' },
-          { nama: getVal('form_indak_1'), nip: getVal('form_nip_indak_1'), pangkat: getVal('form_gol_indak_1'), jabatan: getVal('form_jabatan_indak_1') || 'Petugas Penindakan 1' },
-          { nama: getVal('form_indak_2'), nip: getVal('form_nip_indak_2'), pangkat: getVal('form_gol_indak_2'), jabatan: getVal('form_jabatan_indak_2') || 'Petugas Penindakan 2' },
-          { nama: getVal('form_indak_lainnya'), nip: getVal('form_nip_indak_lainnya'), pangkat: getVal('form_gol_indak_lainnya'), jabatan: getVal('form_jabatan_indak_lainnya') || 'Petugas Penindakan 3' }
-        ];
-      }
-      arr[inp.dataset.spi][inp.dataset.spk] = inp.value;
-      localStorage.setItem('sprinPegawaiList', JSON.stringify(arr));
-
       if (store.activeRecordIndex >= 0 && store.databasePerkara[store.activeRecordIndex]) {
-        store.databasePerkara[store.activeRecordIndex].sprinPegawaiList = arr;
+        let r = store.databasePerkara[store.activeRecordIndex];
+        if (!r.sprinPegawaiList) r.sprinPegawaiList = [];
+        r.sprinPegawaiList[inp.dataset.spi][inp.dataset.spk] = inp.value;
         savePerkaraToStorage();
+        updateReportLive();
       }
-
-      updateReportLive();
     };
   });
 }
 
 export function delSprinPegawai(i: number): void {
-  let list = JSON.parse(localStorage.getItem('sprinPegawaiList') || '[]');
-  list.splice(i, 1);
-  localStorage.setItem('sprinPegawaiList', JSON.stringify(list));
-
   if (store.activeRecordIndex >= 0 && store.databasePerkara[store.activeRecordIndex]) {
-    store.databasePerkara[store.activeRecordIndex].sprinPegawaiList = list;
-    savePerkaraToStorage();
+    let rec = store.databasePerkara[store.activeRecordIndex];
+    if (rec.sprinPegawaiList) {
+      rec.sprinPegawaiList.splice(i, 1);
+      savePerkaraToStorage();
+      renderSprinPegawaiList();
+      updateReportLive();
+    }
   }
-
-  renderSprinPegawaiList();
-  updateReportLive();
 }
 
 export function renderTLFormSection(type: string): void {

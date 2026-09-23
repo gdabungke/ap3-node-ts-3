@@ -1,0 +1,15 @@
+export declare function initUserAccounts(): Promise<void>;
+export declare function checkLoginSession(): void;
+export declare function switchAuthTab(tab: string): void;
+export declare function handleLoginSubmit(e: Event): Promise<void>;
+export declare function handleRegisterSubmit(e: Event): Promise<void>;
+export declare function applyUserProfile(): void;
+export declare function renderRegisteredUsersTable(): void;
+export declare function togglePasswordPreview(index: number): void;
+export declare function deleteUserAccount(index: number): void;
+export declare function populateDisposisiUserDropdown(): void;
+export declare function toggleDropdown(event: MouseEvent): void;
+export declare function toggleUserDropdown(event: MouseEvent): void;
+export declare function openProfileSettingTab(): void;
+export declare function handleLogout(): void;
+export declare function confirmResetAllData(): void;

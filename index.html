@@ -29,7 +29,7 @@
       </div>
       <div>
         <div style="font-weight:900; font-size:20px; color:var(--text-main);">AP3 SYSTEM</div>
-        <div style="font-size:9px; color:var(--text-muted); font-weight:700;">APLIKASI PENYUSUNANPENELITIAN PERKARA</div>
+        <div style="font-size:9px; color:var(--text-muted); font-weight:700;">APLIKASI PENYUSUNAN PENELITIAN PERKARA</div>
       </div>
     </div>
 
@@ -183,18 +183,16 @@
             </button>
           </div>
         </div> <!-- Penutup user-profile-wrapper -->
-      </header> <!-- Tag penutup header bawaan template kamu -->
-    </div> <!-- Tag penutup div pembungkus halaman/topbar -->
+      </header>
+    </div>
 
       <main>
         <section id="dasbor" class="tab-pane active panel">
   <h2>Dashboard Analisis Perkara</h2>
   <p class="small" style="margin-bottom:16px;">Pemantauan statistik penindakan, sebaran penyelesaian perkara, dan estimasi kerugian negara.</p>
   
-  <!-- ROW 1: KARTU METRIK UTAMA & KLASIFIKASI OPERASIONAL -->
   <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 20px;">
     
-    <!-- 1. TOTAL REGISTER & RINCIAN DOKUMEN -->
     <div class="stat-card interactive-stat">
       <div class="stat-card-header">
         <h4>Total Register Perkara</h4>
@@ -213,7 +211,6 @@
       </div>
     </div>
     
-    <!-- 2. ESTIMASI KERUGIAN NEGARA -->
     <div class="stat-card interactive-stat">
       <div class="stat-card-header">
         <h4>Total Kerugian Negara</h4>
@@ -223,7 +220,6 @@
       <div class="stat-badge">Estimasi Taksiran Potensi</div>
     </div>
 
-    <!-- 3. SUMBER / JALUR PENINDAKAN -->
     <div class="stat-card interactive-stat">
       <div class="stat-card-header">
         <h4>Penindakan</h4>
@@ -245,7 +241,6 @@
       </div>
     </div>
 
-    <!-- 4. RINCIAN TINDAK LANJUT PENYELESAIAN -->
     <div class="stat-card interactive-stat">
       <div class="stat-card-header">
         <h4>Rincian Tindak Lanjut</h4>
@@ -261,7 +256,6 @@
     </div>
   </div>
 
-  <!-- ROW 2: TABEL MINI RECENT CASES (1, 2, ATAU MAKSIMAL 3 BARIS) -->
   <div class="panel interactive-stat" style="margin-bottom:0; background:#0f172a; border:1px solid var(--border-color, #334155); border-radius:10px; padding:16px;">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
       <div>
@@ -286,9 +280,7 @@
             <th style="padding:8px 6px; text-align:right;">AKSI</th>
           </tr>
         </thead>
-        <tbody id="dashboardRecentCasesBody">
-          <!-- Diisi otomatis oleh JavaScript updateDashboardStats() -->
-        </tbody>
+        <tbody id="dashboardRecentCasesBody"></tbody>
       </table>
     </div>
   </div>
@@ -531,14 +523,6 @@
               <tbody id="disposisiTableBody"></tbody>
             </table>
           </div>
-
-          <div id="disposisiPagination" style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding: 0 4px;">
-            <span class="small" id="disposisiPageInfo" style="color: var(--text-muted);">Menampilkan halaman 1 dari 1</span>
-            <div style="display: flex; gap: 6px;">
-              <button type="button" class="btn secondary" id="btnPrevDsp" onclick="changeDisposisiPage(-1)" style="padding: 4px 10px; font-size: 12px;">Sebelumnya</button>
-              <button type="button" class="btn secondary" id="btnNextDsp" onclick="changeDisposisiPage(1)" style="padding: 4px 10px; font-size: 12px;">Berikutnya</button>
-            </div>
-          </div>
         </section>
 
         <section id="data" class="tab-pane panel">
@@ -581,15 +565,6 @@
               <tbody id="perkaraTableBody"></tbody>
             </table>
           </div>
-
-        <div id="perkaraPagination" style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding: 0 4px;">
-          <span class="small" id="perkaraPageInfo" style="color: var(--text-muted);">Menampilkan halaman 1 dari 1</span>
-          <div style="display: flex; gap: 6px;">
-            <button type="button" class="btn secondary" id="btnPrevPerkara" onclick="changePerkaraPage(-1)" style="padding: 4px 10px; font-size: 12px;">Sebelumnya</button>
-            <button type="button" class="btn secondary" id="btnNextPerkara" onclick="changePerkaraPage(1)" style="padding: 4px 10px; font-size: 12px;">Berikutnya</button>
-          </div>
-        </div>
-
         </section>
 
         <section id="laporan" class="tab-pane panel">
@@ -843,13 +818,11 @@
       <input type="hidden" id="editingDisposisiIndex" value="-1">
       <div class="grid">
         
-        <!-- 1. NAMA PELAKU -->
         <div style="grid-column: span 2;">
           <label>Nama Pelaku</label>
           <input id="dsp_nama_pelaku" class="form-control" placeholder="Nama lengkap pelaku...">
         </div>
 
-        <!-- 2. JENIS & NOMOR IDENTITAS -->
         <div style="grid-column: span 2;">
           <div class="grid" style="grid-template-columns: 180px 1fr; gap: 8px;">
             <div>
@@ -865,7 +838,6 @@
           </div>
         </div>
 
-        <!-- 3. JENIS PERKARA -->
         <div style="grid-column: span 2;">
           <label>Jenis Perkara</label>
           <select id="dsp_jenis_perkara_select" class="form-control" onchange="syncDspJenisPerkara(this.value)">
@@ -874,7 +846,6 @@
           <input id="dsp_jenis_perkara" class="form-control" style="display:none; margin-top:4px;">
         </div>
 
-        <!-- 4. DOKUMEN PEMBERITAHUAN -->
         <div style="grid-column: span 2;">
           <label>No. & Jenis Dokumen Pemberitahuan</label>
           <div style="display:flex; gap:6px;">
@@ -894,7 +865,6 @@
 
         <div></div>
 
-        <!-- 5. KOMODITI -->
         <div style="grid-column: span 2;">
           <label>Komoditi</label>
           <select id="dsp_komoditi_select" class="form-control" onchange="syncKomoditi(this.value)">
@@ -903,7 +873,6 @@
          <input id="Komoditi" class="form-control" style="display:none;">
        </div>
 
-        <!-- 6. GENERATOR URAIAN BARANG & KEMASAN -->
         <div style="grid-column: span 2; background:#0f172a; padding:12px; border-radius:var(--radius-sm, 6px); border:1px solid var(--border-color, #334155); margin-bottom:6px;">
           <label style="color:var(--primary, #3b82f6); margin-bottom:6px; display:block; font-weight:700;">Generator Auto Teks Uraian Barang & Kemasan</label>
           <div class="grid3" style="margin-bottom:8px; display:grid; grid-template-columns: repeat(3, 1fr); gap:8px;">
@@ -930,7 +899,6 @@
           <textarea id="dsp_uraian_barang" class="form-control" placeholder="Hasil uraian barang otomatis..."></textarea>
         </div>
 
-        <!-- 7. NOMOR & TANGGAL PENINDAKAN (LP, SBP, SPRIN) -->
         <div>
           <label>Nomor LP (Cukup Angka)</label>
           <input id="dsp_no_lp" class="form-control" placeholder="Contoh: 01" oninput="updateDspCodePreviews()">
@@ -961,7 +929,6 @@
           <input type="date" id="dsp_tgl_sprin" class="form-control">
         </div>
 
-        <!-- 8. TARGET PENYIDIK -->
         <div style="grid-column: span 2;">
           <label>Tunjuk Penyidik / Ketua Tim Peneliti</label>
           <select id="dsp_target_penyidik" class="form-control"></select>
@@ -1246,7 +1213,6 @@
           <input id="Kerugian_Negara" placeholder="Contoh: 10000000" oninput="formatRupiahInput(this)" onblur="formatRupiahFinal(this)">
         </div>
 
-        <!-- GENERATOR AUTO TEKS URAIAN BARANG -->
         <div style="grid-column: span 2; background:#0f172a; padding:12px; border-radius:var(--radius-sm); border:1px solid var(--border-color); margin-bottom:10px;">
           <label style="color:var(--primary); margin-bottom:6px;">Generator Auto Teks Uraian Barang & Kemasan</label>
           <div class="grid3" style="margin-bottom:8px;">
@@ -1436,7 +1402,7 @@
       <div class="grid4">
         <div><label>Nama Petugas LPF</label><input id="form_petugas_lpf"></div>
         <div><label>NIP Petugas LPF</label><input id="form_nip_petugas_lpf"></div>
-        <div><label>Jabatan Petugas LPF</label><input id="form_jabatan_petugas_lpf" value="Petugas LPF"></div>
+        <div><label>Jabatan Petugas LPF</label><input id="form_jabatan_lpf" value="Petugas LPF"></div>
         <div><label>Golongan Petugas LPF</label><input id="form_gol_petugas_lpf"></div>
       </div>
 

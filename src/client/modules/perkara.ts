@@ -17,6 +17,33 @@ import { refreshReportTableUI, updateReportLive } from './editor.js';
 let currentPerkaraPage = 1;
 const rowsPerPagePerkara = 5;
 
+// Helper untuk mengambil dan menyimpan data referensi ke server backend
+async function fetchServerConfig(key: string, defaultVal: any): Promise<any> {
+  try {
+    let res = await fetch(`/api/config/${key}`);
+    let json = await res.json();
+    if (json.success && json.data) {
+      return json.data;
+    }
+  } catch (e) {
+    console.error(`Gagal memuat ${key} dari server:`, e);
+  }
+  return JSON.parse(localStorage.getItem(key) || JSON.stringify(defaultVal));
+}
+
+async function saveServerConfig(key: string, val: any): Promise<void> {
+  localStorage.setItem(key, JSON.stringify(val));
+  try {
+    await fetch(`/api/config/${key}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ data: val })
+    });
+  } catch (e) {
+    console.error(`Gagal menyimpan ${key} ke server:`, e);
+  }
+}
+
 export function populateAgeDropdown(): void {
   let select = document.getElementById('Umur_Pelaku') as HTMLSelectElement;
   if(!select) return;
@@ -161,7 +188,7 @@ export function generateUraianBarangOtomatis(): void {
   }
 }
 
-export function autoGenerateAndAddMasterPasal(modusText: string): void {
+export async function autoGenerateAndAddMasterPasal(modusText: string): Promise<void> {
   if (!modusText || modusText === '-') return;
 
   let newPasalList: any[] = [];
@@ -218,7 +245,7 @@ export function autoGenerateAndAddMasterPasal(modusText: string): void {
 
   if (newPasalList.length === 0) return;
 
-  let customMap = JSON.parse(localStorage.getItem('customPasalMap') || '{}');
+  let customMap = await fetchServerConfig('customPasalMap', {});
   let isNewAdded = false;
 
   newPasalList.forEach((item: any) => {
@@ -231,8 +258,8 @@ export function autoGenerateAndAddMasterPasal(modusText: string): void {
   });
 
   if (isNewAdded) {
-    localStorage.setItem('customPasalMap', JSON.stringify(customMap));
-    renderPasalCheckboxes();
+    await saveServerConfig('customPasalMap', customMap);
+    await renderPasalCheckboxes();
   }
 
   setTimeout(() => {
@@ -466,17 +493,17 @@ export function syncKantor(val: string): void {
   if(el) el.value = val;
 }
 
-export function addCustomKantor(): void {
+export async function addCustomKantor(): Promise<void> {
   let input = document.getElementById('setting_newKantor') as HTMLInputElement;
   if (!input) return;
   let val = input.value.trim();
   if(!val) return;
 
-  let customKantor = JSON.parse(localStorage.getItem('customKantorList') || '[]');
+  let customKantor = await fetchServerConfig('customKantorList', []);
   if(!customKantor.includes(val)) {
     customKantor.push(val);
-    localStorage.setItem('customKantorList', JSON.stringify(customKantor));
-    renderKantorDropdown();
+    await saveServerConfig('customKantorList', customKantor);
+    await renderKantorDropdown();
     input.value = '';
     showToast('KANTOR BERHASIL DITAMBAHKAN', 'Unit kantor baru ditambahkan ke opsi.', 'success');
   } else {
@@ -484,11 +511,11 @@ export function addCustomKantor(): void {
   }
 }
 
-export function renderPasalCheckboxes(): void {
+export async function renderPasalCheckboxes(): Promise<void> {
   let container = document.getElementById('pasal_pelanggaran_checkboxes');
   if(!container) return;
 
-  let customMap = JSON.parse(localStorage.getItem('customPasalMap') || '{}');
+  let customMap = await fetchServerConfig('customPasalMap', {});
   let html = '';
 
   Object.keys(defaultPasalClusters).forEach(cluster => {
@@ -502,16 +529,16 @@ export function renderPasalCheckboxes(): void {
   container.innerHTML = html;
 }
 
-export function renderCustomKomoditiOptions(): void {
-  let customKomoditi = JSON.parse(localStorage.getItem('customKomoditiList') || '[]');
+export async function renderCustomKomoditiOptions(): Promise<void> {
+  let customKomoditi = await fetchServerConfig('customKomoditiList', []);
   let komoditiGroup = document.getElementById('optgroup_custom_komoditi');
   if(komoditiGroup) {
     komoditiGroup.innerHTML = customKomoditi.map((k: any) => `<option value="${escText(k)}">${escText(k)}</option>`).join('');
   }
 }
 
-export function renderKantorDropdown(): void {
-  let customKantor = JSON.parse(localStorage.getItem('customKantorList') || '[]');
+export async function renderKantorDropdown(): Promise<void> {
+  let customKantor = await fetchServerConfig('customKantorList', []);
   let allKantor = [...defaultKantorList, ...customKantor];
 
   let select = document.getElementById('Kantor_Select') as HTMLSelectElement;
@@ -923,7 +950,7 @@ export function loadRecordToCurrentView(rec: any): void {
   setSafe('form_indak_2', rec.indak_2);
   setSafe('form_nip_indak_2', rec.nip_indak_2);
   setSafe('form_jabatan_indak_2', rec.jabatan_indak_2 || 'Petugas Penindakan 2');
-  setSafe('form_gol_indak_2', rec.gol_indak_2);
+  setSafe('form_gol_indak_2', rec.gol_gol_indak_2);
 
   setSafe('form_indak_lainnya', rec.indak_lainnya);
   setSafe('form_nip_indak_lainnya', rec.nip_indak_lainnya);
@@ -955,14 +982,7 @@ export function renderPerkaraTable(): void {
 
   if (paginatedData.length === 0) {
     tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:16px; color:var(--text-muted);">Belum ada data perkara tersimpan.</td></tr>`;
-    
-    let pageInfo = document.getElementById('perkaraPageInfo');
-    if (pageInfo) pageInfo.textContent = `Menampilkan 0 data`;
-    
-    let btnPrev = document.getElementById('btnPrevPerkara') as HTMLButtonElement;
-    let btnNext = document.getElementById('btnNextPerkara') as HTMLButtonElement;
-    if (btnPrev) btnPrev.disabled = true;
-    if (btnNext) btnNext.disabled = true;
+    renderPerkaraPagination(totalPages, filtered.length);
     return;
   }
 
@@ -1040,15 +1060,34 @@ export function renderPerkaraTable(): void {
     `;
   }).join('');
 
-  let pageInfo = document.getElementById('perkaraPageInfo');
-  if (pageInfo) {
-    pageInfo.textContent = `Halaman ${currentPerkaraPage} dari ${totalPages} (Total: ${filtered.length} data)`;
+  renderPerkaraPagination(totalPages, filtered.length);
+}
+
+function renderPerkaraPagination(totalPages: number, totalItems: number = 0): void {
+  let paginationContainer = document.getElementById('perkaraPaginationContainer');
+  if (!paginationContainer) {
+    let cardBodyEl = document.querySelector('#data .panel-body, #data .data-table-container, #data');
+    if (cardBodyEl) {
+      let div = document.createElement('div');
+      div.id = 'perkaraPaginationContainer';
+      div.style.cssText = 'display: flex; justify-content: space-between; align-items: center; margin-top: 16px; padding: 4px 8px; font-size: 12px;';
+      cardBodyEl.appendChild(div);
+      paginationContainer = div;
+    } else {
+      return;
+    }
   }
-  
-  let btnPrev = document.getElementById('btnPrevPerkara') as HTMLButtonElement;
-  let btnNext = document.getElementById('btnNextPerkara') as HTMLButtonElement;
-  if (btnPrev) btnPrev.disabled = currentPerkaraPage === 1;
-  if (btnNext) btnNext.disabled = currentPerkaraPage === totalPages;
+
+  const maxPage = totalPages > 0 ? totalPages : 1;
+  if (currentPerkaraPage > maxPage) currentPerkaraPage = maxPage;
+
+  paginationContainer.innerHTML = `
+    <span style="color: var(--text-muted);">Halaman ${currentPerkaraPage} dari ${maxPage} <b style="margin-left: 8px; color: var(--text-main);">Total: ${totalItems} Data</b></span>
+    <div style="display: flex; gap: 4px;">
+      <button type="button" class="btn secondary" style="padding: 4px 10px; font-size: 11px;" ${currentPerkaraPage === 1 ? 'disabled' : ''} onclick="window.changePerkaraPage(-1)">Sebelumnya</button>
+      <button type="button" class="btn secondary" style="padding: 4px 10px; font-size: 11px;" ${currentPerkaraPage >= maxPage ? 'disabled' : ''} onclick="window.changePerkaraPage(1)">Selanjutnya</button>
+    </div>
+  `;
 }
 
 export function addNewPerkaraModal(): void {
@@ -1407,11 +1446,11 @@ export function saveData(): void {
   showToast("DATA TERSIMPAN", "Seluruh data AP3 berhasil dicadangkan.", "success");
 }
 
-export function loadData(): void {
+export async function loadData(): Promise<void> {
   loadPerkaraFromStorage();
-  renderKantorDropdown();
-  renderCustomKomoditiOptions();
-  renderPasalCheckboxes();
+  await renderKantorDropdown();
+  await renderCustomKomoditiOptions();
+  await renderPasalCheckboxes();
 }
 
 export function exportDataToExcel(): void {
@@ -1534,6 +1573,7 @@ export function changePerkaraPage(direction: number): void {
 }
 
 (window as any).addNewPerkaraModal = addNewPerkaraModal;
+(window as any).changePerkaraPage = changePerkaraPage;
 (window as any).editPerkara = editPerkara;
 (window as any).deletePerkara = deletePerkara;
 (window as any).closeModal = closeModal;
