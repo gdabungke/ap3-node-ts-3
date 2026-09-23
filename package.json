@@ -19,7 +19,7 @@
     "sqlite",
     "express"
   ],
-  "author": "Direktorat Jenderal Bea dan Cukai",
+  "author": "GINDO DABUNGKE",
   "license": "ISC",
   "dependencies": {
     "cors": "^2.8.5",
