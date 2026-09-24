@@ -1,1 +1,29 @@
-[]
+[
+  {
+    "id": 1790266346427,
+    "pelaku": "PT BERKAS PERKARA",
+    "jenisIdentitas": "NIB",
+    "nomorIdentitas": "12334235",
+    "jenisPerkara": "Impor - Umum",
+    "komoditi": "Pakaian Bekas / Ballpress / Textile Impor Ilegal",
+    "dokPemberitahuan": "BC 2.0 Nomor 343245",
+    "tglDokPemberitahuan": "2026-09-01",
+    "jumlahKoli": "12",
+    "jenisKoli": "pallet",
+    "autoBarang": "Pakain",
+    "uraianBarang": "12 (dua belas) pallet Pakain",
+    "noLp": "1",
+    "tglLp": "2026-09-01",
+    "noSbp": "1",
+    "tglSbp": "2026-09-01",
+    "noSprin": "1",
+    "tglSprin": "2026-09-01",
+    "targetPenyidik": "Penyidik1",
+    "pengusul": "Admin System",
+    "status": "Disposisi Diterima",
+    "statusDisposisi": "Disposisi Diterima",
+    "tanggalDisposisi": "2026-09-24T16:12:26.427Z",
+    "notifiedForMe": false,
+    "waktuRespon": "2026-09-24T16:13:01.543Z"
+  }
+]

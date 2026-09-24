@@ -178,15 +178,32 @@ class JsonDatabase implements IDatabase {
 
   saveDisposisi(disp: DisposisiRecord): DisposisiRecord {
     const list: DisposisiRecord[] = this.getDisposisi();
-    const nextId: number = list.length > 0 ? Math.max(...list.map((d: DisposisiRecord) => Number(d.id) || 0)) + 1 : 1;
-    const newDisp: DisposisiRecord = {
-      ...disp,
-      id: nextId,
-      tanggalDisposisi: disp.tanggalDisposisi || new Date().toISOString()
-    };
-    list.push(newDisp);
+    
+    // Cek apakah data dengan ID yang sama sudah ada (untuk mencegah data tertimpa/hilang)
+    const existingIndex = list.findIndex((d: DisposisiRecord) => String(d.id) === String(disp.id));
+
+    let savedDisp: DisposisiRecord;
+    if (existingIndex >= 0) {
+      // Jika sudah ada, gabungkan data lama dengan data baru
+      list[existingIndex] = {
+        ...list[existingIndex],
+        ...disp,
+        tanggalDisposisi: list[existingIndex].tanggalDisposisi || disp.tanggalDisposisi || new Date().toISOString()
+      };
+      savedDisp = list[existingIndex];
+    } else {
+      // Jika data baru, buat ID baru
+      const nextId: number = list.length > 0 ? Math.max(...list.map((d: DisposisiRecord) => Number(d.id) || 0)) + 1 : 1;
+      savedDisp = {
+        ...disp,
+        id: disp.id || nextId,
+        tanggalDisposisi: disp.tanggalDisposisi || new Date().toISOString()
+      };
+      list.push(savedDisp);
+    }
+
     fs.writeFileSync(this.disposisiFile, JSON.stringify(list, null, 2), 'utf-8');
-    return newDisp;
+    return savedDisp;
   }
 }
 

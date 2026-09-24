@@ -74,8 +74,10 @@ export function getTLNumFormat(type) {
     }
     if (type === 'BAST_LIMPAH')
         return `BAST-${rec.TL_Limpah_Num || fallbackNum}/LIMPAH/KPU.2064/2026`;
-    if (type === 'BA_SEGEL')
-        return `BA-${rec.TL_Segel_Num || fallbackNum}/KPU.2064/2026`;
+    if (type === 'BA_SEGEL') {
+        let numSegel = rec.TL_Segel_Num || fallbackNum;
+        return `BA-${numSegel}/BUKASEGEL/KPU.2064/2026`;
+    }
     if (type === 'SPSA')
         return `SPSA-${rec.TL_SPSA_Num || fallbackNum}/KPU.2/2026`;
     if (type === 'KEP_BDN')
@@ -359,58 +361,285 @@ export function BA_SEGEL() {
         return `<div class="report"><p>Data belum dipilih.</p></div>`;
     let rec = store.databasePerkara[store.activeRecordIndex];
     let num = getTLNumFormat('BA_SEGEL');
-    let hari = escText(rec.TL_Segel_Hari || 'Selasa');
-    let tglHuruf = escText(rec.TL_Segel_Tgl_Huruf || 'dua puluh satu Oktober tahun dua ribu dua puluh enam');
-    let tglSurat = escText(rec.TL_Tanggal_Surat || '21 Oktober 2026');
-    let noSpli = escText(rec.TL_Segel_No_SPLI || '-');
-    let tglSpli = escText(rec.TL_Segel_Tgl_SPLI || '-');
-    let namaSarkut = escText(rec.TL_Segel_Nama_Sarkut || rec.Pengangkut || '-');
+    let rawDate = rec.TL_Tanggal_Surat || rec.Tanggal_LHP || rec.Tanggal_LP_LP_1 || '';
+    let dateInfo = autoGenerateTeksTanggalBA(rawDate);
+    let hari = escText(rec.TL_Segel_Hari || dateInfo.hari || '');
+    let tglHuruf = escText(rec.TL_Segel_Tgl_Huruf || dateInfo.teksLengkap || '');
+    let tglCetakTTD = rawDate ? formatDateIndo(rawDate) : '';
+    let noSpli = escText(rec.TL_Segel_No_SPLI || rec.Nomor_SPLIT || '-');
+    let tglSpliRaw = rec.TL_Segel_Tgl_SPLI || rec.Tanggal_SPLIT || '';
+    let tglSpli = tglSpliRaw ? formatDateIndo(tglSpliRaw) : '-';
+    let namaSarkut = escText(rec.TL_Segel_Nama_Sarkut || '-');
     let regSarkut = escText(rec.TL_Segel_Reg_Sarkut || '-');
-    let bendera = escText(rec.TL_Segel_Bendera || 'INDONESIA');
-    let nahkoda = escText(rec.TL_Segel_Nahkoda || rec.Nama_Pelaku || '-');
+    let bendera = escText(rec.TL_Segel_Bendera || '-');
+    let nahkoda = escText(rec.TL_Segel_Nahkoda || '-');
     let nikNahkoda = escText(rec.TL_Segel_Nik_Nahkoda || '-');
-    let namaSaksi = escText(rec.TL_Nama_Pemilik || 'DENI YASMAN');
-    let nikSaksi = escText(rec.TL_NIK_Pemilik || '1312011404930001');
-    let alamatSaksi = escText(rec.TL_Alamat_Pemilik || 'Perum Griya Sagulung Permai Blok A No. 59, Batam');
-    let pkrSaksi = escText(rec.TL_Segel_Pekerjaan || 'Karyawan Swasta');
-    let p1 = escText(rec.TL_Segel_P1 || rec.ketua_tim || 'Petugas BA Buka Segel 1');
-    let p2 = escText(rec.TL_Segel_P2 || 'Petugas BA Buka Segel 2');
-    let ttdPemilik = `
-    <div class="sign" style="display:flex; justify-content:space-between; margin-top:14px;">
-      <div style="width:45%; text-align:left; font-size:10pt;">
-        Pemilik/Kuasanya/Saksi*
-        <div class="signature" style="height:55px;"></div>
-        ${tteBadge()}
-        <b>${namaSaksi}</b><br>Alamat: ${alamatSaksi}
-      </div>
-      <div style="width:45%; text-align:left; font-size:10pt;">
-        Pejabat yang melakukan pembukaan segel,
-        <div class="signature" style="height:55px;"></div>
-        ${tteBadge()}
-        <b>${p1} ${p2 ? '& ' + p2 : ''}</b>
-      </div>
+    let jmlBarang = escText(rec.TL_Segel_Jml_Barang || '-');
+    let jenisBarang = escText(rec.TL_Segel_Jenis_Barang || '-');
+    let dokBarang = escText(rec.TL_Segel_Dok_Barang || '-');
+    let pemilikBarang = escText(rec.TL_Segel_Pemilik_Barang || '-');
+    let npwpBarang = escText(rec.TL_Segel_NPWP_Barang || '-');
+    let alamatBangunan = escText(rec.TL_Segel_Alamat_Bangunan || '-');
+    let regBangunan = escText(rec.TL_Segel_Reg_Bangunan || '-');
+    let namaPemilikTempat = escText(rec.TL_Segel_Nama_Pemilik_Tempat || '-');
+    let nikPemilikTempat = escText(rec.TL_Segel_Nik_Pemilik_Tempat || '-');
+    let rawNamaSaksi = escText(rec.TL_Nama_Pemilik || rec.Nama_Pelaku || '');
+    let rawAlamatSaksi = escText(rec.TL_Alamat_Pemilik || '');
+    let rawPkrSaksi = escText(rec.TL_Segel_Pekerjaan || '');
+    let rawNikSaksi = escText(rec.TL_NIK_Pemilik || '');
+    let namaSaksi = rawNamaSaksi ? rawNamaSaksi : '-';
+    let alamatSaksi = rawAlamatSaksi ? rawAlamatSaksi : '-';
+    let pkrSaksi = rawPkrSaksi ? rawPkrSaksi : '-';
+    let nikSaksi = rawNikSaksi ? rawNikSaksi : '-';
+    let namaSaksiTTD = rawNamaSaksi || '-';
+    let p1 = escText(rec.TL_Segel_P1 || rec.ketua_tim || '-');
+    let p2 = escText(rec.TL_Segel_P2 || '-');
+    let p1Nip = escText(rec.TL_NIP_Segel_1 || rec.nip_ketua_tim || '-');
+    let p2Nip = escText(rec.TL_NIP_Segel_2 || '-');
+    let ttdSegel = `
+    <div style="page-break-inside:avoid !important; margin-top:16px; font-family:Arial, Helvetica, sans-serif; font-size:11pt;">
+      <table style="width:100% !important; border-collapse:collapse !important; border:none !important; table-layout:fixed; font-size:11pt;">
+        <colgroup>
+          <col style="width:52%;">
+          <col style="width:48%;">
+        </colgroup>
+        <tr>
+          <td style="border:none !important; padding:0; vertical-align:top;"></td>
+          <td style="border:none !important; padding:0 0 10px 0; vertical-align:top; text-align:left;">
+            <div style="width:85%; margin-left:auto;">Batam, ${tglCetakTTD}</div>
+          </td>
+        </tr>
+        <tr>
+          <td style="border:none !important; padding:0 10px 0 0; vertical-align:top;">
+            Yang menerima,
+            <div style="height:35px;"></div>
+            <b>${namaSaksiTTD}</b>
+          </td>
+          <td style="border:none !important; padding:0; vertical-align:top;">
+            <div style="width:85%; margin-left:auto;">
+              Yang menyerahkan,
+              <div style="height:35px;"></div>
+              ${tteBadge()}
+              <b>${p1}</b><br>
+              NIP. ${p1Nip}
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td style="border:none !important; padding:35px 10px 0 0; vertical-align:top;">
+            <b>----------------------------------------</b>
+          </td>
+          <td style="border:none !important; padding:20px 0 0 0; vertical-align:top;">
+            <div style="width:85%; margin-left:auto;">
+              <div style="height:25px;"></div>
+              ${tteBadge()}
+              <b>${p2}</b><br>
+              NIP. ${p2Nip}
+            </div>
+          </td>
+        </tr>
+      </table>
     </div>
   `;
-    return `<div class="report" style="font-family:Arial, sans-serif; font-size:10pt; line-height:1.35;">
+    return `<div class="report" style="font-family:Arial, sans-serif; font-size:11pt; line-height:1.35;">
     ${generateKopSurat('BA_SEGEL')}
     <div style="text-align:center; font-weight:bold; font-size:11pt; margin:16px 0 3px 0;">BERITA ACARA PEMBUKAAN SEGEL</div>
-    <div style="text-align:center; margin-bottom:12px; font-size:10pt;">Nomor : ${num}</div>
-    <p style="text-align:justify; margin-bottom:6px;">Pada hari ini, ${hari} tanggal ${tglHuruf}. Berdasarkan Surat Perintah Penelitian Kepala Bidang Penindakan dan Penyidikan KPU BC Tipe B Batam Nomor ${noSpli} tanggal ${tglSpli}. Kami yang bertanda tangan di bawah ini telah melakukan pembukaan segel atas:</p>
+    <div style="text-align:center; margin-bottom:12px; font-size:11pt;">Nomor : ${num}</div>
     
-    ${buildTableKv([
-        ['Sarana Pengangkut', 'Nama & Jenis Sarkut', namaSarkut],
-        ['', 'No. Register', regSarkut],
-        ['', 'Bendera', bendera],
-        ['', 'Nahkoda/Pilot/Pengemudi*', nahkoda],
-        ['', 'Nomor Identitas', nikNahkoda],
-        ['Saksi / Penghadap', 'Nama', namaSaksi],
-        ['', 'Alamat', alamatSaksi],
-        ['', 'Pekerjaan', pkrSaksi],
-        ['', 'Identitas (KTP/SIM/Paspor*)', nikSaksi]
-    ])}
-    <p style="margin-top:10px; margin-bottom:0; text-align:justify;">Demikian Berita Acara ini dibuat dengan sebenarnya.</p>
-    ${closeTLReportTag(ttdPemilik, tglSurat)}
+    ${formatTrailingDashes(`Pada hari ini, ${hari} tanggal${tglHuruf}. Berdasarkan Surat Perintah Penelitian Kepala Bidang Penindakan dan Penyidikan KPU BC Tipe B Batam Nomor ${noSpli} tanggal${tglSpli}. Kami yang bertanda tangan di bawah ini telah melakukan pembukaan segel atas:`, '----------')}
+    
+    <table style="width:100% !important; border-collapse:collapse !important; border:none !important; margin-bottom:10px; font-size:11pt !important; table-layout:fixed;">
+      <colgroup>
+        <col style="width:24px;">
+        <col style="width:245px;">
+        <col style="width:18px;">
+        <col style="width:calc(100% - 287px);">
+      </colgroup>
+
+      <tr>
+        <td style="border:none !important; font-weight:bold; vertical-align:top; padding:6px 0 2px 0;">a.</td>
+        <td colspan="3" style="border:none !important; font-weight:bold; padding:6px 0 2px 0;">Sarana Pengangkut</td>
+      </tr>
+      <tr>
+        <td style="border:none !important;"></td>
+        <td style="border:none !important; padding:1px 4px;">Nama dan Jenis Sarkut</td>
+        <td style="border:none !important; padding:1px 0; text-align:center;">:</td>
+        <td style="border:none !important; padding:1px 4px;">${namaSarkut}</td>
+      </tr>
+      <tr>
+        <td style="border:none !important;"></td>
+        <td style="border:none !important; padding:1px 4px;">No. Register</td>
+        <td style="border:none !important; padding:1px 0; text-align:center;">:</td>
+        <td style="border:none !important; padding:1px 4px;">${regSarkut}</td>
+      </tr>
+      <tr>
+        <td style="border:none !important;"></td>
+        <td style="border:none !important; padding:1px 4px;">Bendera</td>
+        <td style="border:none !important; padding:1px 0; text-align:center;">:</td>
+        <td style="border:none !important; padding:1px 4px;">${bendera}</td>
+      </tr>
+      <tr>
+        <td style="border:none !important;"></td>
+        <td style="border:none !important; padding:1px 4px;">Nahkoda/Pilot/Pengemudi*</td>
+        <td style="border:none !important; padding:1px 0; text-align:center;">:</td>
+        <td style="border:none !important; padding:1px 4px;">${nahkoda}</td>
+      </tr>
+      <tr>
+        <td style="border:none !important;"></td>
+        <td style="border:none !important; padding:1px 4px;">Nomor Identitas</td>
+        <td style="border:none !important; padding:1px 0; text-align:center;">:</td>
+        <td style="border:none !important; padding:1px 4px;">${nikNahkoda}</td>
+      </tr>
+
+      <tr>
+        <td style="border:none !important; font-weight:bold; vertical-align:top; padding:8px 0 2px 0;">b.</td>
+        <td colspan="3" style="border:none !important; font-weight:bold; padding:8px 0 2px 0;">Barang</td>
+      </tr>
+      <tr>
+        <td style="border:none !important;"></td>
+        <td style="border:none !important; padding:1px 4px;">Jumlah/Jenis/Nomor Peti Kemas/Kemasan</td>
+        <td style="border:none !important; padding:1px 0; text-align:center;">:</td>
+        <td style="border:none !important; padding:1px 4px;">${jmlBarang}</td>
+      </tr>
+      <tr>
+        <td style="border:none !important;"></td>
+        <td style="border:none !important; padding:1px 4px;">Jumlah/Jenis Barang</td>
+        <td style="border:none !important; padding:1px 0; text-align:center;">:</td>
+        <td style="border:none !important; padding:1px 4px;">${jenisBarang}</td>
+      </tr>
+      <tr>
+        <td style="border:none !important;"></td>
+        <td style="border:none !important; padding:1px 4px;">Jenis/Nomor dan Tgl Dokumen</td>
+        <td style="border:none !important; padding:1px 0; text-align:center;">:</td>
+        <td style="border:none !important; padding:1px 4px;">${dokBarang}</td>
+      </tr>
+      <tr>
+        <td style="border:none !important;"></td>
+        <td style="border:none !important; padding:1px 4px;">Pemilik/Importir/Eksportir/Kuasa*</td>
+        <td style="border:none !important; padding:1px 0; text-align:center;">:</td>
+        <td style="border:none !important; padding:1px 4px;">${pemilikBarang}</td>
+      </tr>
+      <tr>
+        <td style="border:none !important;"></td>
+        <td style="border:none !important; padding:1px 4px;">Nomor Identitas (NPWP)</td>
+        <td style="border:none !important; padding:1px 0; text-align:center;">:</td>
+        <td style="border:none !important; padding:1px 4px;">${npwpBarang}</td>
+      </tr>
+
+      <tr>
+        <td style="border:none !important; font-weight:bold; vertical-align:top; padding:8px 0 2px 0;">c.</td>
+        <td colspan="3" style="border:none !important; font-weight:bold; padding:8px 0 2px 0;">Bangunan atau Tempat</td>
+      </tr>
+      <tr>
+        <td style="border:none !important;"></td>
+        <td style="border:none !important; padding:1px 4px;">Alamat Bangunan/Tempat</td>
+        <td style="border:none !important; padding:1px 0; text-align:center;">:</td>
+        <td style="border:none !important; padding:1px 4px;">${alamatBangunan}</td>
+      </tr>
+      <tr>
+        <td style="border:none !important;"></td>
+        <td style="border:none !important; padding:1px 4px;">No. Reg Bangunan/NPPBKC/NPWP</td>
+        <td style="border:none !important; padding:1px 0; text-align:center;">:</td>
+        <td style="border:none !important; padding:1px 4px;">${regBangunan}</td>
+      </tr>
+      <tr>
+        <td style="border:none !important;"></td>
+        <td style="border:none !important; padding:1px 4px;">Nama Pemilik/Yang Menguasai*</td>
+        <td style="border:none !important; padding:1px 0; text-align:center;">:</td>
+        <td style="border:none !important; padding:1px 4px;">${namaPemilikTempat}</td>
+      </tr>
+      <tr>
+        <td style="border:none !important;"></td>
+        <td style="border:none !important; padding:1px 4px;">Nomor Identitas</td>
+        <td style="border:none !important; padding:1px 0; text-align:center;">:</td>
+        <td style="border:none !important; padding:1px 4px;">${nikPemilikTempat}</td>
+      </tr>
+    </table>
+
+    ${formatTrailingDashes(`Berupa segel/tanda pengaman Kertas sebanyak 1 (satu) segel Nomor ${num} tanggal${tglCetakTTD}.`, '----------')}
+    
+    <p style="margin-bottom:4px; text-align:justify;"><b>Pembukaan segel disaksikan oleh pengangkut/pemilik/atau kuasanya/ketua lingkungan/dll*:</b></p>
+    
+    <table style="width:100% !important; border-collapse:collapse !important; border:none !important; margin-bottom:10px; font-size:11pt !important; table-layout:fixed;">
+      <colgroup>
+        <col style="width:235px;">
+        <col style="width:18px;">
+        <col style="width:calc(100% - 253px);">
+      </colgroup>
+      ${formatRowTrailingDashes('Nama', namaSaksi, '235px')}
+      ${formatRowTrailingDashes('Alamat', alamatSaksi, '235px')}
+      ${formatRowTrailingDashes('Pekerjaan', pkrSaksi, '235px')}
+      ${formatRowTrailingDashes('Identitas (KTP/SIM/Paspor*)', nikSaksi, '235px')}
+    </table>
+
+    ${formatTrailingDashes('Demikian Berita Acara ini dibuat dengan sebenarnya.', '----------')}
+    ${closeTLReportTag(ttdSegel, tglCetakTTD)}
   </div>`;
+}
+export function renderEditorBA_SEGEL(rec, container) {
+    let rawDate = rec.TL_Tanggal_Surat || '';
+    let autoDateInfo = autoGenerateTeksTanggalBA(rawDate);
+    let displayHari = rec.TL_Segel_Hari || autoDateInfo.hari || '';
+    let displayTglHuruf = rec.TL_Segel_Tgl_Huruf || autoDateInfo.teksLengkap || '';
+    container.innerHTML = `
+    <div class="grid" style="margin-bottom:10px;">
+      <div><label>Nomor BA Segel (Cukup Angka)</label><input value="${escText(rec.TL_Segel_Num || '')}" oninput="saveDynamicValTL('TL_Segel_Num', this.value)" placeholder="Contoh: 01"></div>
+      <div>
+        <label>Tanggal Surat / BA Segel</label>
+        <input type="date" id="editorTglSegelInput" value="${escText(rawDate)}" oninput="
+          let val = this.value;
+          saveDynamicValTL('TL_Tanggal_Surat', val);
+          let gen = autoGenerateTeksTanggalBA(val);
+          let hariEl = document.getElementById('editorHariSegelInput') as HTMLInputElement;
+          let hurufEl = document.getElementById('editorHurufSegelInput') as HTMLInputElement;
+          if (hariEl) { hariEl.value = gen.hari; saveDynamicValTL('TL_Segel_Hari', gen.hari); }
+          if (hurufEl) { hurufEl.value = gen.teksLengkap; saveDynamicValTL('TL_Segel_Tgl_Huruf', gen.teksLengkap); }
+        ">
+      </div>
+      <div><label>Hari Pembukaan Segel</label><input id="editorHariSegelInput" value="${escText(displayHari)}" oninput="saveDynamicValTL('TL_Segel_Hari', this.value)"></div>
+      <div><label>Ejaan Huruf Tanggal</label><input id="editorHurufSegelInput" value="${escText(displayTglHuruf)}" oninput="saveDynamicValTL('TL_Segel_Tgl_Huruf', this.value)"></div>
+      
+      <div><label>Nomor SPLI</label><input value="${escText(rec.TL_Segel_No_SPLI || '')}" oninput="saveDynamicValTL('TL_Segel_No_SPLI', this.value)"></div>
+      <div><label>Tanggal SPLI</label><input value="${escText(rec.TL_Segel_Tgl_SPLI || '')}" oninput="saveDynamicValTL('TL_Segel_Tgl_SPLI', this.value)"></div>
+      
+      <!-- Sarana Pengangkut -->
+      <div style="grid-column: span 2; font-weight: bold; margin-top: 8px; border-bottom: 1px solid #ccc; padding-bottom: 4px;">A. Sarana Pengangkut</div>
+      <div><label>Nama & Jenis Sarkut</label><input value="${escText(rec.TL_Segel_Nama_Sarkut || '')}" oninput="saveDynamicValTL('TL_Segel_Nama_Sarkut', this.value)"></div>
+      <div><label>No. Register Sarkut</label><input value="${escText(rec.TL_Segel_Reg_Sarkut || '')}" oninput="saveDynamicValTL('TL_Segel_Reg_Sarkut', this.value)"></div>
+      <div><label>Bendera</label><input value="${escText(rec.TL_Segel_Bendera || '')}" oninput="saveDynamicValTL('TL_Segel_Bendera', this.value)"></div>
+      <div><label>Nahkoda / Pilot / Pengemudi</label><input value="${escText(rec.TL_Segel_Nahkoda || '')}" oninput="saveDynamicValTL('TL_Segel_Nahkoda', this.value)"></div>
+      <div><label>Nomor Identitas Nahkoda</label><input value="${escText(rec.TL_Segel_Nik_Nahkoda || '')}" oninput="saveDynamicValTL('TL_Segel_Nik_Nahkoda', this.value)"></div>
+
+      <!-- Barang -->
+      <div style="grid-column: span 2; font-weight: bold; margin-top: 8px; border-bottom: 1px solid #ccc; padding-bottom: 4px;">B. Barang</div>
+      <div><label>Jml/Jenis/No Peti Kemas/Kemasan</label><input value="${escText(rec.TL_Segel_Jml_Barang || '')}" oninput="saveDynamicValTL('TL_Segel_Jml_Barang', this.value)"></div>
+      <div><label>Jumlah/Jenis Barang</label><input value="${escText(rec.TL_Segel_Jenis_Barang || '')}" oninput="saveDynamicValTL('TL_Segel_Jenis_Barang', this.value)"></div>
+      <div><label>Jenis/No & Tgl Dokumen</label><input value="${escText(rec.TL_Segel_Dok_Barang || '')}" oninput="saveDynamicValTL('TL_Segel_Dok_Barang', this.value)"></div>
+      <div><label>Pemilik/Importir/Eksportir/Kuasa</label><input value="${escText(rec.TL_Segel_Pemilik_Barang || '')}" oninput="saveDynamicValTL('TL_Segel_Pemilik_Barang', this.value)"></div>
+      <div><label>Nomor Identitas (NPWP) Barang</label><input value="${escText(rec.TL_Segel_NPWP_Barang || '')}" oninput="saveDynamicValTL('TL_Segel_NPWP_Barang', this.value)"></div>
+
+      <!-- Bangunan atau Tempat -->
+      <div style="grid-column: span 2; font-weight: bold; margin-top: 8px; border-bottom: 1px solid #ccc; padding-bottom: 4px;">C. Bangunan atau Tempat</div>
+      <div><label>Alamat Bangunan/Tempat</label><input value="${escText(rec.TL_Segel_Alamat_Bangunan || '')}" oninput="saveDynamicValTL('TL_Segel_Alamat_Bangunan', this.value)"></div>
+      <div><label>No. Reg Bangunan/NPPBKC/NPWP</label><input value="${escText(rec.TL_Segel_Reg_Bangunan || '')}" oninput="saveDynamicValTL('TL_Segel_Reg_Bangunan', this.value)"></div>
+      <div><label>Nama Pemilik/Yang Menguasai</label><input value="${escText(rec.TL_Segel_Nama_Pemilik_Tempat || '')}" oninput="saveDynamicValTL('TL_Segel_Nama_Pemilik_Tempat', this.value)"></div>
+      <div><label>Nomor Identitas Pemilik Tempat</label><input value="${escText(rec.TL_Segel_Nik_Pemilik_Tempat || '')}" oninput="saveDynamicValTL('TL_Segel_Nik_Pemilik_Tempat', this.value)"></div>
+
+      <!-- Saksi / Penghadap -->
+      <div style="grid-column: span 2; font-weight: bold; margin-top: 8px; border-bottom: 1px solid #ccc; padding-bottom: 4px;">Data Saksi / Penghadap</div>
+      <div><label>Nama Saksi / Penghadap</label><input value="${escText(rec.TL_Nama_Pemilik || '')}" oninput="saveDynamicValTL('TL_Nama_Pemilik', this.value)"></div>
+      <div><label>NIK Saksi</label><input value="${escText(rec.TL_NIK_Pemilik || '')}" oninput="saveDynamicValTL('TL_NIK_Pemilik', this.value)"></div>
+      <div><label>Pekerjaan Saksi</label><input value="${escText(rec.TL_Segel_Pekerjaan || '')}" oninput="saveDynamicValTL('TL_Segel_Pekerjaan', this.value)"></div>
+      <div style="grid-column: span 2;"><label>Alamat Saksi</label><textarea oninput="saveDynamicValTL('TL_Alamat_Pemilik', this.value)">${escText(rec.TL_Alamat_Pemilik || '')}</textarea></div>
+
+      <!-- Petugas Penandatangan -->
+      <div style="grid-column: span 2; font-weight: bold; margin-top: 8px; border-bottom: 1px solid #ccc; padding-bottom: 4px;">Petugas Penandatangan</div>
+      <div><label>Petugas Pembuka Segel 1 (Penerima 1)</label><input value="${escText(rec.TL_Segel_P1 || '')}" oninput="saveDynamicValTL('TL_Segel_P1', this.value)"></div>
+      <div><label>NIP Petugas 1</label><input value="${escText(rec.TL_NIP_Segel_1 || '')}" oninput="saveDynamicValTL('TL_NIP_Segel_1', this.value)"></div>
+      <div><label>Petugas Pembuka Segel 2 (Saksi Penerima 1)</label><input value="${escText(rec.TL_Segel_P2 || '')}" oninput="saveDynamicValTL('TL_Segel_P2', this.value)"></div>
+      <div><label>NIP Petugas 2</label><input value="${escText(rec.TL_NIP_Segel_2 || '')}" oninput="saveDynamicValTL('TL_NIP_Segel_2', this.value)"></div>
+    </div>
+  `;
 }
 export function KEP_BDN() {
     if (store.activeRecordIndex < 0)
