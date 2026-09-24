@@ -613,182 +613,224 @@ export function BA_SEGEL(): string {
   </div>`;
 }
 
-export function renderEditorBA_SEGEL(rec: any, container: HTMLElement): void {
-  let rawDate = rec.TL_Tanggal_Surat || '';
-  let autoDateInfo = autoGenerateTeksTanggalBA(rawDate);
-  let displayHari = rec.TL_Segel_Hari || autoDateInfo.hari || '';
-  let displayTglHuruf = rec.TL_Segel_Tgl_Huruf || autoDateInfo.teksLengkap || '';
-
-  container.innerHTML = `
-    <div class="grid" style="margin-bottom:10px;">
-      <div><label>Nomor BA Segel (Cukup Angka)</label><input value="${escText(rec.TL_Segel_Num || '')}" oninput="saveDynamicValTL('TL_Segel_Num', this.value)" placeholder="Contoh: 01"></div>
-      <div>
-        <label>Tanggal Surat / BA Segel</label>
-        <input type="date" id="editorTglSegelInput" value="${escText(rawDate)}" oninput="
-          let val = this.value;
-          saveDynamicValTL('TL_Tanggal_Surat', val);
-          let gen = autoGenerateTeksTanggalBA(val);
-          let hariEl = document.getElementById('editorHariSegelInput') as HTMLInputElement;
-          let hurufEl = document.getElementById('editorHurufSegelInput') as HTMLInputElement;
-          if (hariEl) { hariEl.value = gen.hari; saveDynamicValTL('TL_Segel_Hari', gen.hari); }
-          if (hurufEl) { hurufEl.value = gen.teksLengkap; saveDynamicValTL('TL_Segel_Tgl_Huruf', gen.teksLengkap); }
-        ">
-      </div>
-      <div><label>Hari Pembukaan Segel</label><input id="editorHariSegelInput" value="${escText(displayHari)}" oninput="saveDynamicValTL('TL_Segel_Hari', this.value)"></div>
-      <div><label>Ejaan Huruf Tanggal</label><input id="editorHurufSegelInput" value="${escText(displayTglHuruf)}" oninput="saveDynamicValTL('TL_Segel_Tgl_Huruf', this.value)"></div>
-      
-      <div><label>Nomor SPLI</label><input value="${escText(rec.TL_Segel_No_SPLI || '')}" oninput="saveDynamicValTL('TL_Segel_No_SPLI', this.value)"></div>
-      <div><label>Tanggal SPLI</label><input value="${escText(rec.TL_Segel_Tgl_SPLI || '')}" oninput="saveDynamicValTL('TL_Segel_Tgl_SPLI', this.value)"></div>
-      
-      <!-- Sarana Pengangkut -->
-      <div style="grid-column: span 2; font-weight: bold; margin-top: 8px; border-bottom: 1px solid #ccc; padding-bottom: 4px;">A. Sarana Pengangkut</div>
-      <div><label>Nama & Jenis Sarkut</label><input value="${escText(rec.TL_Segel_Nama_Sarkut || '')}" oninput="saveDynamicValTL('TL_Segel_Nama_Sarkut', this.value)"></div>
-      <div><label>No. Register Sarkut</label><input value="${escText(rec.TL_Segel_Reg_Sarkut || '')}" oninput="saveDynamicValTL('TL_Segel_Reg_Sarkut', this.value)"></div>
-      <div><label>Bendera</label><input value="${escText(rec.TL_Segel_Bendera || '')}" oninput="saveDynamicValTL('TL_Segel_Bendera', this.value)"></div>
-      <div><label>Nahkoda / Pilot / Pengemudi</label><input value="${escText(rec.TL_Segel_Nahkoda || '')}" oninput="saveDynamicValTL('TL_Segel_Nahkoda', this.value)"></div>
-      <div><label>Nomor Identitas Nahkoda</label><input value="${escText(rec.TL_Segel_Nik_Nahkoda || '')}" oninput="saveDynamicValTL('TL_Segel_Nik_Nahkoda', this.value)"></div>
-
-      <!-- Barang -->
-      <div style="grid-column: span 2; font-weight: bold; margin-top: 8px; border-bottom: 1px solid #ccc; padding-bottom: 4px;">B. Barang</div>
-      <div><label>Jml/Jenis/No Peti Kemas/Kemasan</label><input value="${escText(rec.TL_Segel_Jml_Barang || '')}" oninput="saveDynamicValTL('TL_Segel_Jml_Barang', this.value)"></div>
-      <div><label>Jumlah/Jenis Barang</label><input value="${escText(rec.TL_Segel_Jenis_Barang || '')}" oninput="saveDynamicValTL('TL_Segel_Jenis_Barang', this.value)"></div>
-      <div><label>Jenis/No & Tgl Dokumen</label><input value="${escText(rec.TL_Segel_Dok_Barang || '')}" oninput="saveDynamicValTL('TL_Segel_Dok_Barang', this.value)"></div>
-      <div><label>Pemilik/Importir/Eksportir/Kuasa</label><input value="${escText(rec.TL_Segel_Pemilik_Barang || '')}" oninput="saveDynamicValTL('TL_Segel_Pemilik_Barang', this.value)"></div>
-      <div><label>Nomor Identitas (NPWP) Barang</label><input value="${escText(rec.TL_Segel_NPWP_Barang || '')}" oninput="saveDynamicValTL('TL_Segel_NPWP_Barang', this.value)"></div>
-
-      <!-- Bangunan atau Tempat -->
-      <div style="grid-column: span 2; font-weight: bold; margin-top: 8px; border-bottom: 1px solid #ccc; padding-bottom: 4px;">C. Bangunan atau Tempat</div>
-      <div><label>Alamat Bangunan/Tempat</label><input value="${escText(rec.TL_Segel_Alamat_Bangunan || '')}" oninput="saveDynamicValTL('TL_Segel_Alamat_Bangunan', this.value)"></div>
-      <div><label>No. Reg Bangunan/NPPBKC/NPWP</label><input value="${escText(rec.TL_Segel_Reg_Bangunan || '')}" oninput="saveDynamicValTL('TL_Segel_Reg_Bangunan', this.value)"></div>
-      <div><label>Nama Pemilik/Yang Menguasai</label><input value="${escText(rec.TL_Segel_Nama_Pemilik_Tempat || '')}" oninput="saveDynamicValTL('TL_Segel_Nama_Pemilik_Tempat', this.value)"></div>
-      <div><label>Nomor Identitas Pemilik Tempat</label><input value="${escText(rec.TL_Segel_Nik_Pemilik_Tempat || '')}" oninput="saveDynamicValTL('TL_Segel_Nik_Pemilik_Tempat', this.value)"></div>
-
-      <!-- Saksi / Penghadap -->
-      <div style="grid-column: span 2; font-weight: bold; margin-top: 8px; border-bottom: 1px solid #ccc; padding-bottom: 4px;">Data Saksi / Penghadap</div>
-      <div><label>Nama Saksi / Penghadap</label><input value="${escText(rec.TL_Nama_Pemilik || '')}" oninput="saveDynamicValTL('TL_Nama_Pemilik', this.value)"></div>
-      <div><label>NIK Saksi</label><input value="${escText(rec.TL_NIK_Pemilik || '')}" oninput="saveDynamicValTL('TL_NIK_Pemilik', this.value)"></div>
-      <div><label>Pekerjaan Saksi</label><input value="${escText(rec.TL_Segel_Pekerjaan || '')}" oninput="saveDynamicValTL('TL_Segel_Pekerjaan', this.value)"></div>
-      <div style="grid-column: span 2;"><label>Alamat Saksi</label><textarea oninput="saveDynamicValTL('TL_Alamat_Pemilik', this.value)">${escText(rec.TL_Alamat_Pemilik || '')}</textarea></div>
-
-      <!-- Petugas Penandatangan -->
-      <div style="grid-column: span 2; font-weight: bold; margin-top: 8px; border-bottom: 1px solid #ccc; padding-bottom: 4px;">Petugas Penandatangan</div>
-      <div><label>Petugas Pembuka Segel 1 (Penerima 1)</label><input value="${escText(rec.TL_Segel_P1 || '')}" oninput="saveDynamicValTL('TL_Segel_P1', this.value)"></div>
-      <div><label>NIP Petugas 1</label><input value="${escText(rec.TL_NIP_Segel_1 || '')}" oninput="saveDynamicValTL('TL_NIP_Segel_1', this.value)"></div>
-      <div><label>Petugas Pembuka Segel 2 (Saksi Penerima 1)</label><input value="${escText(rec.TL_Segel_P2 || '')}" oninput="saveDynamicValTL('TL_Segel_P2', this.value)"></div>
-      <div><label>NIP Petugas 2</label><input value="${escText(rec.TL_NIP_Segel_2 || '')}" oninput="saveDynamicValTL('TL_NIP_Segel_2', this.value)"></div>
-    </div>
-  `;
-}
-
 export function KEP_BDN(): string {
   if (store.activeRecordIndex < 0) return `<div class="report"><p>Data belum dipilih.</p></div>`;
   let rec = store.databasePerkara[store.activeRecordIndex];
   let num = getTLNumFormat('KEP_BDN');
-  let noSBP = rec.Nomor_SBP ? `SBP-${rec.Nomor_SBP}/MANDIRI/PATLA/KPU.2/2026` : 'SBP-338/MANDIRI/PATLA/KPU.2/2026';
-  let noLP = rec.NoLP_LP_1 ? `LP-${rec.NoLP_LP_1}/PATLA/KPU.206/2026` : 'LP-338/PATLA/KPU.206/2026';
+  
+  let noSBP = rec.Nomor_SBP ? `SBP-${rec.Nomor_SBP}/MANDIRI/PATLA/KPU.2/2026` : '(NOMOR SBP)';
+  let tglSBP = rec.Tanggal_SBP ? formatDateIndo(rec.Tanggal_SBP) : '(TANGGAL SBP)';
+  let noLP = rec.NoLP_LP_1 ? `LP-${rec.NoLP_LP_1}/PATLA/KPU.206/2026` : '(NOMOR LP)';
+  let tglLP = rec.Tanggal_LP_LP_1 ? formatDateIndo(rec.Tanggal_LP_LP_1) : '(TANGGAL LP)';
+  
+  let lokasi = escText(rec.Lokasi_Penindakan || '(LOKASI PENINDAKAN)');
+  let pelaku = escText(rec.Nama_Pelaku || '(NAMA PELAKU)');
+  let modus = escText(rec.Modus_Operandi || 'melakukan pelanggaran');
+  let tglND = rec.KEP_Tanggal_ND ? formatDateIndo(rec.KEP_Tanggal_ND) : '28 September 2026';
 
-  let listBarang = rec.KEP_List_Barang || [
-    { jumlah: '98 (sembilan puluh delapan) koli', uraian: 'Tepung Terigu merk “Segitiga Biru” 25 Kg', kondisi: 'Kurang Baik', asal: 'Tidak Teridentifikasi', ket: '-' },
-    { jumlah: '189 (seratus delapan puluh sembilan) koli', uraian: 'Beras merek “Harumas” 25 Kg', kondisi: 'Kurang Baik', asal: 'Tidak Teridentifikasi', ket: '-' }
-  ];
+  let listBarang = rec.KEP_List_Barang || [];
 
-  let rowsLampiranHtml = listBarang.map((item: any, idx: number) => `
+  let rowsLampiranHtml = listBarang.length > 0 ? listBarang.map((item: any, idx: number) => `
     <tr>
-      <td style="border:1px solid #000; padding:5px; text-align:center;">${idx + 1}.</td>
-      <td style="border:1px solid #000; padding:5px; text-align:center;">${escText(item.jumlah)}</td>
-      <td style="border:1px solid #000; padding:5px; text-align:left;">${escText(item.uraian)}</td>
-      <td style="border:1px solid #000; padding:5px; text-align:center;">${escText(item.kondisi)}</td>
-      <td style="border:1px solid #000; padding:5px; text-align:center;">${escText(item.asal)}</td>
-      <td style="border:1px solid #000; padding:5px; text-align:center;">${escText(item.ket)}</td>
+      <td style="border:1px solid #000; padding:6px; text-align:center; font-family:'Bookman Old Style', serif; font-size:12pt;">${idx + 1}.</td>
+      <td style="border:1px solid #000; padding:6px; text-align:center; font-family:'Bookman Old Style', serif; font-size:12pt;">${escText(item.jumlah || '')}</td>
+      <td style="border:1px solid #000; padding:6px; text-align:left; font-family:'Bookman Old Style', serif; font-size:12pt;">${escText(item.uraian || '')}</td>
+      <td style="border:1px solid #000; padding:6px; text-align:center; font-family:'Bookman Old Style', serif; font-size:12pt;">${escText(item.kondisi || '')}</td>
+      <td style="border:1px solid #000; padding:6px; text-align:center; font-family:'Bookman Old Style', serif; font-size:12pt;">${escText(item.asal || '')}</td>
+      <td style="border:1px solid #000; padding:6px; text-align:center; font-family:'Bookman Old Style', serif; font-size:12pt;">${escText(item.ket || '')}</td>
     </tr>
-  `).join('');
+  `).join('') : `
+    <tr>
+      <td colspan="6" style="border:1px solid #000; padding:12px; text-align:center; font-family:'Bookman Old Style', serif; font-size:12pt; font-style:italic; color:#555;">(Belum ada daftar barang)</td>
+    </tr>
+  `;
 
   let ttdKepalaKantor = `
-    <div style="page-break-inside: avoid !important; display:flex; justify-content:flex-end; margin-top:16px;">
-      <div style="text-align:left; width:45%; font-size:10pt;">
-        KEPALA KANTOR PELAYANAN UTAMA BEA DAN CUKAI TIPE B BATAM,
-        <div class="signature" style="height:55px;"></div>
-        ${tteBadge()}
-        <b>${escText(getVal('form_kabid') || 'ZAKY FIRMANSYAH')}</b>
-      </div>
-    </div>
-  `;
-
-  let lampiranTabelBDN = `
-    <div class="report" style="font-family:Arial, sans-serif; font-size:10pt; line-height:1.35;">
-      <div style="font-weight:bold; font-size:9.5pt; text-align:left; line-height:1.3;">
-        LAMPIRAN<br>
-        KEPUTUSAN KEPALA KANTOR PELAYANAN UTAMA BEA DAN CUKAI TIPE B BATAM<br>
-        NOMOR : ${rec.KEP_Nomor_ND || num}<br>
-        TENTANG PENETAPAN BARANG IMPOR SEBAGAI BARANG YANG DIKUASAI NEGARA ATAS ${noSBP} TANGGAL ${rec.Tanggal_SBP || '28 September 2026'}
-      </div>
-      <div style="font-weight:bold; margin-top:14px; text-align:center; font-size:10.5pt;">DAFTAR BARANG YANG DIKUASAI NEGARA</div>
-      <table class="rtable" style="width:100%; border-collapse:collapse; margin-top:10px; border:1px solid #000; font-size:9.5pt;">
-        <thead>
-          <tr style="background:#f3f4f6;">
-            <th style="border:1px solid #000; padding:5px; text-align:center; width:5%;">No</th>
-            <th style="border:1px solid #000; padding:5px; text-align:center; width:22%;">Jumlah Barang</th>
-            <th style="border:1px solid #000; padding:5px; text-align:left; width:35%;">Uraian Barang</th>
-            <th style="border:1px solid #000; padding:5px; text-align:center; width:13%;">Kondisi</th>
-            <th style="border:1px solid #000; padding:5px; text-align:center; width:15%;">Negara Asal</th>
-            <th style="border:1px solid #000; padding:5px; text-align:center; width:10%;">Ket</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${rowsLampiranHtml}
-        </tbody>
+    <div style="page-break-inside: avoid !important; margin-top:20px; font-family:'Bookman Old Style', serif; font-size:12pt;">
+      <table style="width:100%; border-collapse:collapse; border:none !important; font-family:'Bookman Old Style', serif; font-size:12pt;">
+        <tr>
+          <td style="border:none !important; width:55%;"></td>
+          <td style="border:none !important; width:45%; vertical-align:top; text-align:left;">
+            Ditetapkan di Batam<br>
+            pada tanggal ${tglND}
+            <div style="margin-top:6px;">
+              KEPALA KANTOR PELAYANAN UTAMA BEA DAN CUKAI TIPE B BATAM,
+            </div>
+            <div class="signature" style="height:45px;"></div>
+            ${tteBadge()}
+            <div style="text-decoration:underline;">${escText(getVal('form_kabid') || 'ZAKY FIRMANSYAH')}</div>
+          </td>
+        </tr>
       </table>
-      ${ttdKepalaKantor}
     </div>
   `;
 
-  let lembarSatu = `<div class="report" style="font-family:Arial, sans-serif; font-size:10pt; line-height:1.35;">
-    <div style="text-align:center; font-weight:bold; font-size:10.5pt; line-height:1.3;">
-      KEPUTUSAN KEPALA KANTOR PELAYANAN UTAMA BEA DAN CUKAI TIPE B BATAM<br>
-      NOMOR ${rec.KEP_Nomor_ND || num}<br><br>
-      TENTANG<br><br>
-      PENETAPAN BARANG IMPOR SEBAGAI BARANG YANG DIKUASAI NEGARA ATAS ${noSBP} TANGGAL ${rec.KEP_Tanggal_ND || '28 September 2026'}<br><br>
-      KEPALA KANTOR PELAYANAN UTAMA BEA DAN CUKAI TIPE B BATAM,
+  let ttdLampiran = `
+    <div style="page-break-inside: avoid !important; margin-top:25px; font-family:'Bookman Old Style', serif; font-size:12pt;">
+      <table style="width:100%; border-collapse:collapse; border:none !important; font-family:'Bookman Old Style', serif; font-size:12pt;">
+        <tr>
+          <td style="border:none !important; width:55%;"></td>
+          <td style="border:none !important; width:45%; vertical-align:top; text-align:left;">
+            <div>
+              KEPALA KANTOR PELAYANAN UTAMA BEA DAN CUKAI TIPE B BATAM,
+            </div>
+            <div class="signature" style="height:45px;"></div>
+            ${tteBadge()}
+            <div style="text-decoration:underline;">${escText(getVal('form_kabid') || 'ZAKY FIRMANSYAH')}</div>
+          </td>
+        </tr>
+      </table>
     </div>
+  `;
+
+  let lembarSatu = `<div class="report" style="font-family:'Bookman Old Style', serif; font-size:12pt; line-height:1.35; margin:0; padding:0;">
+    <!-- Header Surat -->
+    <table style="width:100%; border-collapse:collapse; border:none !important; font-family:'Bookman Old Style', serif; font-size:12pt; text-align:center; line-height:1.3; margin-bottom:12px;">
+      <tr><td style="border:none !important; padding:2px 0;">KEPUTUSAN KEPALA KANTOR PELAYANAN UTAMA BEA DAN CUKAI TIPE B BATAM</td></tr>
+      <tr><td style="border:none !important; padding:12px 0 2px 0;">NOMOR ${rec.KEP_Nomor_ND || num}</td></tr>
+      <tr><td style="border:none !important; padding:12px 0 2px 0;">TENTANG</td></tr>
+      <tr><td style="border:none !important; padding:6px 0;">PENETAPAN BARANG IMPOR SEBAGAI BARANG YANG DIKUASAI NEGARA ATAS ${noSBP} tanggal ${tglSBP}</td></tr>
+      <tr><td style="border:none !important; padding:16px 0 2px 0;">KEPALA KANTOR PELAYANAN UTAMA BEA DAN CUKAI TIPE B BATAM,</td></tr>
+    </table>
     
-    <p style="margin-top:12px; margin-bottom:4px; text-align:justify;"><b>Menimbang :</b></p>
-    <table style="width:100%; border-collapse:collapse; font-size:10pt; line-height:1.3; margin-bottom:8px;">
-      <tr><td style="width:25px; vertical-align:top;">a.</td><td style="text-align:justify; vertical-align:top;">bahwa pada Kantor Pelayanan Utama Bea dan Cukai Tipe B Batam terdapat barang hasil penegahan oleh Pejabat Bea dan Cukai di ${escText(rec.Lokasi_Penindakan || 'lokasi penindakan')} atas modus operandi yang dilakukan oleh ${escText(rec.Nama_Pelaku || 'pelaku')} sesuai dengan Surat Bukti Penindakan nomor ${noSBP} dan Laporan Pelanggaran nomor ${noLP};</td></tr>
-      <tr><td style="vertical-align:top;">b.</td><td style="text-align:justify; vertical-align:top;">bahwa berdasarkan ketentuan Pasal 68 ayat (1) huruf a dan b Undang-Undang Nomor 10 Tahun 1995 tentang Kepabeanan sebagaimana telah diubah dengan Undang-Undang Nomor 17 Tahun 2006;</td></tr>
-      <tr><td style="vertical-align:top;">c.</td><td style="text-align:justify; vertical-align:top;">bahwa berdasarkan ketentuan Pasal 71 ayat (2) Peraturan Pemerintah Nomor 41 Tahun 2021 tentang Penyelenggaraan Kawasan Perdagangan Bebas dan Pelabuhan Bebas;</td></tr>
-      <tr><td style="vertical-align:top;">d.</td><td style="text-align:justify; vertical-align:top;">bahwa berdasarkan pertimbangan tersebut, dipandang perlu menetapkan barang sebagai Barang Dikuasai Negara.</td></tr>
+    <!-- Menimbang -->
+    <table style="width:100%; border-collapse:collapse; border:none !important; font-size:12pt; font-family:'Bookman Old Style', serif; line-height:1.35; margin-bottom:10px;">
+      <tr>
+        <td style="width:120px; border:none !important; vertical-align:top; padding:2px 0;">Menimbang</td>
+        <td style="width:15px; border:none !important; vertical-align:top; padding:2px 0; text-align:center;">:</td>
+        <td style="border:none !important; text-align:justify; vertical-align:top; padding:2px 0;">
+          <table style="width:100%; border-collapse:collapse; border:none !important; font-size:12pt; font-family:'Bookman Old Style', serif;">
+            <tr>
+              <td style="width:25px; border:none !important; vertical-align:top; padding:0;">a.</td>
+              <td style="width:15px; border:none !important; vertical-align:top; padding:0; text-align:center;">:</td>
+              <td style="border:none !important; text-align:justify; vertical-align:top; padding:0;">bahwa pada Kantor Pelayanan Utama Bea dan Cukai Tipe B Batam terdapat barang hasil penegahan oleh Pejabat Bea dan Cukai di ${lokasi} atas modus operandi yang dilakukan oleh ${pelaku} (${modus}) sesuai dengan Surat Bukti Penindakan nomor ${noSBP} tanggal ${tglSBP} dan Laporan Pelanggaran nomor ${noLP} tanggal ${tglLP};</td>
+            </tr>
+            <tr>
+              <td style="border:none !important; vertical-align:top; padding:4px 0 0 0;">b.</td>
+              <td style="border:none !important; vertical-align:top; padding:4px 0 0 0; text-align:center;">:</td>
+              <td style="border:none !important; text-align:justify; vertical-align:top; padding:4px 0 0 0;">bahwa berdasarkan ketentuan Pasal 68 ayat (1) huruf a dan b Undang-Undang Nomor 10 Tahun 1995 tentang Kepabeanan sebagaimana telah diubah dengan Undang-undang Nomor 17 Tahun 2006 tentang Perubahan atas Undang-undang Nomor 10 Tahun 1995, Barang yang dilarang atau dibatasai sebagaimana dimaksud dalam Pasal 53 ayat (4) dan Barang dan/atau sarana pengangkut yang ditegah oleh Pejabat Bea dan Cukai sebagaimana dimaksud dalam Pasal 77 ayat (1);</td>
+            </tr>
+            <tr>
+              <td style="border:none !important; vertical-align:top; padding:4px 0 0 0;">c.</td>
+              <td style="border:none !important; vertical-align:top; padding:4px 0 0 0; text-align:center;">:</td>
+              <td style="border:none !important; text-align:justify; vertical-align:top; padding:4px 0 0 0;">bahwa berdasarkan ketentuan Pasal 71 ayat (2) Peraturan Pemerintah Republik Indonesia Nomor 41 Tahun 2021 tentang Penyelenggaraan Kawasan Perdagangan Bebas dan Pelabuhan Bebas, Barang yang dilarang atau dibatasi untuk: a. Dimasukkan ke KPBPB dari Luar Daerah Pabean; atau b. Dikeluarkan dari KPBPB ke Luar Daerah Pabean atau tempat lain dalam Daerah Pabean”, yang tidak diberitahukan atau diberitahukan secara tidak benar ditetapkan sebagai barang yang dikuasai negara, kecuali terhadap barang dimaksud ditetapkan lain berdasarkan ketentuan perundang-undangan;</td>
+            </tr>
+            <tr>
+              <td style="border:none !important; vertical-align:top; padding:4px 0 0 0;">d.</td>
+              <td style="border:none !important; vertical-align:top; padding:4px 0 0 0; text-align:center;">:</td>
+              <td style="border:none !important; text-align:justify; vertical-align:top; padding:4px 0 0 0;">bahwa berdasarkan pertimbangan sebagaimana dimaksud diatas, dipandang perlu untuk menetapkan barang dimaksud sebagai Barang yang Dikuasi Negara.</td>
+            </tr>
+          </table>
+        </td>
+      </tr>
     </table>
 
-    <p style="margin-bottom:4px; text-align:justify;"><b>Mengingat :</b></p>
-    <table style="width:100%; border-collapse:collapse; font-size:10pt; line-height:1.3; margin-bottom:8px;">
-      <tr><td style="width:25px; vertical-align:top;">1.</td><td style="text-align:justify; vertical-align:top;">Undang-Undang Nomor 10 Tahun 1995 tentang Kepabeanan sebagaimana telah diubah dengan Undang-Undang Nomor 17 Tahun 2006;</td></tr>
-      <tr><td style="vertical-align:top;">2.</td><td style="text-align:justify; vertical-align:top;">Peraturan Pemerintah Nomor 41 Tahun 2021 tentang Penyelenggaraan Kawasan Perdagangan Bebas dan Pelabuhan Bebas;</td></tr>
-      <tr><td style="vertical-align:top;">3.</td><td style="text-align:justify; vertical-align:top;">Peraturan Menteri Keuangan Nomor 178/PMK.04/2019;</td></tr>
-      <tr><td style="vertical-align:top;">4.</td><td style="text-align:justify; vertical-align:top;">Peraturan Direktur Jenderal Bea dan Cukai nomor PER-8/BC/2024.</td></tr>
+    <!-- Mengingat -->
+    <table style="width:100%; border-collapse:collapse; border:none !important; font-size:12pt; font-family:'Bookman Old Style', serif; line-height:1.35; margin-bottom:10px;">
+      <tr>
+        <td style="width:120px; border:none !important; vertical-align:top; padding:2px 0;">Mengingat</td>
+        <td style="width:15px; border:none !important; vertical-align:top; padding:2px 0; text-align:center;">:</td>
+        <td style="border:none !important; text-align:justify; vertical-align:top; padding:2px 0;">
+          <table style="width:100%; border-collapse:collapse; border:none !important; font-size:12pt; font-family:'Bookman Old Style', serif;">
+            <tr>
+              <td style="width:25px; border:none !important; vertical-align:top; padding:0;">1.</td>
+              <td style="width:15px; border:none !important; vertical-align:top; padding:0; text-align:center;">:</td>
+              <td style="border:none !important; text-align:justify; vertical-align:top; padding:0;">Undang-undang nomor 10 tahun 1995 tentang Kepabeanan sebagaimana telah diubah dengan Undang-undang nomor 17 tahun 2006;</td>
+            </tr>
+            <tr>
+              <td style="border:none !important; vertical-align:top; padding:4px 0 0 0;">2.</td>
+              <td style="border:none !important; vertical-align:top; padding:4px 0 0 0; text-align:center;">:</td>
+              <td style="border:none !important; text-align:justify; vertical-align:top; padding:4px 0 0 0;">Peraturan Pemerintah nomor 41 tahun 2021 tentang Penyelenggaraan Kawasan Perdagangan Bebas dan Pelabuhan Bebas;</td>
+            </tr>
+            <tr>
+              <td style="border:none !important; vertical-align:top; padding:4px 0 0 0;">3.</td>
+              <td style="border:none !important; vertical-align:top; padding:4px 0 0 0; text-align:center;">:</td>
+              <td style="border:none !important; text-align:justify; vertical-align:top; padding:4px 0 0 0;">Peraturan Menteri Keuangan Republik Indonesia Nomor 178/PMK.04/2019 Tentang Penyelesaian Terhadap Barang Yang Dinyatakan Tidak Dikuasai, Barang Yang Dikuasai Negara, Dan Barang Yang Menjadi Milik Negara;</td>
+            </tr>
+            <tr>
+              <td style="border:none !important; vertical-align:top; padding:4px 0 0 0;">4.</td>
+              <td style="border:none !important; vertical-align:top; padding:4px 0 0 0; text-align:center;">:</td>
+              <td style="border:none !important; text-align:justify; vertical-align:top; padding:4px 0 0 0;">Peraturan Direktur Jenderal Bea dan Cukai nomor PER-8/BC/2024 tentang Tata Laksana Pengawasan Di Bidang Kepabeanan dan Cukai.</td>
+            </tr>
+          </table>
+        </td>
+      </tr>
     </table>
 
-    <div style="text-align:center; font-weight:bold; margin:10px 0;">MEMUTUSKAN:</div>
-    <table style="width:100%; border-collapse:collapse; font-size:10pt; line-height:1.3; margin-bottom:8px;">
-      <tr><td style="width:100px; vertical-align:top;"><b>Menetapkan</b></td><td style="width:15px; vertical-align:top;">:</td><td style="text-align:justify; vertical-align:top;">KEPUTUSAN KEPALA KANTOR PELAYANAN UTAMA BEA DAN CUKAI TIPE B BATAM TENTANG PENETAPAN BARANG SEBAGAI BARANG YANG DIKUASAI NEGARA ATAS ${noSBP} TANGGAL ${rec.Tanggal_SBP || '-'}.</td></tr>
-      <tr><td style="vertical-align:top;"><b>KESATU</b></td><td style="vertical-align:top;">:</td><td style="text-align:justify; vertical-align:top;">Barang-barang sebagaimana terlampir merupakan hasil penegahan oleh Pejabat Bea dan Cukai di ${escText(rec.Lokasi_Penindakan || '-')} atas modus operandi yang dilakukan oleh ${escText(rec.Nama_Pelaku || '-')} sesuai dengan Surat Bukti Penindakan nomor ${noSBP} dan Laporan Pelanggaran nomor ${noLP}.</td></tr>
-      <tr><td style="vertical-align:top;"><b>KEDUA</b></td><td style="vertical-align:top;">:</td><td style="text-align:justify; vertical-align:top;">Sesuai dengan ketentuan Pasal 68 ayat (1) huruf a dan b Undang-Undang Nomor 10 Tahun 1995 tentang Kepabeanan sebagaimana telah diubah dengan Undang-Undang Nomor 17 Tahun 2006, barang-barang sebagaimana dimaksud dalam Diktum KESATU ditetapkan sebagai Barang yang Dikuasai Negara.</td></tr>
-      <tr><td style="vertical-align:top;"><b>KETIGA</b></td><td style="vertical-align:top;">:</td><td style="text-align:justify; vertical-align:top;">Barang yang Dikuasai Negara sebagaimana dimaksud dalam Diktum KESATU disimpan di Gudang Penindakan dan Penyidikan Batu Ampar dan/atau Tanjung Uncang di bawah pengawasan Kantor Pelayanan Utama Bea Dan Cukai Tipe B Batam.</td></tr>
-      <tr><td style="vertical-align:top;"><b>KEEMPAT</b></td><td style="vertical-align:top;">:</td><td style="text-align:justify; vertical-align:top;">Keputusan ini mulai berlaku pada tanggal ditetapkan, dengan ketentuan apabila dikemudian hari terdapat kekeliruan akan diadakan pembetulan seperlunya.</td></tr>
+    <div style="text-align:center; font-family:'Bookman Old Style', serif; font-size:12pt; margin:12px 0;">MEMUTUSKAN:</div>
+    
+    <!-- Menetapkan s.d. Salinan -->
+    <table style="width:100%; border-collapse:collapse; border:none !important; font-size:12pt; font-family:'Bookman Old Style', serif; line-height:1.35; margin-bottom:10px;">
+      <tr>
+        <td style="width:120px; border:none !important; vertical-align:top; padding:2px 0;">Menetapkan</td>
+        <td style="width:15px; border:none !important; vertical-align:top; padding:2px 0; text-align:center;">:</td>
+        <td style="border:none !important; text-align:justify; vertical-align:top; padding:2px 0;">KEPUTUSAN KEPALA KANTOR PELAYANAN UTAMA BEA DAN CUKAI TIPE B BATAM TENTANG PENETAPAN BARANG IMPOR SEBAGAI BARANG YANG DIKUASAI NEGARA ATAS ${noSBP} tanggal ${tglSBP}.</td>
+      </tr>
+      <tr>
+        <td style="border:none !important; vertical-align:top; padding:2px 0;">KESATU</td>
+        <td style="border:none !important; vertical-align:top; padding:2px 0; text-align:center;">:</td>
+        <td style="border:none !important; text-align:justify; vertical-align:top; padding:2px 0;">Barang-barang sebagaimana terlampir pada Keputusan Kepala Kantor Pelayanan Utama Bea dan Cukai Tipe B Batam ini merupakan hasil penegahan oleh Pejabat Bea dan Cukai di ${lokasi} atas modus operandi yang dilakukan oleh ${pelaku} sesuai dengan Surat Bukti Penindakan nomor ${noSBP} tanggal ${tglSBP} dan Laporan Pelanggaran nomor ${noLP} tanggal ${tglLP}.</td>
+      </tr>
+      <tr>
+        <td style="border:none !important; vertical-align:top; padding:2px 0;">KEDUA</td>
+        <td style="border:none !important; vertical-align:top; padding:2px 0; text-align:center;">:</td>
+        <td style="border:none !important; text-align:justify; vertical-align:top; padding:2px 0;">Sesuai dengan ketentuan Pasal 68 ayat (1) huruf a dan b Undang-Undang Nomor 10 Tahun 1995 tentang Kepabeanan sebagaimana telah diubah dengan Undang-Undang Nomor 17 Tahun 2006 tentang Perubahan atas Undang-Undang Nomor 10 Tahun 1995 tentang Kepabeanan, barang-barang sebagaimana dimaksud dalam Diktum KESATU ditetapkan sebagai Barang yang Dikuasai Negara.</td>
+      </tr>
+      <tr>
+        <td style="border:none !important; vertical-align:top; padding:2px 0;">KETIGA</td>
+        <td style="border:none !important; vertical-align:top; padding:2px 0; text-align:center;">:</td>
+        <td style="border:none !important; text-align:justify; vertical-align:top; padding:2px 0;">Barang yang Dikuasai Negara sebagaimana dimaksud dalam Diktum KESATU disimpan di Gudang Penindakan dan Penyidikan Batu Ampar dan/atau Tanjung Uncang di bawah pengawasan Kantor Pelayanan Utama Bea Dan Cukai TIPE B BATAM.</td>
+      </tr>
+      <tr>
+        <td style="border:none !important; vertical-align:top; padding:2px 0;">KEEMPAT</td>
+        <td style="border:none !important; vertical-align:top; padding:2px 0; text-align:center;">:</td>
+        <td style="border:none !important; text-align:justify; vertical-align:top; padding:2px 0;">Keputusan ini mulai berlaku pada tanggal ditetapkan, dengan ketentuan apabila dikemudian hari terdapat kekeliruan akan diadakan pembetulan seperlunya.</td>
+      </tr>
+      <tr>
+        <td style="border:none !important; vertical-align:top; padding:12px 0 2px 0;">Salinan</td>
+        <td style="border:none !important; vertical-align:top; padding:12px 0 2px 0; text-align:center;">:</td>
+        <td style="border:none !important; text-align:justify; vertical-align:top; padding:12px 0 2px 0;">
+          Keputusan Kepala Kantor Pelayanan Utama Bea dan Cukai Tipe B Batam ini disampaikan kepada:<br>
+          1. Menteri Keuangan;<br>
+          2. Direktur Jenderal Bea dan Cukai;<br>
+          3. Inspektorat Jenderal;<br>
+          4. Direktur Teknis Kepabeanan, Direktorat Jenderal Bea dan Cukai;<br>
+          5. Direktur Penindakan dan Penyidikan;<br>
+          6. Pemilik/Kuasa a.n ${pelaku}
+        </td>
+      </tr>
     </table>
 
-    <div style="font-size:8.5pt; line-height:1.2; margin-top:8px;">
-      Salinan disampaikan kepada:<br>
-      1. Menteri Keuangan;<br>
-      2. Direktur Jenderal Bea dan Cukai;<br>
-      3. Inspektorat Jenderal;<br>
-      4. Direktur Teknis Kepabeanan, Direktorat Jenderal Bea dan Cukai;<br>
-      5. Direktur Penindakan dan Penyidikan;<br>
-      6. Pemilik/Kuasa a.n ${escText(rec.Nama_Pelaku || '-')}
+    ${ttdKepalaKantor}
+  </div>`;
+
+  let lembarKedua = `<div class="report" style="font-family:'Bookman Old Style', serif; font-size:12pt; line-height:1.35;">
+    <div style="font-size:12pt; text-align:left; line-height:1.3;">
+      LAMPIRAN<br>
+      KEPUTUSAN KEPALA KANTOR PELAYANAN UTAMA BEA DAN CUKAI TIPE B BATAM<br>
+      NOMOR : ${rec.KEP_Nomor_ND || num}<br>
+      TENTANG PENETAPAN BARANG IMPOR SEBAGAI BARANG YANG DIKUASAI NEGARA ATAS ${noSBP} TANGGAL ${tglSBP}
     </div>
-    ${closeTLReportTag(ttdKepalaKantor, rec.KEP_Tanggal_ND || '28 September 2026')}
-  `;
+    <div style="margin-top:16px; text-align:center; font-size:12pt;">DAFTAR BARANG YANG DIKUASAI NEGARA</div>
+    <table class="rtable" style="width:100%; border-collapse:collapse; margin-top:12px; border:1px solid #000; font-size:12pt; font-family:'Bookman Old Style', serif;">
+      <thead>
+        <tr style="background:#f3f4f6;">
+          <th style="border:1px solid #000; padding:6px; text-align:center; width:5%; font-family:'Bookman Old Style', serif; font-size:12pt;">No</th>
+          <th style="border:1px solid #000; padding:6px; text-align:center; width:25%; font-family:'Bookman Old Style', serif; font-size:12pt;">Jumlah Barang</th>
+          <th style="border:1px solid #000; padding:6px; text-align:left; width:30%; font-family:'Bookman Old Style', serif; font-size:12pt;">Uraian Barang</th>
+          <th style="border:1px solid #000; padding:6px; text-align:center; width:13%; font-family:'Bookman Old Style', serif; font-size:12pt;">Kondisi</th>
+          <th style="border:1px solid #000; padding:6px; text-align:center; width:17%; font-family:'Bookman Old Style', serif; font-size:12pt;">Negara Asal</th>
+          <th style="border:1px solid #000; padding:6px; text-align:center; width:10%; font-family:'Bookman Old Style', serif; font-size:12pt;">Keterangan</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rowsLampiranHtml}
+      </tbody>
+    </table>
+    ${ttdLampiran}
+  </div>`;
 
-  return `${lembarSatu}<div class="pagebreak"></div>${lampiranTabelBDN}`;
+  return `${lembarSatu}<div class="pagebreak" style="page-break-before: always; break-before: page; margin-top: 30px;"></div>${lembarKedua}`;
 }
 
 export function SPSA(): string {

@@ -1118,14 +1118,77 @@ export function renderTLFormSection(type: string): void {
     </div>
   `;
   } else if (type === 'KEP_BDN') {
-    container.innerHTML = `
-      <div class="grid" style="margin-bottom:10px;">
-        <div><label>Nomor Keputusan KEP</label><input value="${escText(rec.KEP_Nomor_ND || '')}" oninput="saveDynamicValTL('KEP_Nomor_ND', this.value)"></div>
-        <div><label>Tanggal Keputusan KEP</label><input value="${escText(rec.KEP_Tanggal_ND || '')}" oninput="saveDynamicValTL('KEP_Tanggal_ND', this.value)"></div>
-        <div><label>Nama Kepala Kantor</label><input value="${escText(rec.Kepala_Kantor || '')}" oninput="saveDynamicValTL('Kepala_Kantor', this.value)"></div>
-        <div><label>NIP Kepala Kantor</label><input value="${escText(rec.NIP_Kepala_Kantor || '')}" oninput="saveDynamicValTL('NIP_Kepala_Kantor', this.value)"></div>
+  let listBarang = rec.KEP_List_Barang || [];
+  
+  let rowsInputHtml = listBarang.map((item: any, idx: number) => `
+    <tr data-idx="${idx}">
+      <td style="padding:4px;"><input value="${escText(item.jumlah || '')}" oninput="updateKEPBarang(${idx}, 'jumlah', this.value)" placeholder="Jumlah" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:6px; border-radius:4px; font-size:11px;"></td>
+      <td style="padding:4px;"><input value="${escText(item.uraian || '')}" oninput="updateKEPBarang(${idx}, 'uraian', this.value)" placeholder="Uraian Barang" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:6px; border-radius:4px; font-size:11px;"></td>
+      <td style="padding:4px;"><input value="${escText(item.kondisi || '')}" oninput="updateKEPBarang(${idx}, 'kondisi', this.value)" placeholder="Kondisi" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:6px; border-radius:4px; font-size:11px;"></td>
+      <td style="padding:4px;"><input value="${escText(item.asal || '')}" oninput="updateKEPBarang(${idx}, 'asal', this.value)" placeholder="Negara Asal" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:6px; border-radius:4px; font-size:11px;"></td>
+      <td style="padding:4px;"><input value="${escText(item.ket || '')}" oninput="updateKEPBarang(${idx}, 'ket', this.value)" placeholder="Ket" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:6px; border-radius:4px; font-size:11px;"></td>
+      <td style="padding:4px; text-align:center;"><button type="button" onclick="removeKEPBarang(${idx})" style="background:#dc2626; color:#fff; border:none; padding:6px 10px; border-radius:4px; cursor:pointer; font-size:11px;">Hapus</button></td>
+    </tr>
+  `).join('');
+
+  container.innerHTML = `
+    <!-- 1. NOMOR & TANGGAL KEPUTUSAN KEP -->
+    <div style="background:#0f172a; border:1px solid var(--border-color, #334155); padding:12px; border-radius:8px; margin-bottom:14px;">
+      <span style="font-size:11px; font-weight:700; color:#fbbf24; letter-spacing:0.5px; display:flex; align-items:center; gap:6px; margin-bottom:10px;">
+        <i class="fi fi-rr-document"></i> NOMOR & TANGGAL KEPUTUSAN KEP
+      </span>
+      <div class="grid" style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:10px; margin-bottom:8px;">
+        <div>
+          <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Nomor Keputusan KEP</label>
+          <input value="${escText(rec.KEP_Nomor_ND || '')}" oninput="saveDynamicValTL('KEP_Nomor_ND', this.value)" placeholder="Contoh: KEP-..." style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
+        </div>
+        <div>
+          <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Tanggal Keputusan KEP</label>
+          <input type="date" value="${escText(rec.KEP_Tanggal_ND || '')}" oninput="saveDynamicValTL('KEP_Tanggal_ND', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
+        </div>
       </div>
-    `;
+    </div>
+
+    <!-- 2. PEJABAT PENANDATANGAN -->
+    <div style="background:#0f172a; border:1px solid var(--border-color, #334155); padding:12px; border-radius:8px; margin-bottom:14px;">
+      <div style="font-size:11px; font-weight:700; color:#fbbf24; margin-bottom:8px; text-transform:uppercase;">Pejabat Penandatangan</div>
+      <div class="grid" style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:10px; margin-bottom:8px;">
+        <div>
+          <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Nama Kepala Kantor</label>
+          <input value="${escText(rec.Kepala_Kantor || '')}" oninput="saveDynamicValTL('Kepala_Kantor', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
+        </div>
+        <div>
+          <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">NIP Kepala Kantor</label>
+          <input value="${escText(rec.NIP_Kepala_Kantor || '')}" oninput="saveDynamicValTL('NIP_Kepala_Kantor', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. DAFTAR BARANG YANG DIKUASAI NEGARA -->
+    <div style="background:#0f172a; border:1px solid var(--border-color, #334155); padding:12px; border-radius:8px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <span style="font-size:11px; font-weight:700; color:#fbbf24; text-transform:uppercase;">Daftar Barang yang Dikuasai Negara</span>
+        <button type="button" onclick="addKEPBarang()" style="background:#2563eb; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:11px; font-weight:600;">+ Tambah Barang</button>
+      </div>
+      <div style="overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse; font-size:11px;">
+          <thead>
+            <tr style="color:#94a3b8; text-align:left; border-bottom:1px solid #334155;">
+              <th style="padding:6px; width:20%;">Jumlah</th>
+              <th style="padding:6px; width:30%;">Uraian</th>
+              <th style="padding:6px; width:15%;">Kondisi</th>
+              <th style="padding:6px; width:15%;">Asal</th>
+              <th style="padding:6px; width:10%;">Ket</th>
+              <th style="padding:6px; width:10%; text-align:center;">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="kep-barang-tbody">
+            ${rowsInputHtml || '<tr><td colspan="6" style="text-align:center; padding:10px; color:#64748b;">Belum ada data barang. Klik Tambah Barang.</td></tr>'}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
   } else if (type === 'SPSA') {
     container.innerHTML = `
       <div class="grid" style="margin-bottom:10px;">
