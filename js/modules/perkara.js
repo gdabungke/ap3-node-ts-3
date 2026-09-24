@@ -956,6 +956,8 @@ export function renderPerkaraTable() {
         renderPerkaraPagination(totalPages, filtered.length);
         return;
     }
+    // Cek apakah user yang login memiliki hak akses Admin / Kasi
+    let isAdmin = store.currentUser && (store.currentUser.role === 'Admin' || store.currentUser.role === 'Kepala Seksi Penyidikan');
     tbody.innerHTML = paginatedData.map((rec, index) => {
         let i = startIdx + index;
         let originalIndex = filtered.indexOf(rec);
@@ -972,14 +974,20 @@ export function renderPerkaraTable() {
             : `<span style="font-size:11px; color:var(--text-muted, #94a3b8);">-</span>`;
         let cleanLP = String(rec.NoLP_LP_1 || '-').replace(/^LP-?/i, '');
         let cleanSBP = String(rec.Nomor_SBP || '-').replace(/^SBP-?/i, '');
+        // Tombol Edit selalu muncul untuk semua user
         let actionButtons = `
       <button type="button" class="btn warning" style="padding:4px 8px; font-size:10px;" onclick="editPerkara(${originalIndex})">
         <i class="fi fi-rr-edit"></i> Edit
       </button>
-      <button type="button" class="btn danger" style="padding:4px 8px; font-size:10px;" onclick="deletePerkara(${originalIndex})">
-        <i class="fi fi-rr-trash"></i> Hapus
-      </button>
     `;
+        // Tombol Hapus HANYA ditambahkan jika yang login adalah Admin / Kasi
+        if (isAdmin) {
+            actionButtons += `
+        <button type="button" class="btn danger" style="padding:4px 8px; font-size:10px;" onclick="deletePerkara(${originalIndex})">
+          <i class="fi fi-rr-trash"></i> Hapus
+        </button>
+      `;
+        }
         return `
       <tr>
         <td><b>${i + 1}</b></td>
