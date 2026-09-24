@@ -263,6 +263,38 @@ export function formatRowTrailingDots(label, value, labelWidth = '271px') {
     </tr>
   `.trim();
 }
+/**
+ * Fungsi Master Validator Terpusat untuk seluruh dokumen operasional.
+ * Menggabungkan validasi nomor ganda, urutan sekuensial, dan kronologi tanggal.
+ *
+ * @param {Array} docItems - Daftar dokumen yang ingin dicek [{num, date, numKey, dateKey, label}, ...]
+ * @param {Object} datesObj - Objek tanggal untuk cek kronologi {tglSprin, tglSbp, tglLp, ...}
+ * @param {any} currentRecordId - ID record yang sedang diedit (biar tidak bentrok dengan datanya sendiri)
+ * @param {any} linkedParentId - ID parent jika ada relasi
+ */
+export function validateMasterOperationalData(docItems = [], datesObj = {}, currentRecordId = null, linkedParentId = null) {
+    // 1. Jalankan Validasi Nomor Dokumen & Urutan Sekuensial Global
+    if (docItems && docItems.length > 0) {
+        let docValidation = validateFormDocumentNumbers(docItems, currentRecordId, linkedParentId);
+        if (!docValidation.isValid) {
+            return {
+                isValid: false,
+                message: docValidation.message
+            };
+        }
+    }
+    // 2. Jalankan Validasi Kronologi Tanggal Operasional
+    if (datesObj && Object.keys(datesObj).length > 0) {
+        let chronoValidation = validateOperationalChronology(datesObj);
+        if (!chronoValidation.isValid) {
+            return {
+                isValid: false,
+                message: chronoValidation.message || 'Terjadi anomali pada kronologi tanggal operasional.'
+            };
+        }
+    }
+    return { isValid: true, message: '' };
+}
 export function extractDocSequenceNumber(docString) {
     if (!docString)
         return null;

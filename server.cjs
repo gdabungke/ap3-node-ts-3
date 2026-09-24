@@ -223,16 +223,26 @@ const server = http.createServer((req, res) => {
       }
 
       if (pathname === '/api/disposisi' && req.method === 'POST') {
-        const list = readJson(disposisiFile);
+        let list = payload.list || payload.data || payload;
+        if (typeof list === 'string') { try { list = JSON.parse(list); } catch {} }
+        
+        // Jika payload adalah array utuh (bulk save), timpa file disposisi dengan array tersebut
+        if (Array.isArray(list)) {
+          writeJson(disposisiFile, list);
+          res.writeHead(200);
+          return res.end(JSON.stringify({ success: true, message: 'Seluruh data disposisi berhasil diperbarui.', data: list }));
+        }
+
+        // Fallback untuk single item push
+        const existingList = readJson(disposisiFile);
         let item = payload.disposisi || payload;
-        if (typeof item === 'string') { try { item = JSON.parse(item); } catch {} }
         const newDisp = {
           ...item,
-          id: list.length > 0 ? Math.max(...list.map(d => Number(d.id) || 0)) + 1 : 1,
+          id: existingList.length > 0 ? Math.max(...existingList.map(d => Number(d.id) || 0)) + 1 : 1,
           createdAt: new Date().toISOString()
         };
-        list.push(newDisp);
-        writeJson(disposisiFile, list);
+        existingList.push(newDisp);
+        writeJson(disposisiFile, existingList);
         res.writeHead(201);
         return res.end(JSON.stringify({ success: true, message: 'Disposisi berhasil disimpan.', data: newDisp }));
       }

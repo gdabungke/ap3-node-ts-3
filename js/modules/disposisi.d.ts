@@ -10,6 +10,7 @@ export declare function closeDisposisiModal(): void;
 export declare function populatePenyidikDropdownForDisposisi(): void;
 export declare function simpanDraftDisposisi(): Promise<void>;
 export declare function kirimDisposisiBerkat(): Promise<void>;
+export declare function hapusDisposisi(idDisposisi: any): Promise<void>;
 export declare function renderDisposisiTable(): Promise<void>;
 export declare function changeDisposisiPage(direction: number): void;
 export declare function terimaDisposisi(dspData: any): void;

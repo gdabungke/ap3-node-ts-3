@@ -6,5 +6,21 @@
     "pass": "admin",
     "role": "Admin",
     "createdAt": "2026-09-22T16:40:40.836Z"
+  },
+  {
+    "id": 2,
+    "nama": "Penyidik1",
+    "email": "penyidik1@gmail.com",
+    "pass": "1234",
+    "role": "Penyidik / Ketua Tim Peneliti",
+    "createdAt": "2026-09-24T03:13:28.059Z"
+  },
+  {
+    "id": 3,
+    "nama": "Penyidik2",
+    "email": "penyidik2@gmail.com",
+    "pass": "1234",
+    "role": "Penyidik / Ketua Tim Peneliti",
+    "createdAt": "2026-09-24T03:14:04.348Z"
   }
 ]

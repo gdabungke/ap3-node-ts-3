@@ -8,8 +8,7 @@ import {
   formatModusVerb, 
   terbilangHuruf, 
   generateNextBookingNumber,
-  validateFormDocumentNumbers,
-  validateOperationalChronology
+  validateMasterOperationalData
 } from '../utils/formatters.js';
 import { showToast, showToastConfirm } from './ui.js';
 import { refreshReportTableUI, updateReportLive } from './editor.js';
@@ -1143,6 +1142,44 @@ export function addNewPerkaraModal(): void {
     catLpfEl.value = "Setuju dengan usulan tim peneliti, segera tindak lanjuti proses penyusunan administrasi penanganan perkara sesuai ketentuan yang berlaku.";
   }
 
+  // ==========================================
+  // SISIPKAN VALIDASI BLUR REAL-TIME DI SINI
+  // ==========================================
+  let inputNoSprin = document.getElementById('No_SPRIN_Indak') as HTMLInputElement;
+  let inputTglSprin = document.getElementById('Tanggal_SPRIN_Indak') as HTMLInputElement;
+  let inputNoSbp = document.getElementById('Nomor_SBP') as HTMLInputElement;
+  let inputTglSbp = document.getElementById('Tanggal_SBP') as HTMLInputElement;
+
+  let currentPerkaraId = null;
+  let editRecordIdxInput = document.getElementById('editingRecordIndex') as HTMLInputElement;
+  if (editRecordIdxInput && editRecordIdxInput.value !== '-1') {
+    currentPerkaraId = editRecordIdxInput.value;
+  }
+
+  const setupPerkaraBlur = (numInput: HTMLInputElement, dateInput: HTMLInputElement, labelName: string, numKey: string, dateKey: string) => {
+    if (numInput && !numInput.dataset.validationAttached) {
+      numInput.dataset.validationAttached = 'true';
+      numInput.addEventListener('blur', () => {
+        let noVal = numInput.value;
+        let tglVal = dateInput ? dateInput.value : '';
+
+        if (noVal) {
+          let docItems = [{ num: noVal, date: tglVal, numKey: numKey, dateKey: dateKey, label: labelName }];
+          let validation = validateMasterOperationalData(docItems, {}, currentPerkaraId);
+
+          if (!validation.isValid) {
+            showToast(validation.message, 'error');
+            numInput.focus();
+          }
+        }
+      });
+    }
+  };
+
+  setupPerkaraBlur(inputNoSprin, inputTglSprin, 'SPRIN INDAK', 'noSprin', 'tglSprin');
+  setupPerkaraBlur(inputNoSbp, inputTglSbp, 'SBP', 'noSbp', 'tglSbp');
+  // ==========================================
+
   updateLiveCodePreviews();
   let modal = document.getElementById('perkaraModal');
   if (modal) modal.classList.add('active');
@@ -1268,7 +1305,22 @@ export function executePerkaraSubmission(): void {
     let noLhp = ((document.getElementById('Nomor_LHP') as HTMLInputElement)?.value || '').trim();
     let tglLhp = (document.getElementById('Tanggal_LHP') as HTMLInputElement)?.value || '';
 
-    let chronoCheck = (validateOperationalChronology as any)({
+    // ==========================================
+    // VALIDASI MENGGUNAKAN MASTER TERPUSAT
+    // ==========================================
+    let docsToValidate: any[] = [
+      { num: noSprinVal, date: tglSprinVal, numKey: 'No_SPRIN_Indak', dateKey: 'Tanggal_SPRIN_Indak', label: 'Nomor SPRIN INDAK' },
+      { num: noSbpVal, date: tglSbpVal, numKey: 'Nomor_SBP', dateKey: 'Tanggal_SBP', label: 'Nomor SBP' },
+      { num: noLpVal, date: tglLpVal, numKey: 'NoLP_LP_1', dateKey: 'Tanggal_LP_LP_1', label: 'Nomor LP' },
+      { num: noLppVal, date: tglLppVal, numKey: 'No_LPP', dateKey: 'Tanggal_LPP', label: 'Nomor LPP' },
+      { num: noLpfVal, date: tglLpfVal, numKey: 'No_LPF', dateKey: 'Tanggal_LPF', label: 'Nomor LPF' },
+      { num: noSplitVal, date: tglSplitVal, numKey: 'Nomor_SPLIT', dateKey: 'Tanggal_SPLIT', label: 'Nomor SPLIT' },
+      { num: noSprinCacah, date: tglSprinCacah, numKey: 'No_SPRIN_CACAH', dateKey: 'Tanggal_Sprin_Cacah', label: 'Nomor SPRIN Cacah' },
+      { num: noBa, date: tglBa, numKey: 'Nomor_BA', dateKey: 'Tanggal_BA', label: 'Nomor BA' },
+      { num: noLhp, date: tglLhp, numKey: 'Nomor_LHP', dateKey: 'Tanggal_LHP', label: 'Nomor LHP' }
+    ];
+
+    let datesObj = {
       tglSprin: tglSprinVal,
       tglSbp: tglSbpVal,
       tglLp: tglLpVal,
@@ -1278,30 +1330,14 @@ export function executePerkaraSubmission(): void {
       tglSprinCacah: tglSprinCacah,
       tglBa: tglBa,
       tglLhp: tglLhp
-    });
+    };
 
-    if (!chronoCheck.isValid) {
-      showToast("URUTAN TANGGAL SALAH", chronoCheck.message, "warning");
-      return;
-    }
-
-    let docsToValidate: any[] = [
-      { num: noSprinVal as string, date: tglSprinVal as string, numKey: 'No_SPRIN_Indak', dateKey: 'Tanggal_SPRIN_Indak', label: 'Nomor SPRIN INDAK' },
-      { num: noSbpVal as string, date: tglSbpVal as string, numKey: 'Nomor_SBP', dateKey: 'Tanggal_SBP', label: 'Nomor SBP' },
-      { num: noLpVal as string, date: tglLpVal as string, numKey: 'NoLP_LP_1', dateKey: 'Tanggal_LP_LP_1', label: 'Nomor LP' },
-      { num: noLppVal as string, date: tglLppVal as string, numKey: 'No_LPP', dateKey: 'Tanggal_LPP', label: 'Nomor LPP' },
-      { num: noLpfVal as string, date: tglLpfVal as string, numKey: 'No_LPF', dateKey: 'Tanggal_LPF', label: 'Nomor LPF' },
-      { num: noSplitVal as string, date: tglSplitVal as string, numKey: 'Nomor_SPLIT', dateKey: 'Tanggal_SPLIT', label: 'Nomor SPLIT' },
-      { num: noSprinCacah as string, date: tglSprinCacah as string, numKey: 'No_SPRIN_CACAH', dateKey: 'Tanggal_Sprin_Cacah', label: 'Nomor SPRIN Cacah' },
-      { num: noBa as string, date: tglBa as string, numKey: 'Nomor_BA', dateKey: 'Tanggal_BA', label: 'Nomor BA' },
-      { num: noLhp as string, date: tglLhp as string, numKey: 'Nomor_LHP', dateKey: 'Tanggal_LHP', label: 'Nomor LHP' }
-    ];
-
-    let validationResult = (validateFormDocumentNumbers as any)(docsToValidate, currentRecordId, linkedParentId);
+    let validationResult = validateMasterOperationalData(docsToValidate, datesObj, currentRecordId);
     if (!validationResult.isValid) {
-      showToast("PENOMORAN DITOLAK", validationResult.message, "danger");
+      showToast("VALIDASI DITOLAK", validationResult.message, "danger");
       return;
     }
+    // ==========================================
 
     const valSafe = (id: string) => {
       let el = document.getElementById(id) as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;

@@ -1,6 +1,6 @@
 import { store, savePerkaraToStorage, loadPerkaraFromStorage } from '../state/store.js';
 import { defaultPasalClusters, defaultKantorList } from '../config/constants.js';
-import { escText, getVal, formatDate, formatDateIndo, formatModusVerb, terbilangHuruf, generateNextBookingNumber, validateFormDocumentNumbers, validateOperationalChronology } from '../utils/formatters.js';
+import { escText, getVal, formatDate, formatDateIndo, formatModusVerb, terbilangHuruf, generateNextBookingNumber, validateMasterOperationalData } from '../utils/formatters.js';
 import { showToast, showToastConfirm } from './ui.js';
 import { refreshReportTableUI, updateReportLive } from './editor.js';
 let currentPerkaraPage = 1;
@@ -1114,6 +1114,38 @@ export function addNewPerkaraModal() {
     if (catLpfEl && !catLpfEl.value) {
         catLpfEl.value = "Setuju dengan usulan tim peneliti, segera tindak lanjuti proses penyusunan administrasi penanganan perkara sesuai ketentuan yang berlaku.";
     }
+    // ==========================================
+    // SISIPKAN VALIDASI BLUR REAL-TIME DI SINI
+    // ==========================================
+    let inputNoSprin = document.getElementById('No_SPRIN_Indak');
+    let inputTglSprin = document.getElementById('Tanggal_SPRIN_Indak');
+    let inputNoSbp = document.getElementById('Nomor_SBP');
+    let inputTglSbp = document.getElementById('Tanggal_SBP');
+    let currentPerkaraId = null;
+    let editRecordIdxInput = document.getElementById('editingRecordIndex');
+    if (editRecordIdxInput && editRecordIdxInput.value !== '-1') {
+        currentPerkaraId = editRecordIdxInput.value;
+    }
+    const setupPerkaraBlur = (numInput, dateInput, labelName, numKey, dateKey) => {
+        if (numInput && !numInput.dataset.validationAttached) {
+            numInput.dataset.validationAttached = 'true';
+            numInput.addEventListener('blur', () => {
+                let noVal = numInput.value;
+                let tglVal = dateInput ? dateInput.value : '';
+                if (noVal) {
+                    let docItems = [{ num: noVal, date: tglVal, numKey: numKey, dateKey: dateKey, label: labelName }];
+                    let validation = validateMasterOperationalData(docItems, {}, currentPerkaraId);
+                    if (!validation.isValid) {
+                        showToast(validation.message, 'error');
+                        numInput.focus();
+                    }
+                }
+            });
+        }
+    };
+    setupPerkaraBlur(inputNoSprin, inputTglSprin, 'SPRIN INDAK', 'noSprin', 'tglSprin');
+    setupPerkaraBlur(inputNoSbp, inputTglSbp, 'SBP', 'noSbp', 'tglSbp');
+    // ==========================================
     updateLiveCodePreviews();
     let modal = document.getElementById('perkaraModal');
     if (modal)
@@ -1227,21 +1259,9 @@ export function executePerkaraSubmission() {
         let tglBa = document.getElementById('Tanggal_BA')?.value || '';
         let noLhp = (document.getElementById('Nomor_LHP')?.value || '').trim();
         let tglLhp = document.getElementById('Tanggal_LHP')?.value || '';
-        let chronoCheck = validateOperationalChronology({
-            tglSprin: tglSprinVal,
-            tglSbp: tglSbpVal,
-            tglLp: tglLpVal,
-            tglLpp: tglLppVal,
-            tglLpf: tglLpfVal,
-            tglSplit: tglSplitVal,
-            tglSprinCacah: tglSprinCacah,
-            tglBa: tglBa,
-            tglLhp: tglLhp
-        });
-        if (!chronoCheck.isValid) {
-            showToast("URUTAN TANGGAL SALAH", chronoCheck.message, "warning");
-            return;
-        }
+        // ==========================================
+        // VALIDASI MENGGUNAKAN MASTER TERPUSAT
+        // ==========================================
         let docsToValidate = [
             { num: noSprinVal, date: tglSprinVal, numKey: 'No_SPRIN_Indak', dateKey: 'Tanggal_SPRIN_Indak', label: 'Nomor SPRIN INDAK' },
             { num: noSbpVal, date: tglSbpVal, numKey: 'Nomor_SBP', dateKey: 'Tanggal_SBP', label: 'Nomor SBP' },
@@ -1253,11 +1273,23 @@ export function executePerkaraSubmission() {
             { num: noBa, date: tglBa, numKey: 'Nomor_BA', dateKey: 'Tanggal_BA', label: 'Nomor BA' },
             { num: noLhp, date: tglLhp, numKey: 'Nomor_LHP', dateKey: 'Tanggal_LHP', label: 'Nomor LHP' }
         ];
-        let validationResult = validateFormDocumentNumbers(docsToValidate, currentRecordId, linkedParentId);
+        let datesObj = {
+            tglSprin: tglSprinVal,
+            tglSbp: tglSbpVal,
+            tglLp: tglLpVal,
+            tglLpp: tglLppVal,
+            tglLpf: tglLpfVal,
+            tglSplit: tglSplitVal,
+            tglSprinCacah: tglSprinCacah,
+            tglBa: tglBa,
+            tglLhp: tglLhp
+        };
+        let validationResult = validateMasterOperationalData(docsToValidate, datesObj, currentRecordId);
         if (!validationResult.isValid) {
-            showToast("PENOMORAN DITOLAK", validationResult.message, "danger");
+            showToast("VALIDASI DITOLAK", validationResult.message, "danger");
             return;
         }
+        // ==========================================
         const valSafe = (id) => {
             let el = document.getElementById(id);
             return el ? el.value.trim() : '';
