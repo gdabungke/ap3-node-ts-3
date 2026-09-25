@@ -1,13 +1,5 @@
 export declare function generateKopSurat(jenisDokumen: string): string;
-export declare function getDocNum(id: string): string;
-export declare function fmtLP(): string;
-export declare function fmtLPF(): string;
-export declare function fmtSBP(): string;
-export declare function fmtSprinIndak(): string;
-export declare function fmtPrintCacah(): string;
-export declare function fmtSplit(): string;
-export declare function fmtBA(): string;
-export declare function fmtLHP(): string;
+export declare function getDocNum(type: string, customInput?: string): string;
 export declare function syncLPToDocs(val: string): void;
 export declare function tteBadge(): string;
 export declare function baseReport(title: string, no: string, isBA?: boolean, docType?: string): string;

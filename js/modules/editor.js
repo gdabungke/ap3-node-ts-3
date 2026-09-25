@@ -1,7 +1,7 @@
 import { store, savePerkaraToStorage } from '../state/store.js';
 import { escText, getVal, formatDate, formatDateIndo, autoGenerateTeksTanggalBA } from '../utils/formatters.js';
 import { autoPaginateReports, applyPageNumbers, navigatePreviewPage, updatePreviewHeaderUI, updateTLPreviewHeaderUI, renderPageSelector } from './ui.js';
-import { getDocNum, fmtLP, fmtLPF, fmtSplit, fmtPrintCacah, fmtBA, fmtLHP, LPP, LPF, SPLIT, SPRIN_CACAH, BA, LHP } from '../templates/laporan.js';
+import { getDocNum, LPP, LPF, SPLIT, SPRIN_CACAH, BA, LHP } from '../templates/laporan.js';
 import { getTLNumFormat, BAST_PEMILIK, BA_SEGEL, KEP_BDN, SPSA, BAST_LIMPAH } from '../templates/tindaklanjut.js';
 export function saveDynamicVal(id, val) {
     let el = document.getElementById(id);
@@ -23,22 +23,22 @@ export function saveDynamicValTL(key, val) {
 export function refreshReportTableUI() {
     let elNumLPP = document.getElementById('table_num_LPP');
     if (elNumLPP)
-        elNumLPP.textContent = fmtLP();
+        elNumLPP.textContent = getDocNum('LPP');
     let elNumLPF = document.getElementById('table_num_LPF');
     if (elNumLPF)
-        elNumLPF.textContent = fmtLPF();
+        elNumLPF.textContent = getDocNum('LPF');
     let elNumSPLIT = document.getElementById('table_num_SPLIT');
     if (elNumSPLIT)
-        elNumSPLIT.textContent = fmtSplit();
+        elNumSPLIT.textContent = getDocNum('SPLIT');
     let elNumSPRIN = document.getElementById('table_num_SPRIN_CACAH');
     if (elNumSPRIN)
-        elNumSPRIN.textContent = fmtPrintCacah();
+        elNumSPRIN.textContent = getDocNum('SPRIN_CACAH');
     let elNumBA = document.getElementById('table_num_BA');
     if (elNumBA)
-        elNumBA.textContent = fmtBA();
+        elNumBA.textContent = getDocNum('BA_CACAH');
     let elNumLHP = document.getElementById('table_num_LHP');
     if (elNumLHP)
-        elNumLHP.textContent = fmtLHP();
+        elNumLHP.textContent = getDocNum('LHP');
     let elDateLPP = document.getElementById('table_date_LPP');
     if (elDateLPP)
         elDateLPP.textContent = formatDate('Tanggal_LPP') !== '-' ? formatDate('Tanggal_LPP') : formatDate('Tanggal_LP_LP_1');
@@ -1187,28 +1187,129 @@ export function renderTLFormSection(type) {
     }
     else if (type === 'SPSA') {
         container.innerHTML = `
-      <div class="grid" style="margin-bottom:10px;">
-        <div><label>Nomor SPSA</label><input value="${escText(rec.SPSA_Nomor || '')}" oninput="saveDynamicValTL('SPSA_Nomor', this.value)"></div>
-        <div><label>Tanggal SPSA</label><input value="${escText(rec.SPSA_Tanggal || '')}" oninput="saveDynamicValTL('SPSA_Tanggal', this.value)"></div>
-        <div><label>Besaran Denda</label><input value="${escText(rec.SPSA_Denda || '')}" oninput="saveDynamicValTL('SPSA_Denda', this.value)"></div>
-        <div><label>Jatuh Tempo Pembayaran</label><input value="${escText(rec.SPSA_Jatuh_Tempo || '')}" oninput="saveDynamicValTL('SPSA_Jatuh_Tempo', this.value)"></div>
-        <div style="grid-column: span 2;"><label>Pasal Pelanggaran SPSA</label><textarea oninput="saveDynamicValTL('SPSA_Pasal_Pelanggaran', this.value)">${escText(rec.SPSA_Pasal_Pelanggaran || '')}</textarea></div>
-        <div style="grid-column: span 2;"><label>Alasan Penetapan Denda</label><textarea oninput="saveDynamicValTL('SPSA_Alasan', this.value)">${escText(rec.SPSA_Alasan || '')}</textarea></div>
+    <!-- 1. INFORMASI NOMOR & TANGGAL SPSA -->
+    <div style="background:#0f172a; border:1px solid var(--border-color, #334155); padding:12px; border-radius:8px; margin-bottom:14px;">
+      <span style="font-size:11px; font-weight:700; color:#fbbf24; letter-spacing:0.5px; display:flex; align-items:center; gap:6px; margin-bottom:10px;">
+        <i class="fi fi-rr-document"></i> INFORMASI NOMOR & TANGGAL SPSA
+      </span>
+      <div class="grid" style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:10px; margin-bottom:8px;">
+        <div>
+          <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Nomor SPSA</label>
+          <input value="${escText(rec.SPSA_Nomor || '')}" oninput="saveDynamicValTL('SPSA_Nomor', this.value)" placeholder="Contoh: 01" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
+        </div>
+        <div>
+          <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Tanggal SPSA</label>
+          <input type="date" value="${escText(rec.SPSA_Tanggal || '')}" oninput="saveDynamicValTL('SPSA_Tanggal', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
+        </div>
       </div>
-    `;
+    </div>
+
+    <!-- 2. DETAIL DENDA & JATUH TEMPO -->
+    <div style="background:#0f172a; border:1px solid var(--border-color, #334155); padding:12px; border-radius:8px; margin-bottom:14px;">
+      <span style="font-size:11px; font-weight:700; color:#fbbf24; letter-spacing:0.5px; display:flex; align-items:center; gap:6px; margin-bottom:10px;">
+        <i class="fi fi-rr-money"></i> DETAIL DENDA & JATUH TEMPO
+      </span>
+      <div class="grid" style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:10px; margin-bottom:8px;">
+        <div>
+          <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Besaran Denda</label>
+          <input value="${escText(rec.SPSA_Denda || '')}" oninput="saveDynamicValTL('SPSA_Denda', this.value)" placeholder="Contoh: Rp 10.000.000,-" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
+        </div>
+        <div>
+          <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Jatuh Tempo Pembayaran</label>
+          <input type="date" value="${escText(rec.SPSA_Jatuh_Tempo || '')}" oninput="saveDynamicValTL('SPSA_Jatuh_Tempo', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. PASAL & ALASAN PENETAPAN -->
+    <div style="background:#0f172a; border:1px solid var(--border-color, #334155); padding:12px; border-radius:8px;">
+      <span style="font-size:11px; font-weight:700; color:#fbbf24; letter-spacing:0.5px; display:flex; align-items:center; gap:6px; margin-bottom:10px;">
+        <i class="fi fi-rr-books"></i> PASAL & ALASAN PENETAPAN
+      </span>
+      <div style="margin-bottom:10px;">
+        <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Pasal Pelanggaran SPSA</label>
+        <textarea oninput="saveDynamicValTL('SPSA_Pasal_Pelanggaran', this.value)" rows="3" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px; font-family:inherit; font-size:11px;">${escText(rec.SPSA_Pasal_Pelanggaran || '')}</textarea>
+      </div>
+      <div>
+        <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Alasan Penetapan Denda</label>
+        <textarea oninput="saveDynamicValTL('SPSA_Alasan', this.value)" rows="3" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px; font-family:inherit; font-size:11px;">${escText(rec.SPSA_Alasan || '')}</textarea>
+      </div>
+    </div>
+  `;
     }
     else if (type === 'BAST_LIMPAH') {
         container.innerHTML = `
-      <div class="grid" style="margin-bottom:10px;">
-        <div><label>Hari Pelimpahan</label><input value="${escText(rec.Limpah_Hari || '')}" oninput="saveDynamicValTL('Limpah_Hari', this.value)"></div>
-        <div><label>Tanggal Surat</label><input value="${escText(rec.Limpah_Tanggal || '')}" oninput="saveDynamicValTL('Limpah_Tanggal', this.value)"></div>
-        <div style="grid-column: span 2;"><label>Tanggal Dalam Huruf</label><input value="${escText(rec.Limpah_Tgl_Huruf || '')}" oninput="saveDynamicValTL('Limpah_Tgl_Huruf', this.value)"></div>
-        <div><label>Instansi Penerima</label><input value="${escText(rec.Instansi_Penerima || '')}" oninput="saveDynamicValTL('Instansi_Penerima', this.value)"></div>
-        <div><label>Nama Pejabat Penerima</label><input value="${escText(rec.Limpah_Pejabat_Penerima || '')}" oninput="saveDynamicValTL('Limpah_Pejabat_Penerima', this.value)"></div>
-        <div><label>NIP Pejabat Penerima</label><input value="${escText(rec.Limpah_NIP_Penerima || '')}" oninput="saveDynamicValTL('Limpah_NIP_Penerima', this.value)"></div>
-        <div><label>Petugas Pelimpah (Bea Cukai)</label><input value="${escText(rec.Limpah_Petugas_1 || rec.ketua_tim || '')}" oninput="saveDynamicValTL('Limpah_Petugas_1', this.value)"></div>
+    <!-- 1. WAKTU & TANGGAL PELIMPAHAN -->
+    <div style="background:#0f172a; border:1px solid var(--border-color, #334155); padding:12px; border-radius:8px; margin-bottom:14px;">
+      <span style="font-size:11px; font-weight:700; color:#fbbf24; letter-spacing:0.5px; display:flex; align-items:center; gap:6px; margin-bottom:10px;">
+        <i class="fi fi-rr-calendar"></i> WAKTU & TANGGAL PELIMPAHAN
+      </span>
+      <div class="grid" style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:10px; margin-bottom:8px;">
+        <div>
+          <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Hari Pelimpahan</label>
+          <input value="${escText(rec.Limpah_Hari || '')}" oninput="saveDynamicValTL('Limpah_Hari', this.value)" placeholder="Contoh: Kamis" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
+        </div>
+        <div>
+          <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Tanggal Surat</label>
+          <input type="date" value="${escText(rec.Limpah_Tanggal || '')}" oninput="saveDynamicValTL('Limpah_Tanggal', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
+        </div>
+        <div style="grid-column: span 2;">
+          <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Tanggal Dalam Huruf</label>
+          <input value="${escText(rec.Limpah_Tgl_Huruf || '')}" oninput="saveDynamicValTL('Limpah_Tgl_Huruf', this.value)" placeholder="Contoh: dua belas Desember tahun dua ribu dua puluh enam" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
+        </div>
       </div>
-    `;
+    </div>
+
+    <!-- 2. DATA INSTANSI & PEJABAT PENERIMA (PIHAK KEDUA) -->
+    <div style="background:#0f172a; border:1px solid var(--border-color, #334155); padding:12px; border-radius:8px; margin-bottom:14px;">
+      <span style="font-size:11px; font-weight:700; color:#fbbf24; letter-spacing:0.5px; display:flex; align-items:center; gap:6px; margin-bottom:10px;">
+        <i class="fi fi-rr-building"></i> INSTANSI & PEJABAT PENERIMA (PIHAK KEDUA)
+      </span>
+      <div class="grid" style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:10px; margin-bottom:8px;">
+        <div style="grid-column: span 2;">
+          <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Nama Instansi / Lembaga</label>
+          <input value="${escText(rec.Instansi_Penerima || '')}" oninput="saveDynamicValTL('Instansi_Penerima', this.value)" placeholder="Contoh: Dinas LHK Provinsi Kepri" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
+        </div>
+        <div>
+          <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Nama Pejabat Penerima</label>
+          <input value="${escText(rec.Limpah_Pejabat_Penerima || '')}" oninput="saveDynamicValTL('Limpah_Pejabat_Penerima', this.value)" placeholder="Nama lengkap & gelar" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
+        </div>
+        <div>
+          <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">NIP Pejabat Penerima</label>
+          <input value="${escText(rec.Limpah_NIP_Penerima || '')}" oninput="saveDynamicValTL('Limpah_NIP_Penerima', this.value)" placeholder="NIP Pejabat" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
+        </div>
+        <div style="grid-column: span 2;">
+          <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Jabatan Pejabat Penerima</label>
+          <input value="${escText(rec.Limpah_Jabatan_Penerima || '')}" oninput="saveDynamicValTL('Limpah_Jabatan_Penerima', this.value)" placeholder="Contoh: Kepala Dinas / Penyidik Pegawai Negeri Sipil" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. PETUGAS PELIMPAH BEA CUKAI (PIHAK PERTAMA) -->
+    <div style="background:#0f172a; border:1px solid var(--border-color, #334155); padding:12px; border-radius:8px;">
+      <span style="font-size:11px; font-weight:700; color:#fbbf24; letter-spacing:0.5px; display:flex; align-items:center; gap:6px; margin-bottom:10px;">
+        <i class="fi fi-rr-user"></i> PETUGAS PELIMPAH (PIHAK PERTAMA)
+      </span>
+      <div class="grid" style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:10px; margin-bottom:8px;">
+        <div>
+          <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Nama Petugas Pelimpah</label>
+          <input value="${escText(rec.Limpah_Petugas_1 || rec.ketua_tim || '')}" oninput="saveDynamicValTL('Limpah_Petugas_1', this.value)" placeholder="Nama Petugas" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
+        </div>
+        <div>
+          <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">NIP Petugas Pelimpah</label>
+          <input value="${escText(rec.Limpah_NIP_1 || '')}" oninput="saveDynamicValTL('Limpah_NIP_1', this.value)" placeholder="NIP Petugas" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
+        </div>
+        <div>
+          <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Pangkat / Golongan</label>
+          <input value="${escText(rec.Limpah_Pangkat_1 || '')}" oninput="saveDynamicValTL('Limpah_Pangkat_1', this.value)" placeholder="Contoh: Penata Tk. I / III/d" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
+        </div>
+        <div>
+          <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Jabatan Petugas</label>
+          <input value="${escText(rec.Limpah_Jabatan_1 || '')}" oninput="saveDynamicValTL('Limpah_Jabatan_1', this.value)" placeholder="Contoh: Pemeriksa Bea dan Cukai" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
+        </div>
+      </div>
+    </div>
+  `;
     }
 }
 window.saveDynamicVal = saveDynamicVal;

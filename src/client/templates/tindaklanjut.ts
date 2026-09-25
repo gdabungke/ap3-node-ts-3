@@ -78,18 +78,30 @@ export function getTLNumFormat(type: string): string {
   let rec = store.databasePerkara[store.activeRecordIndex];
   let fallbackNum = rec.Nomor_LHP || rec.NoLP_LP_1 || '338';
   
+  let formattedNum = '-';
+
   if (type === 'BAST_PEMILIK') {
     let num = rec.TL_BAST_Num || fallbackNum;
-    return `BAST-${num}/KPU.2064/2026`;
-  }
-  if (type === 'BAST_LIMPAH') return `BAST-${rec.TL_Limpah_Num || fallbackNum}/LIMPAH/KPU.2064/2026`;
-  if (type === 'BA_SEGEL') {
+    formattedNum = `BAST-${num}/KPU.2064/2026`;
+  } 
+  else if (type === 'BAST_LIMPAH') {
+    let num = rec.TL_Limpah_Num || fallbackNum;
+    formattedNum = `BAST-${num}/LIMPAH/KPU.2064/2026`;
+  } 
+  else if (type === 'BA_SEGEL') {
     let numSegel = rec.TL_Segel_Num || fallbackNum;
-    return `BA-${numSegel}/BUKASEGEL/KPU.2064/2026`;
+    formattedNum = `BA-${numSegel}/BUKASEGEL/KPU.2064/2026`;
+  } 
+  else if (type === 'SPSA') {
+    let numSpsa = rec.TL_SPSA_Num || fallbackNum;
+    formattedNum = `SPSA-${numSpsa}/KPU.2/2026`;
+  } 
+  else if (type === 'KEP_BDN') {
+    let numKep = rec.TL_KEP_Num || fallbackNum;
+    formattedNum = `KEP-${numKep}/KPU.2/2026`;
   }
-  if (type === 'SPSA') return `SPSA-${rec.TL_SPSA_Num || fallbackNum}/KPU.2/2026`;
-  if (type === 'KEP_BDN') return `KEP-${rec.TL_KEP_Num || fallbackNum}/KPU.2064/2026`;
-  return '-';
+
+  return formattedNum;
 }
 
 export function closeTLReportTag(customSignHTML: string, tglStr: string): string {
@@ -858,22 +870,24 @@ export function SPSA(): string {
     
     <div style="margin-bottom:10px; font-size:10pt; line-height:1.3;">
       <b>Kepada Yth.</b><br>
-      Nama : ${escText(rec.TL_Nama_Pemilik || rec.Nama_Pelaku || '-')}<br>
-      No KTP : ${escText(rec.TL_NIK_Pemilik || rec.Nomor_Identitas || '-')}<br>
-      Alamat : ${escText(rec.TL_Alamat_Pemilik || rec.Alamat_Pelaku || '-')}
+      <table style="width:100%; border-collapse:collapse; font-size:10pt; margin-top:4px;">
+        <tr><td style="width:80px; vertical-align:top;">Nama</td><td style="width:15px; text-align:center; vertical-align:top;">:</td><td style="vertical-align:top;">${escText(rec.TL_Nama_Pemilik || rec.Nama_Pelaku || '-')}</td></tr>
+        <tr><td style="vertical-align:top;">No KTP</td><td style="text-align:center; vertical-align:top;">:</td><td style="vertical-align:top;">${escText(rec.TL_NIK_Pemilik || rec.Nomor_Identitas || '-')}</td></tr>
+        <tr><td style="vertical-align:top;">Alamat</td><td style="text-align:center; vertical-align:top;">:</td><td style="vertical-align:top;">${escText(rec.TL_Alamat_Pemilik || rec.Alamat_Pelaku || '-')}</td></tr>
+      </table>
     </div>
     
-    <p style="text-align:justify; margin-bottom:8px;">Berdasarkan ketentuan pada pasal pelanggaran spsa (${escText(rec.SPSA_Pasal_Pelanggaran || '9A ayat (1) Undang-Undang Nomor 10 Tahun 1995 tentang Kepabeanan sebagaimana telah diubah dengan Undang-Undang Nomor 17 Tahun 2006 dan pasal 34 ayat (5) Peraturan Pemerintah nomor 41 tahun 2021 tentang Penyelenggaraan Kawasan Perdagangan Bebas')}), dengan ini ditetapkan sanksi administrasi berupa denda sebesar <b>${escText(rec.SPSA_Denda || 'Rp 10.000.000,- (sepuluh juta rupiah)')}</b> dengan alasan penetapan (${escText(rec.SPSA_Alasan || 'tidak menyerahkan pemberitahuan pabean atas barang yang diangkutnya sebelum keberangkatan sarana pengangkut')}) sebagaimana dimaksud pada pasal dasar denda (${escText(rec.SPSA_Pasal_Denda || '9A ayat (3) Undang-Undang Nomor 10 Tahun 1995 tentang Kepabeanan sebagaimana telah diubah dengan Undang-Undang Nomor 17 Tahun 2006')}).</p>
+    <p style="text-align:justify; margin-bottom:8px; text-indent:40px;">Berdasarkan ketentuan pada pasal pelanggaran spsa (${escText(rec.SPSA_Pasal_Pelanggaran || '9A ayat (1) Undang-Undang Nomor 10 Tahun 1995 tentang Kepabeanan sebagaimana telah diubah dengan Undang-Undang Nomor 17 Tahun 2006 dan pasal 34 ayat (5) Peraturan Pemerintah nomor 41 tahun 2021 tentang Penyelenggaraan Kawasan Perdagangan Bebas')}), dengan ini ditetapkan sanksi administrasi berupa denda sebesar <b>${escText(rec.SPSA_Denda || 'Rp 10.000.000,- (sepuluh juta rupiah)')}</b> dengan alasan penetapan (${escText(rec.SPSA_Alasan || 'tidak menyerahkan pemberitahuan pabean atas barang yang diangkutnya sebelum keberangkatan sarana pengangkut')}) sebagaimana dimaksud pada pasal dasar denda (${escText(rec.SPSA_Pasal_Denda || '9A ayat (3) Undang-Undang Nomor 10 Tahun 1995 tentang Kepabeanan sebagaimana telah diubah dengan Undang-Undang Nomor 17 Tahun 2006')})[cite: 10].</p>
     
-    <p style="text-align:justify; margin-bottom:8px;">Saudara wajib melunasi sanksi administrasi berupa denda tersebut paling lambat tanggal ${escText(rec.SPSA_Jatuh_Tempo || '18 Januari 2026')} dan bukti pelunasan agar disampaikan kepada Kepala Kantor Pelayanan Utama Bea dan Cukai Tipe B Batam.</p>
-    <p style="text-align:justify; margin-bottom:8px;">Apabila tagihan tidak dilunasi atau tidak diajukan keberatan sampai dengan tanggal ${escText(rec.SPSA_Jatuh_Tempo || '18 Januari 2026')}, dikenakan bunga yang terutang sebesar 2% (dua persen) setiap bulan untuk paling lama 24 (dua puluh empat) bulan dari jumlah yang terutang, bagian bulan dihitung satu bulan penuh.</p>
-    <p style="text-align:justify; margin-bottom:8px;">Keberatan atas penetapan ini hanya dapat diajukan secara tertulis kepada Direktur Jenderal Bea dan Cukai melalui Kantor Pelayanan Utama Bea dan Cukai Tipe B Batam sesuai dengan ketentuan tentang keberatan, paling lambat pada tanggal ${escText(rec.SPSA_Jatuh_Tempo || '18 Januari 2026')}.</p>
+    <p style="text-align:justify; margin-bottom:8px; text-indent:40px;">Saudara wajib melunasi sanksi administrasi berupa denda tersebut paling lambat tanggal ${escText(rec.SPSA_Jatuh_Tempo || '18 Januari 2026')} dan bukti pelunasan agar disampaikan kepada Kepala Kantor Pelayanan Utama Bea dan Cukai Tipe B Batam[cite: 10].</p>
+    <p style="text-align:justify; margin-bottom:8px; text-indent:40px;">Apabila tagihan tidak dilunasi atau tidak diajukan keberatan sampai dengan tanggal ${escText(rec.SPSA_Jatuh_Tempo || '18 Januari 2026')}, dikenakan bunga yang terutang sebesar 2% (dua persen) setiap bulan untuk paling lama 24 (dua puluh empat) bulan dari jumlah yang terutang, bagian bulan dihitung satu bulan penuh[cite: 10].</p>
+    <p style="text-align:justify; margin-bottom:8px; text-indent:40px;">Keberatan atas penetapan ini hanya dapat diajukan secara tertulis kepada Direktur Jenderal Bea dan Cukai melalui Kantor Pelayanan Utama Bea dan Cukai Tipe B Batam sesuai dengan ketentuan tentang keberatan, paling lambat pada tanggal ${escText(rec.SPSA_Jatuh_Tempo || '18 Januari 2026')}[cite: 10].</p>
     
     ${closeTLReportTag(ttdSPSA, escText(rec.SPSA_Tanggal || '09 September 2026'))}
     <div style="font-size:8.5pt; margin-top:12px; line-height:1.2;">
-      SPSA ini dibuat rangkap 2 (dua):<br>
-      - Rangkap ke-1 untuk ${escText(rec.TL_Nama_Pemilik || rec.Nama_Pelaku || '-')}<br>
-      - Rangkap ke-2 untuk Kepala KPU Bea dan Cukai Tipe B Batam
+      SPSA ini dibuat rangkap 2 (dua):[cite: 10]<br>
+      - Rangkap ke-1 untuk ${escText(rec.TL_Nama_Pemilik || rec.Nama_Pelaku || '-')}[cite: 10]<br>
+      - Rangkap ke-2 untuk Kepala KPU Bea dan Cukai Tipe B Batam[cite: 10]
     </div>
   </div>`;
 }
@@ -882,33 +896,45 @@ export function BAST_LIMPAH(): string {
   if (store.activeRecordIndex < 0) return `<div class="report"><p>Data belum dipilih.</p></div>`;
   let rec = store.databasePerkara[store.activeRecordIndex];
   let num = getTLNumFormat('BAST_LIMPAH');
+  
   let hari = escText(rec.Limpah_Hari || 'Kamis');
   let tglHuruf = escText(rec.Limpah_Tgl_Huruf || 'dua belas Desember tahun dua ribu dua puluh enam');
   let tglSurat = escText(rec.Limpah_Tanggal || '12 Desember 2026');
+  
   let sarkut = escText(rec.Limpah_Sarkut || rec.Pengangkut || '-');
   let barang = escText(rec.Limpah_Barang || rec.Uraian_Barang || '±1250 batang balok kayu');
   let dokumen = escText(rec.Limpah_Dokumen || 'Dokumen Kapal, KTP, dan dokumen lainnya');
+  
   let namaOrang = escText(rec.TL_Nama_Pemilik || rec.Nama_Pelaku || 'RAJA DOLI SIREGAR');
   let nikOrang = escText(rec.TL_NIK_Pemilik || rec.Nomor_Identitas || '2102081511890006');
-  let pejabatPenerima = escText(rec.Limpah_Pejabat_Penerima || 'Pejabat Instansi');
-  let nipPenerima = escText(rec.Limpah_NIP_Penerima || '-');
+  
   let instansi = escText(rec.Instansi_Penerima || 'Dinas Lingkungan Hidup dan Kehutanan (DLHK) Provinsi Kepri');
+  let pejabatPenerima = escText(rec.Limpah_Pejabat_Penerima || 'Pejabat Instansi');
+  let jabatanPenerima = escText(rec.Limpah_Jabatan_Penerima || 'Kepala Dinas / Pejabat Yang Berwenang');
+  let nipPenerima = escText(rec.Limpah_NIP_Penerima || '-');
+
   let petugas1 = escText(rec.Limpah_Petugas_1 || rec.ketua_tim || 'Petugas Pelimpah 1');
   let nip1 = escText(rec.Limpah_NIP_1 || '-');
+  let pangkat1 = escText(rec.Limpah_Pangkat_1 || '-');
+  let jabatan1 = escText(rec.Limpah_Jabatan_1 || 'Pemeriksa Bea dan Cukai');
 
   let ttdLimpah = `
-    <div class="sign" style="display:flex; justify-content:space-between; margin-top:14px;">
+    <div class="sign" style="display:flex; justify-content:space-between; margin-top:20px; page-break-inside: avoid !important;">
       <div style="width:45%; text-align:left; font-size:10pt;">
-        Yang menerima,<br>Instansi Penerima (${instansi})
+        <b>PIHAK KEDUA,</b><br>
+        Mewakili ${instansi}
         <div class="signature" style="height:55px;"></div>
         ${tteBadge()}
-        <b>${pejabatPenerima}</b><br>NIP. ${nipPenerima}
+        <b>${pejabatPenerima}</b><br>
+        NIP. ${nipPenerima}
       </div>
       <div style="width:45%; text-align:left; font-size:10pt;">
-        Yang menyerahkan,<br>Petugas Pelimpah
+        <b>PIHAK PERTAMA,</b><br>
+        Petugas Pelimpah KPU BC Tipe B Batam
         <div class="signature" style="height:55px;"></div>
         ${tteBadge()}
-        <b>${petugas1}</b><br>NIP. ${nip1}
+        <b>${petugas1}</b><br>
+        NIP. ${nip1}
       </div>
     </div>
   `;
@@ -916,19 +942,77 @@ export function BAST_LIMPAH(): string {
   return `<div class="report" style="font-family:Arial, sans-serif; font-size:10pt; line-height:1.35;">
     ${generateKopSurat('BAST_LIMPAH')}
     <div style="text-align:center; font-weight:bold; font-size:11pt; margin:16px 0 3px 0;">BERITA ACARA SERAH TERIMA</div>
-    <div style="text-align:center; margin-bottom:12px; font-size:10pt;">Nomor : ${num}</div>
-    <p style="text-align:justify; margin-bottom:6px;">Pada hari ini, ${hari} tanggal ${tglHuruf}. Kami yang bertanda tangan di bawah ini bertindak untuk/atas nama Kantor Pelayanan Utama Bea dan Cukai Tipe B Batam, telah menyerahkan:</p>
+    <div style="text-align:center; margin-bottom:14px; font-size:10pt;">Nomor : ${num}</div>
+    
+    <p style="text-align:justify; margin-bottom:8px; text-indent:30px;">
+      Pada hari ini ${hari} tanggal ${tglHuruf}, kami yang bertanda tangan di bawah ini masing-masing:
+    </p>
+
+    <table style="width:100%; border-collapse:collapse; margin-bottom:8px; font-size:10pt;">
+      <tr>
+        <td style="width:25px; vertical-align:top; text-align:center;">1.</td>
+        <td style="width:90px; vertical-align:top;">Nama</td>
+        <td style="width:15px; vertical-align:top; text-align:center;">:</td>
+        <td style="vertical-align:top;"><b>${petugas1}</b></td>
+      </tr>
+      <tr>
+        <td></td>
+        <td style="vertical-align:top;">NIP</td>
+        <td style="vertical-align:top; text-align:center;">:</td>
+        <td style="vertical-align:top;">${nip1}</td>
+      </tr>
+      <tr>
+        <td></td>
+        <td style="vertical-align:top;">Pangkat/Gol</td>
+        <td style="vertical-align:top; text-align:center;">:</td>
+        <td style="vertical-align:top;">${pangkat1}</td>
+      </tr>
+      <tr>
+        <td></td>
+        <td style="vertical-align:top;">Jabatan</td>
+        <td style="vertical-align:top; text-align:center;">:</td>
+        <td style="vertical-align:top;">${jabatan1} pada Kantor Pelayanan Utama Bea dan Cukai Tipe B Batam, bertindak untuk dan atas nama jabatan selanjutnya disebut sebagai <b>PIHAK PERTAMA</b>.</td>
+      </tr>
+    </table>
+
+    <table style="width:100%; border-collapse:collapse; margin-bottom:12px; font-size:10pt;">
+      <tr>
+        <td style="width:25px; vertical-align:top; text-align:center;">2.</td>
+        <td style="width:90px; vertical-align:top;">Nama</td>
+        <td style="width:15px; vertical-align:top; text-align:center;">:</td>
+        <td style="vertical-align:top;"><b>${pejabatPenerima}</b></td>
+      </tr>
+      <tr>
+        <td></td>
+        <td style="vertical-align:top;">NIP</td>
+        <td style="vertical-align:top; text-align:center;">:</td>
+        <td style="vertical-align:top;">${nipPenerima}</td>
+      </tr>
+      <tr>
+        <td></td>
+        <td style="vertical-align:top;">Jabatan</td>
+        <td style="vertical-align:top; text-align:center;">:</td>
+        <td style="vertical-align:top;">${jabatanPenerima} pada ${instansi}, bertindak untuk dan atas nama instansi selanjutnya disebut sebagai <b>PIHAK KEDUA</b>.</td>
+      </tr>
+    </table>
+
+    <p style="text-align:justify; margin-bottom:10px; text-indent:30px;">
+      PIHAK PERTAMA telah menyerahkan dan PIHAK KEDUA telah menerima penanganan perkara penindakan beserta barang bukti dan/atau dokumen terkait, dengan rincian sebagai berikut:
+    </p>
     
     ${buildTableKv([
       ['Sarana Pengangkut', 'Jenis Sarana Pengangkut', sarkut],
-      ['Barang', 'Jml/No. Peti Kemas/Kemasan/ Jumlah/Jenis Barang', barang],
-      ['Dokumen', 'Jenis/No. dan Tgl. Dokumen', dokumen],
-      ['Orang', 'Nama & No. Identitas', `${namaOrang} (No. Identitas: ${nikOrang})`],
-      ['Diserahkan kepada', 'Nama / NIP / Alamat', `${pejabatPenerima} (NIP:${nipPenerima})`],
-      ['Instansi Penerima', 'Menerima atas nama', instansi],
-      ['Maksud Penyerahan', 'Rangka Kegiatan', 'Pelimpahan Penanganan Perkara Penindakan oleh KPU Bea dan Cukai Tipe B Batam agar ditindaklanjuti oleh pihak berwenang.']
+      ['Barang Bukti', 'Jml / Uraian / Jenis Barang', barang],
+      ['Dokumen', 'Jenis / No. dan Tgl. Dokumen', dokumen],
+      ['Pihak Terkait / Orang', 'Nama & No. Identitas', `${namaOrang} (No. Identitas: ${nikOrang})`],
+      ['Instansi Penerima', 'Lembaga / Instansi', instansi],
+      ['Maksud Penyerahan', 'Rangka Kegiatan', 'Pelimpahan penanganan perkara penindakan oleh KPU Bea dan Cukai Tipe B Batam agar dapat ditindaklanjuti secara hukum oleh instansi berwenang.']
     ])}
-    <p style="margin-top:10px; margin-bottom:0; text-align:justify;">Demikian Berita Acara ini dibuat dengan sebenarnya.</p>
+
+    <p style="text-align:justify; margin-top:12px; margin-bottom:8px; text-indent:30px;">
+      Demikian Berita Acara Serah Terima ini dibuat dengan sebenarnya dan ditandatangani oleh kedua belah pihak untuk dipergunakan sebagaimana mestinya.
+    </p>
+
     ${closeTLReportTag(ttdLimpah, tglSurat)}
   </div>`;
 }
