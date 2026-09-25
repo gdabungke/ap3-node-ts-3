@@ -122,7 +122,81 @@
       }
     ],
     "Dasar_SPLIT": "",
-    "Alternatif_Penyelesaian_Perkara": "1. Terhadap seluruh barang hasil penindakan ditetapkan sebagai Barang yang Dikuasai Negara (BDN) untuk diproses pengadministrasiannya menjadi BMN.\n\n2. Terhadap barang impor yang tidak memenuhi ketentuan perizinan direkomendasikan untuk diekspor kembali (re-ekspor) ke negara asal."
+    "Alternatif_Penyelesaian_Perkara": "1. Terhadap seluruh barang hasil penindakan ditetapkan sebagai Barang yang Dikuasai Negara (BDN) untuk diproses pengadministrasiannya menjadi BMN.\n\n2. Terhadap barang impor yang tidak memenuhi ketentuan perizinan direkomendasikan untuk diekspor kembali (re-ekspor) ke negara asal.",
+    "TL_BAST_SarkutList": [
+      {
+        "jenis": "MV Segar",
+        "nopol": "-"
+      }
+    ],
+    "TL_BAST_BarangList": [
+      {
+        "kemasan": "OOCL 234567 / 40 feet",
+        "uraian": "2 (NaN bulan undefined tahun NaN) roll Tekstil dan Produk Tekstil (TPT) / Kain / Garmen"
+      }
+    ],
+    "TL_BAST_DokumenList": [
+      {
+        "uraian": "Eks. BC 2.0 Nomor 123654 nomor 12345 tanggal 01 September 2026"
+      }
+    ],
+    "TL_BAST_OrangList": [
+      {
+        "nama": "-",
+        "identitas": "-"
+      }
+    ],
+    "sprinPegawaiList": [
+      {
+        "nama": "Sukanto",
+        "nip": "199401012010021001",
+        "pangkat": "-",
+        "jabatan": "Ketua Tim Peneliti"
+      },
+      {
+        "nama": "Sumitro",
+        "nip": "199401012010021002",
+        "pangkat": "Ii.d",
+        "jabatan": "Petugas LPP"
+      },
+      {
+        "nama": "Suasana",
+        "nip": "199401012010021003",
+        "pangkat": "Ii.c",
+        "jabatan": "-"
+      },
+      {
+        "nama": "Sumirda",
+        "nip": "199401012010021004",
+        "pangkat": "Ii.c",
+        "jabatan": "Petugas Penindakan 1"
+      },
+      {
+        "nama": "Suraso",
+        "nip": "199401012010021005",
+        "pangkat": "-",
+        "jabatan": "Petugas Penindakan 2"
+      },
+      {
+        "nama": "Sukoco",
+        "nip": "199401012010021006",
+        "pangkat": "Ii.c",
+        "jabatan": "Petugas Penindakan 3"
+      }
+    ],
+    "Hari_Cacah": "selasa",
+    "TeksTanggal": "satu bulan september tahun dua ribu dua puluh enam",
+    "TL_Tanggal_Surat": "2026-09-01",
+    "TL_Hari_BAST": "Selasa",
+    "TL_Tgl_Huruf_BAST": "satu bulan september tahun dua ribu dua puluh enam",
+    "TL_Nama_Pemilik": "PT Gunung Kidul",
+    "TL_NIK_Pemilik": "NPWP : 1212134567",
+    "TL_Alamat_Pemilik": "Batam",
+    "KEP_Tanggal_ND": "2026-09-01",
+    "KEP_Nomor_ND": "KEP-1/KPU.2064/2026",
+    "SPSA_Nomor": "1",
+    "SPSA_Tanggal": "2026-09-01",
+    "Limpah_Tanggal": "2026-09-01"
   },
   {
     "id": 1790235694074,

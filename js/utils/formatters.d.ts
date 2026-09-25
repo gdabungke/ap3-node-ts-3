@@ -31,18 +31,18 @@ export declare function validateMasterOperationalData(docItems?: any[], datesObj
     isValid: boolean;
     message: string;
 };
-export declare function extractDocSequenceNumber(docString: string): number | null;
-export declare function getAllGlobalRecords(): any[];
-export declare function generateNextBookingNumber(prefix: string, fieldKey: string, suffixPattern?: string, padLength?: number): string;
-export declare function validateGlobalDocSequence(newDocNum: string, newDocDate: string, fieldNumKey: string, fieldDateKey: string, currentRecordId?: any, linkedParentId?: any): {
-    isValid: boolean;
-    message?: string;
-};
 export declare function validateFormDocumentNumbers(docItems?: any[], currentRecordId?: any, linkedParentId?: any): {
     isValid: boolean;
     message: string;
 };
 export declare function validateOperationalChronology(dates?: any): {
+    isValid: boolean;
+    message?: string;
+};
+export declare function extractDocSequenceNumber(docString: string): number | null;
+export declare function getAllGlobalRecords(): any[];
+export declare function generateNextBookingNumber(prefix: string, fieldKey: string, suffixPattern?: string, padLength?: number): string;
+export declare function validateGlobalDocSequence(newDocNum: string, newDocDate: string, fieldNumKey: string, fieldDateKey: string, currentRecordId?: any, linkedParentId?: any): {
     isValid: boolean;
     message?: string;
 };

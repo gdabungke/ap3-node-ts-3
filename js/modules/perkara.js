@@ -1254,12 +1254,12 @@ export function executePerkaraSubmission() {
         let tglSbpVal = document.getElementById('Tanggal_SBP')?.value || '';
         let noLpVal = (document.getElementById('NoLP_LP_1')?.value || '').trim() || '1';
         let tglLpVal = document.getElementById('Tanggal_LP_LP_1')?.value || '';
-        let year = new Date().getFullYear();
-        let noLppVal = (existingRec && existingRec.No_LPP) ? existingRec.No_LPP : generateNextBookingNumber('LPP-', 'No_LPP', `/KBC.04/${year}`, 3);
+        // Auto-booking murni mengambil nomor urutnya saja (tanpa embel-embel format tahun/kategori di database)
+        let noLppVal = (existingRec && existingRec.No_LPP) ? existingRec.No_LPP : generateNextBookingNumber('', 'No_LPP', '', 3);
         let tglLppVal = (existingRec && existingRec.Tanggal_LPP) ? existingRec.Tanggal_LPP : tglLpVal;
-        let noLpfVal = (existingRec && existingRec.No_LPF) ? existingRec.No_LPF : generateNextBookingNumber('LPF-', 'No_LPF', `/KBC.04/${year}`, 3);
+        let noLpfVal = (existingRec && existingRec.No_LPF) ? existingRec.No_LPF : generateNextBookingNumber('', 'No_LPF', '', 3);
         let tglLpfVal = (existingRec && existingRec.Tanggal_LPF) ? existingRec.Tanggal_LPF : tglLpVal;
-        let noSplitVal = (existingRec && existingRec.Nomor_SPLIT) ? existingRec.Nomor_SPLIT : generateNextBookingNumber('SPLI-', 'Nomor_SPLIT', `/KBC.04/${year}`, 3);
+        let noSplitVal = (existingRec && existingRec.Nomor_SPLIT) ? existingRec.Nomor_SPLIT : generateNextBookingNumber('', 'Nomor_SPLIT', '', 3);
         let tglSplitVal = (existingRec && existingRec.Tanggal_SPLIT) ? existingRec.Tanggal_SPLIT : tglLpVal;
         let noSprinCacah = (document.getElementById('No_SPRIN_CACAH')?.value || '').trim();
         let tglSprinCacah = document.getElementById('Tanggal_SPRIN_CACAH')?.value || '';

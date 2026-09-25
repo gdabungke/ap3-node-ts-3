@@ -54,6 +54,7 @@ export function generateKopSurat(jenisDokumen: string): string {
 // FUNGSI FORMAT PENOMORAN
 export function getDocNum(type: string, customInput?: string): string {
   let formatted = '-';
+  let activeRec = (store.activeRecordIndex >= 0 && store.databasePerkara[store.activeRecordIndex]) ? store.databasePerkara[store.activeRecordIndex] : {};
 
   if (type === 'GET_ELEMENT') {
     let el = document.getElementById(customInput || '') as HTMLInputElement;
@@ -61,46 +62,49 @@ export function getDocNum(type: string, customInput?: string): string {
   }
 
   if (type === 'SPRIN_INDAK') {
-    let val = customInput || getVal('No_SPRIN_Indak');
+    let val = customInput || getVal('No_SPRIN_Indak') || activeRec.No_SPRIN_Indak || '';
     let tgl = formatDate('Tanggal_SPRIN_Indak');
-    if (val && val !== '-') {
+    if (val && val !== '-' && val !== '') {
       let sprinPad = val.length < 2 ? String(val).padStart(2, '0') : val;
       let noFormatted = `SPRIN-${sprinPad}/KPU.206/2026`;
       formatted = tgl !== '-' ? `${noFormatted} tanggal ${tgl}` : noFormatted;
     }
   } 
   else if (type === 'SBP') {
-    let val = customInput || getVal('Nomor_SBP');
-    let status = getVal('Status_Penangkapan');
+    let val = customInput || getVal('Nomor_SBP') || activeRec.Nomor_SBP || '';
+    let status = getVal('Status_Penangkapan') || activeRec.Status_Penangkapan || '';
     let tipe = status.toUpperCase().includes('LIMPAHAN') ? 'LIMPAH' : 'MANDIRI';
     formatted = (val && val !== '-') ? `SBP-${val}/${tipe}/KPU.2/2026` : `SBP-/${tipe}/KPU.2/2026`;
   } 
   else if (type === 'LP') {
-    let val = customInput || getVal('NoLP_LP_1');
+    let val = customInput || getVal('NoLP_LP_1') || activeRec.NoLP_LP_1 || '';
     formatted = (val && val !== '-') ? `LP-${val}/KPU.206/2026` : 'LP-/KPU.206/2026';
   } 
   else if (type === 'LPP') {
-    let val = customInput || getDocNum('GET_ELEMENT', 'No_LPP') || getVal('NoLP_LP_1');
-    formatted = (val && val !== '-') ? `LPP-${val}/KPU.206/2026` : 'LPP-/KPU.206/2026';
+    let val = customInput || getDocNum('GET_ELEMENT', 'No_LPP') || activeRec.No_LPP || '';
+    let cleaned = val.replace(/^(LPP)[-\s]*/i, '').trim();
+    formatted = (cleaned && cleaned !== '-') ? `LPP-${cleaned}/KPU.206/2026` : 'LPP-/KPU.206/2026';
   } 
   else if (type === 'LPF') {
-    let val = customInput || getDocNum('GET_ELEMENT', 'No_LPF') || getVal('NoLP_LP_1');
-    formatted = (val && val !== '-') ? `LPF-${val}/KPU.206/2026` : 'LPF-/KPU.206/2026';
+    let val = customInput || getDocNum('GET_ELEMENT', 'No_LPF') || activeRec.No_LPF || '';
+    let cleaned = val.replace(/^(LPF)[-\s]*/i, '').trim();
+    formatted = (cleaned && cleaned !== '-') ? `LPF-${cleaned}/KPU.206/2026` : 'LPF-/KPU.206/2026';
   } 
   else if (type === 'SPLIT') {
-    let val = customInput || getDocNum('GET_ELEMENT', 'Nomor_SPLIT');
-    formatted = (val && val !== '-') ? `SPLIT-${val}/KPU.206/2026` : 'SPLIT-/KPU.206/2026';
+    let val = customInput || getDocNum('GET_ELEMENT', 'Nomor_SPLIT') || activeRec.Nomor_SPLIT || '';
+    let cleaned = val.replace(/^(SPLIT|SPLI)[-\s]*/i, '').trim();
+    formatted = (cleaned && cleaned !== '-') ? `SPLIT-${cleaned}/KPU.206/2026` : 'SPLIT-/KPU.206/2026';
   } 
   else if (type === 'SPRIN_CACAH') {
-    let val = customInput || getDocNum('GET_ELEMENT', 'No_SPRIN_CACAH');
+    let val = customInput || getDocNum('GET_ELEMENT', 'No_SPRIN_CACAH') || activeRec.No_SPRIN_CACAH || '';
     formatted = (val && val !== '-') ? `PRIN-${val}/KPU.206/CACAH/2026` : 'PRIN-/KPU.206/CACAH/2026';
   } 
   else if (type === 'BA_CACAH') {
-    let val = customInput || getDocNum('GET_ELEMENT', 'Nomor_BA');
+    let val = customInput || getDocNum('GET_ELEMENT', 'Nomor_BA') || activeRec.Nomor_BA || '';
     formatted = (val && val !== '-') ? `BA-${val}/KPU.206/CACAH/2026` : 'BA-/KPU.206/CACAH/2026';
   } 
   else if (type === 'LHP') {
-    let val = customInput || getDocNum('GET_ELEMENT', 'Nomor_LHP');
+    let val = customInput || getDocNum('GET_ELEMENT', 'Nomor_LHP') || activeRec.Nomor_LHP || '';
     formatted = (val && val !== '-') ? `LHP-${val}/KPU.206/2026` : 'LHP-/KPU.206/2026';
   }
 

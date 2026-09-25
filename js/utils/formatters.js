@@ -295,6 +295,58 @@ export function validateMasterOperationalData(docItems = [], datesObj = {}, curr
     }
     return { isValid: true, message: '' };
 }
+export function validateFormDocumentNumbers(docItems = [], currentRecordId = null, linkedParentId = null) {
+    for (let item of docItems) {
+        if (item.num && item.date) {
+            let result = validateGlobalDocSequence(item.num, item.date, item.numKey, item.dateKey, currentRecordId, linkedParentId);
+            if (!result.isValid) {
+                return {
+                    isValid: false,
+                    message: `[${item.label || item.numKey}] ${result.message}`
+                };
+            }
+        }
+    }
+    return { isValid: true, message: '' };
+}
+export function validateOperationalChronology(dates = {}) {
+    let { tglSprin, tglSbp, tglLp, tglLpp, tglLpf, tglSplit, tglSprinCacah, tglBa, tglLhp } = dates;
+    let parse = (d) => (d ? new Date(d).getTime() : null);
+    let dSprin = parse(tglSprin);
+    let dSbp = parse(tglSbp);
+    let dLp = parse(tglLp);
+    let dLpp = parse(tglLpp);
+    let dLpf = parse(tglLpf);
+    let dSplit = parse(tglSplit);
+    let dSprinCacah = parse(tglSprinCacah);
+    let dBa = parse(tglBa);
+    let dLhp = parse(tglLhp);
+    if (dSprin && dSbp && dSprin > dSbp) {
+        return { isValid: false, message: "Tanggal SPRIN INDAK tidak boleh melebihi Tanggal SBP!" };
+    }
+    if (dSbp && dLp && dSbp > dLp) {
+        return { isValid: false, message: "Tanggal SBP tidak boleh mendahului/melewati Tanggal LP!" };
+    }
+    if (dLp && dLpp && dLp > dLpp) {
+        return { isValid: false, message: "Tanggal Laporan Pelanggaran (LP) tidak boleh lebih baru dari LPP!" };
+    }
+    if (dLpp && dLpf && dLpp > dLpf) {
+        return { isValid: false, message: "Tanggal LPP tidak boleh melebihi Tanggal LPF!" };
+    }
+    if (dLpf && dSplit && dLpf > dSplit) {
+        return { isValid: false, message: "Tanggal LPF tidak boleh melebihi Tanggal SPLIT!" };
+    }
+    if (dSbp && dSprinCacah && dSprinCacah < dSbp) {
+        return { isValid: false, message: "Tanggal SPRIN CACAH tidak boleh mendahului Tanggal SBP!" };
+    }
+    if (dSprinCacah && dBa && dBa < dSprinCacah) {
+        return { isValid: false, message: "Tanggal BA CACAH tidak boleh mendahului Tanggal SPRIN CACAH!" };
+    }
+    if (dBa && dLhp && dLhp < dBa) {
+        return { isValid: false, message: "Tanggal LHP tidak boleh mendahului Tanggal BA CACAH!" };
+    }
+    return { isValid: true };
+}
 export function extractDocSequenceNumber(docString) {
     if (!docString)
         return null;
@@ -391,58 +443,6 @@ export function validateGlobalDocSequence(newDocNum, newDocDate, fieldNumKey, fi
                 }
             }
         }
-    }
-    return { isValid: true };
-}
-export function validateFormDocumentNumbers(docItems = [], currentRecordId = null, linkedParentId = null) {
-    for (let item of docItems) {
-        if (item.num && item.date) {
-            let result = validateGlobalDocSequence(item.num, item.date, item.numKey, item.dateKey, currentRecordId, linkedParentId);
-            if (!result.isValid) {
-                return {
-                    isValid: false,
-                    message: `[${item.label || item.numKey}] ${result.message}`
-                };
-            }
-        }
-    }
-    return { isValid: true, message: '' };
-}
-export function validateOperationalChronology(dates = {}) {
-    let { tglSprin, tglSbp, tglLp, tglLpp, tglLpf, tglSplit, tglSprinCacah, tglBa, tglLhp } = dates;
-    let parse = (d) => (d ? new Date(d).getTime() : null);
-    let dSprin = parse(tglSprin);
-    let dSbp = parse(tglSbp);
-    let dLp = parse(tglLp);
-    let dLpp = parse(tglLpp);
-    let dLpf = parse(tglLpf);
-    let dSplit = parse(tglSplit);
-    let dSprinCacah = parse(tglSprinCacah);
-    let dBa = parse(tglBa);
-    let dLhp = parse(tglLhp);
-    if (dSprin && dSbp && dSprin > dSbp) {
-        return { isValid: false, message: "Tanggal SPRIN INDAK tidak boleh melebihi Tanggal SBP!" };
-    }
-    if (dSbp && dLp && dSbp > dLp) {
-        return { isValid: false, message: "Tanggal SBP tidak boleh mendahului/melewati Tanggal LP!" };
-    }
-    if (dLp && dLpp && dLp > dLpp) {
-        return { isValid: false, message: "Tanggal Laporan Pelanggaran (LP) tidak boleh lebih baru dari LPP!" };
-    }
-    if (dLpp && dLpf && dLpp > dLpf) {
-        return { isValid: false, message: "Tanggal LPP tidak boleh melebihi Tanggal LPF!" };
-    }
-    if (dLpf && dSplit && dLpf > dSplit) {
-        return { isValid: false, message: "Tanggal LPF tidak boleh melebihi Tanggal SPLIT!" };
-    }
-    if (dSbp && dSprinCacah && dSprinCacah < dSbp) {
-        return { isValid: false, message: "Tanggal SPRIN CACAH tidak boleh mendahului Tanggal SBP!" };
-    }
-    if (dSprinCacah && dBa && dBa < dSprinCacah) {
-        return { isValid: false, message: "Tanggal BA CACAH tidak boleh mendahului Tanggal SPRIN CACAH!" };
-    }
-    if (dBa && dLhp && dLhp < dBa) {
-        return { isValid: false, message: "Tanggal LHP tidak boleh mendahului Tanggal BA CACAH!" };
     }
     return { isValid: true };
 }

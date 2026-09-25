@@ -1,5 +1,5 @@
 import { store, savePerkaraToStorage } from '../state/store.js';
-import { escText, getVal, formatDate, formatDateIndo, autoGenerateTeksTanggalBA } from '../utils/formatters.js';
+import { escText, getVal, formatDate, formatDateIndo, autoGenerateTeksTanggalBA, generateNextBookingNumber } from '../utils/formatters.js';
 import { autoPaginateReports, applyPageNumbers, navigatePreviewPage, updatePreviewHeaderUI, updateTLPreviewHeaderUI, renderPageSelector } from './ui.js';
 import { getDocNum, LPP, LPF, SPLIT, SPRIN_CACAH, BA, LHP } from '../templates/laporan.js';
 import { getTLNumFormat, BAST_PEMILIK, BA_SEGEL, KEP_BDN, SPSA, BAST_LIMPAH } from '../templates/tindaklanjut.js';
@@ -291,6 +291,11 @@ export function renderDynamicInputs(type) {
   `;
     let activeRec = store.databasePerkara[store.activeRecordIndex];
     if (type === 'LPP') {
+        // Auto-generate nomor LPP jika di record masih kosong/-
+        if (!activeRec.No_LPP || activeRec.No_LPP === '-' || activeRec.No_LPP === '') {
+            activeRec.No_LPP = generateNextBookingNumber('', 'No_LPP', '', 3);
+            savePerkaraToStorage();
+        }
         let catLpp = getVal('Catatan_LPP');
         let detBarang = getVal('Detail_Barang_LPP') !== '-' ? getVal('Detail_Barang_LPP') : getVal('Uraian_Barang');
         if (!catLpp || catLpp === '-' || catLpp === '') {
@@ -302,11 +307,11 @@ export function renderDynamicInputs(type) {
       <div class="grid" style="margin-bottom:10px;">
         <div>
           <label>Nomor LPP (Cukup Angka)</label>
-          <input id="input_No_LPP" value="${escText(getDocNum('No_LPP') || getVal('NoLP_LP_1'))}" oninput="saveDynamicVal('No_LPP', this.value); refreshReportTableUI();">
+          <input id="input_No_LPP" value="${escText(activeRec.No_LPP)}" oninput="saveDynamicVal('No_LPP', this.value); refreshReportTableUI();">
         </div>
         <div>
           <label>Tanggal LPP</label>
-          <input type="date" id="input_Tgl_LPP" value="${getVal('Tanggal_LPP') !== '-' ? getVal('Tanggal_LPP') : (document.getElementById('Tanggal_LP_LP_1')?.value || '')}" onchange="saveDynamicVal('Tanggal_LPP', this.value); refreshReportTableUI();">
+          <input type="date" id="input_Tgl_LPP" value="${activeRec.Tanggal_LPP && activeRec.Tanggal_LPP !== '-' ? activeRec.Tanggal_LPP : (document.getElementById('Tanggal_LP_LP_1')?.value || '')}" onchange="saveDynamicVal('Tanggal_LPP', this.value); refreshReportTableUI();">
         </div>
       </div>
       <div style="margin-bottom:10px;">
@@ -320,6 +325,11 @@ export function renderDynamicInputs(type) {
     `;
     }
     else if (type === 'LPF') {
+        // Auto-generate nomor LPF jika di record masih kosong/-
+        if (!activeRec.No_LPF || activeRec.No_LPF === '-' || activeRec.No_LPF === '') {
+            activeRec.No_LPF = generateNextBookingNumber('', 'No_LPF', '', 3);
+            savePerkaraToStorage();
+        }
         let catLpf = getVal('Catatan_LPF');
         if (!catLpf || catLpf === '-' || catLpf === '') {
             catLpf = "Setuju dengan usulan tim peneliti, segera tindak lanjuti proses penyusunan administrasi penanganan perkara sesuai ketentuan yang berlaku.";
@@ -328,11 +338,11 @@ export function renderDynamicInputs(type) {
       <div class="grid" style="margin-bottom:10px;">
         <div>
           <label>Nomor LPF (Cukup Angka)</label>
-          <input id="input_No_LPF" value="${escText(getDocNum('No_LPF') || getVal('NoLP_LP_1'))}" oninput="saveDynamicVal('No_LPF', this.value); refreshReportTableUI();">
+          <input id="input_No_LPF" value="${escText(activeRec.No_LPF)}" oninput="saveDynamicVal('No_LPF', this.value); refreshReportTableUI();">
         </div>
         <div>
           <label>Tanggal LPF</label>
-          <input type="date" id="input_Tgl_LPF" value="${getVal('Tanggal_LPF') !== '-' ? getVal('Tanggal_LPF') : (document.getElementById('Tanggal_LP_LP_1')?.value || '')}" onchange="saveDynamicVal('Tanggal_LPF', this.value); refreshReportTableUI();">
+          <input type="date" id="input_Tgl_LPF" value="${activeRec.Tanggal_LPF && activeRec.Tanggal_LPF !== '-' ? activeRec.Tanggal_LPF : (document.getElementById('Tanggal_LP_LP_1')?.value || '')}" onchange="saveDynamicVal('Tanggal_LPF', this.value); refreshReportTableUI();">
         </div>
       </div>
       <div>
@@ -342,6 +352,11 @@ export function renderDynamicInputs(type) {
     `;
     }
     else if (type === 'SPLIT') {
+        // Auto-generate nomor SPLIT jika di record masih kosong/-
+        if (!activeRec.Nomor_SPLIT || activeRec.Nomor_SPLIT === '-' || activeRec.Nomor_SPLIT === '') {
+            activeRec.Nomor_SPLIT = generateNextBookingNumber('', 'Nomor_SPLIT', '', 3);
+            savePerkaraToStorage();
+        }
         let dasarSplit = getVal('Dasar_SPLIT');
         if (!dasarSplit || dasarSplit === '')
             dasarSplit = '-';
@@ -349,11 +364,11 @@ export function renderDynamicInputs(type) {
       <div class="grid" style="margin-bottom:10px;">
         <div>
           <label>Nomor SPLIT (Cukup Angka)</label>
-          <input id="input_Nomor_SPLIT" value="${escText(getDocNum('Nomor_SPLIT') || getVal('NoLP_LP_1'))}" oninput="saveDynamicVal('Nomor_SPLIT', this.value); refreshReportTableUI();">
+          <input id="input_Nomor_SPLIT" value="${escText(activeRec.Nomor_SPLIT)}" oninput="saveDynamicVal('Nomor_SPLIT', this.value); refreshReportTableUI();">
         </div>
         <div>
           <label>Tanggal SPLIT</label>
-          <input type="date" id="input_Tgl_SPLIT" value="${getVal('Tanggal_SPLIT') !== '-' ? getVal('Tanggal_SPLIT') : (document.getElementById('Tanggal_LP_LP_1')?.value || '')}" onchange="saveDynamicVal('Tanggal_SPLIT', this.value); refreshReportTableUI();">
+          <input type="date" id="input_Tgl_SPLIT" value="${activeRec.Tanggal_SPLIT && activeRec.Tanggal_SPLIT !== '-' ? activeRec.Tanggal_SPLIT : (document.getElementById('Tanggal_LP_LP_1')?.value || '')}" onchange="saveDynamicVal('Tanggal_SPLIT', this.value); refreshReportTableUI();">
         </div>
       </div>
       <div>
@@ -369,15 +384,18 @@ export function renderDynamicInputs(type) {
         renderSplitPegawaiList();
     }
     else if (type === 'SPRIN_CACAH') {
+        let activeRec = store.databasePerkara[store.activeRecordIndex] || {};
+        let nomorSprinCacahVal = activeRec.No_SPRIN_CACAH || '';
+        let tanggalSprinCacahVal = activeRec.Tanggal_Sprin_Cacah && activeRec.Tanggal_Sprin_Cacah !== '-' ? activeRec.Tanggal_Sprin_Cacah : (document.getElementById('Tanggal_SBP')?.value || '');
         container.innerHTML = recordSelectorHtml + `
       <div class="grid" style="margin-bottom:10px;">
         <div>
           <label>Nomor SPRIN CACAH (Cukup Angka)</label>
-          <input id="input_No_SPRIN" value="${escText(getDocNum('No_SPRIN_CACAH'))}" oninput="saveDynamicVal('No_SPRIN_CACAH', this.value); refreshReportTableUI();">
+          <input id="input_No_SPRIN" value="${escText(nomorSprinCacahVal)}" oninput="saveDynamicVal('No_SPRIN_CACAH', this.value); refreshReportTableUI();">
         </div>
         <div>
           <label>Tanggal SPRIN CACAH</label>
-          <input type="date" id="input_Tgl_SPRIN" value="${getVal('Tanggal_Sprin_Cacah') !== '-' ? getVal('Tanggal_Sprin_Cacah') : (document.getElementById('Tanggal_SBP')?.value || '')}" onchange="saveDynamicVal('Tanggal_Sprin_Cacah', this.value); refreshReportTableUI();">
+          <input type="date" id="input_Tgl_SPRIN" value="${tanggalSprinCacahVal}" onchange="saveDynamicVal('Tanggal_Sprin_Cacah', this.value); refreshReportTableUI();">
         </div>
       </div>
       <p class="small" style="margin-top:0;">Daftar petugas pelaksana pencacahan barang hasil penindakan:</p>
@@ -389,25 +407,39 @@ export function renderDynamicInputs(type) {
         renderSprinPegawaiList();
     }
     else if (type === 'BA') {
+        let activeRec = store.databasePerkara[store.activeRecordIndex] || {};
+        let nomorBaVal = activeRec.Nomor_BA || '';
+        let tanggalBaVal = activeRec.Tanggal_BA && activeRec.Tanggal_BA !== '-' ? activeRec.Tanggal_BA : (document.getElementById('Tanggal_SBP')?.value || '');
+        let hariCacahVal = activeRec.Hari_Cacah || '';
+        let teksTanggalVal = activeRec.TeksTanggal || '';
+        // Jika tarikh sudah ada tetapi hari/teks tanggal belum terisi, jana secara automatik
+        if (tanggalBaVal && (!hariCacahVal || !teksTanggalVal)) {
+            const r = autoGenerateTeksTanggalBA(tanggalBaVal);
+            hariCacahVal = hariCacahVal || r.hari.toLowerCase();
+            teksTanggalVal = teksTanggalVal || r.teksLengkap.toLowerCase();
+            activeRec.Hari_Cacah = hariCacahVal;
+            activeRec.TeksTanggal = teksTanggalVal;
+            savePerkaraToStorage();
+        }
         let items = activeRec.cacahItems || [];
         container.innerHTML = recordSelectorHtml + `
       <div class="grid3" style="margin-bottom:10px;">
         <div>
           <label>Nomor BA (Cukup Angka)</label>
-          <input id="input_Nomor_BA" value="${escText(getDocNum('Nomor_BA'))}" oninput="saveDynamicVal('Nomor_BA', this.value); refreshReportTableUI();">
+          <input id="input_Nomor_BA" value="${escText(nomorBaVal)}" oninput="saveDynamicVal('Nomor_BA', this.value); refreshReportTableUI();">
         </div>
         <div>
           <label>Tanggal BA Cacah</label>
-          <input type="date" id="input_Tgl_BA" value="${getVal('Tanggal_BA') !== '-' ? getVal('Tanggal_BA') : (document.getElementById('Tanggal_SBP')?.value || '')}" onchange="saveDynamicVal('Tanggal_BA', this.value); if(this.value){ const r = autoGenerateTeksTanggalBA(this.value); saveDynamicVal('Hari_Cacah', r.hari.toLowerCase()); saveDynamicVal('TeksTanggal', r.teksLengkap.toLowerCase()); (document.getElementById('Hari_Cacah') as HTMLInputElement).value = r.hari.toLowerCase(); (document.getElementById('TeksTanggal') as HTMLInputElement).value = r.teksLengkap.toLowerCase(); } refreshReportTableUI();">
+          <input type="date" id="input_Tgl_BA" value="${tanggalBaVal}" onchange="saveDynamicVal('Tanggal_BA', this.value); if(this.value){ const r = autoGenerateTeksTanggalBA(this.value); saveDynamicVal('Hari_Cacah', r.hari.toLowerCase()); saveDynamicVal('TeksTanggal', r.teksLengkap.toLowerCase()); (document.getElementById('Hari_Cacah') as HTMLInputElement).value = r.hari.toLowerCase(); (document.getElementById('TeksTanggal') as HTMLInputElement).value = r.teksLengkap.toLowerCase(); } refreshReportTableUI();">
         </div>
         <div>
           <label>Hari Cacah (Huruf Kecil)</label>
-          <input id="Hari_Cacah" class="lowercase-input" value="${escText(getVal('Hari_Cacah') || '')}" oninput="saveDynamicVal('Hari_Cacah', this.value.toLowerCase());">
+          <input id="Hari_Cacah" class="lowercase-input" value="${escText(hariCacahVal)}" oninput="saveDynamicVal('Hari_Cacah', this.value.toLowerCase());">
         </div>
       </div>
       <div style="margin-bottom:10px;">
         <label>Teks Tanggal Lengkap (Huruf Kecil)</label>
-        <input id="TeksTanggal" class="lowercase-input" value="${escText(getVal('TeksTanggal') || '')}" oninput="saveDynamicVal('TeksTanggal', this.value.toLowerCase());">
+        <input id="TeksTanggal" class="lowercase-input" value="${escText(teksTanggalVal)}" oninput="saveDynamicVal('TeksTanggal', this.value.toLowerCase());">
       </div>
       <h4>Isian Tambahan Barang Hasil Pencacahan (BA)</h4>
       <div id="items"></div>
@@ -418,16 +450,21 @@ export function renderDynamicInputs(type) {
         renderItems(items);
     }
     else if (type === 'LHP') {
-        let penyelesaianVal = getVal('Penyelesaian_Perkara') !== '-' ? getVal('Penyelesaian_Perkara') : (getVal('Alternatif_Penyelesaian_Perkara') !== '-' ? getVal('Alternatif_Penyelesaian_Perkara') : '');
+        let activeRec = store.databasePerkara[store.activeRecordIndex] || {};
+        let nomorLhpVal = activeRec.Nomor_LHP || '';
+        let tanggalLhpVal = activeRec.Tanggal_LHP && activeRec.Tanggal_LHP !== '-' ? activeRec.Tanggal_LHP : (document.getElementById('Tanggal_LP_LP_1')?.value || '');
+        let penyelesaianVal = activeRec.Penyelesaian_Perkara || activeRec.Alternatif_Penyelesaian_Perkara || '';
+        // Fungsi helper untuk mengecek apakah opsi checkbox sebelumnya pernah dicentang
+        const isChecked = (val) => penyelesaianVal.toLowerCase().includes(val.toLowerCase()) ? 'checked' : '';
         container.innerHTML = recordSelectorHtml + `
       <div class="grid" style="margin-bottom:10px;">
         <div>
           <label>Nomor LHP (Cukup Angka)</label>
-          <input id="input_Nomor_LHP" value="${escText(getDocNum('Nomor_LHP'))}" oninput="saveDynamicVal('Nomor_LHP', this.value); refreshReportTableUI();">
+          <input id="input_Nomor_LHP" value="${escText(nomorLhpVal)}" oninput="saveDynamicVal('Nomor_LHP', this.value); refreshReportTableUI();">
         </div>
         <div>
           <label>Tanggal LHP</label>
-          <input type="date" id="input_Tgl_LHP" value="${getVal('Tanggal_LHP') !== '-' ? getVal('Tanggal_LHP') : (document.getElementById('Tanggal_LP_LP_1')?.value || '')}" onchange="saveDynamicVal('Tanggal_LHP', this.value); refreshReportTableUI();">
+          <input type="date" id="input_Tgl_LHP" value="${tanggalLhpVal}" onchange="saveDynamicVal('Tanggal_LHP', this.value); refreshReportTableUI();">
         </div>
       </div>
 
@@ -436,56 +473,56 @@ export function renderDynamicInputs(type) {
 
           <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 6px 12px; margin-bottom:10px;">
             <label style="display:inline-flex; align-items:center; gap:6px; font-size:11px; cursor:pointer; margin:0; width:auto; text-align:left; font-weight:normal; text-transform:none;">
-              <input type="checkbox" class="chk-lhp-opsi" value="bdn" onchange="syncUraianKombinasiLHP()" style="width:14px; height:14px; margin:0; flex-shrink:0;">
+              <input type="checkbox" class="chk-lhp-opsi" value="bdn" ${isChecked('bdn')} onchange="syncUraianKombinasiLHP()" style="width:14px; height:14px; margin:0; flex-shrink:0;">
               <span>Penetapan BDN</span>
             </label>
             <label style="display:inline-flex; align-items:center; gap:6px; font-size:11px; cursor:pointer; margin:0; width:auto; text-align:left; font-weight:normal; text-transform:none;">
-              <input type="checkbox" class="chk-lhp-opsi" value="spsa" onchange="syncUraianKombinasiLHP()" style="width:14px; height:14px; margin:0; flex-shrink:0;">
+              <input type="checkbox" class="chk-lhp-opsi" value="spsa" ${isChecked('spsa')} onchange="syncUraianKombinasiLHP()" style="width:14px; height:14px; margin:0; flex-shrink:0;">
               <span>Sanksi Denda (SPSA)</span>
             </label>
             <label style="display:inline-flex; align-items:center; gap:6px; font-size:11px; cursor:pointer; margin:0; width:auto; text-align:left; font-weight:normal; text-transform:none;">
-              <input type="checkbox" class="chk-lhp-opsi" value="kembali" onchange="syncUraianKombinasiLHP()" style="width:14px; height:14px; margin:0; flex-shrink:0;">
+              <input type="checkbox" class="chk-lhp-opsi" value="kembali" ${isChecked('kembali')} onchange="syncUraianKombinasiLHP()" style="width:14px; height:14px; margin:0; flex-shrink:0;">
               <span>Barang Dikembalikan</span>
             </label>
 
             <label style="display:inline-flex; align-items:center; gap:6px; font-size:11px; cursor:pointer; margin:0; width:auto; text-align:left; font-weight:normal; text-transform:none;">
-              <input type="checkbox" class="chk-lhp-opsi" value="reekspor" onchange="syncUraianKombinasiLHP()" style="width:14px; height:14px; margin:0; flex-shrink:0;">
+              <input type="checkbox" class="chk-lhp-opsi" value="reekspor" ${isChecked('reekspor')} onchange="syncUraianKombinasiLHP()" style="width:14px; height:14px; margin:0; flex-shrink:0;">
               <span>Re-Ekspor</span>
             </label>
             <label style="display:inline-flex; align-items:center; gap:6px; font-size:11px; cursor:pointer; margin:0; width:auto; text-align:left; font-weight:normal; text-transform:none;">
-              <input type="checkbox" class="chk-lhp-opsi" value="keluar_sebagian" onchange="syncUraianKombinasiLHP()" style="width:14px; height:14px; margin:0; flex-shrink:0;">
+              <input type="checkbox" class="chk-lhp-opsi" value="keluar_sebagian" ${isChecked('keluar_sebagian')} onchange="syncUraianKombinasiLHP()" style="width:14px; height:14px; margin:0; flex-shrink:0;">
               <span>Pengeluaran Barang Sebagian</span>
             </label>
             <label style="display:inline-flex; align-items:center; gap:6px; font-size:11px; cursor:pointer; margin:0; width:auto; text-align:left; font-weight:normal; text-transform:none;">
-              <input type="checkbox" class="chk-lhp-opsi" value="ur" onchange="syncUraianKombinasiLHP()" style="width:14px; height:14px; margin:0; flex-shrink:0;">
+              <input type="checkbox" class="chk-lhp-opsi" value="ur" ${isChecked('ur')} onchange="syncUraianKombinasiLHP()" style="width:14px; height:14px; margin:0; flex-shrink:0;">
               <span>Ultimum Remedium (Pasal 40B)</span>
             </label>
 
             <label style="display:inline-flex; align-items:center; gap:6px; font-size:11px; cursor:pointer; margin:0; width:auto; text-align:left; font-weight:normal; text-transform:none;">
-              <input type="checkbox" class="chk-lhp-opsi" value="musnah" onchange="syncUraianKombinasiLHP()" style="width:14px; height:14px; margin:0; flex-shrink:0;">
+              <input type="checkbox" class="chk-lhp-opsi" value="musnah" ${isChecked('musnah')} onchange="syncUraianKombinasiLHP()" style="width:14px; height:14px; margin:0; flex-shrink:0;">
               <span>Pemusnahan (BMN)</span>
             </label>
             <label style="display:inline-flex; align-items:center; gap:6px; font-size:11px; cursor:pointer; margin:0; width:auto; text-align:left; font-weight:normal; text-transform:none;">
-              <input type="checkbox" class="chk-lhp-opsi" value="sidik" onchange="syncUraianKombinasiLHP()" style="width:14px; height:14px; margin:0; flex-shrink:0;">
+              <input type="checkbox" class="chk-lhp-opsi" value="sidik" ${isChecked('sidik')} onchange="syncUraianKombinasiLHP()" style="width:14px; height:14px; margin:0; flex-shrink:0;">
               <span>Naik Penyidikan</span>
             </label>
             <label style="display:inline-flex; align-items:center; gap:6px; font-size:11px; cursor:pointer; margin:0; width:auto; text-align:left; font-weight:normal; text-transform:none;">
-              <input type="checkbox" class="chk-lhp-opsi" value="pelimpahan" onchange="syncUraianKombinasiLHP()" style="width:14px; height:14px; margin:0; flex-shrink:0;">
+              <input type="checkbox" class="chk-lhp-opsi" value="pelimpahan" ${isChecked('pelimpahan')} onchange="syncUraianKombinasiLHP()" style="width:14px; height:14px; margin:0; flex-shrink:0;">
               <span>Pelimpahan / Serah Terima</span>
             </label>
 
             <label style="display:inline-flex; align-items:center; gap:6px; font-size:11px; cursor:pointer; margin:0; width:auto; text-align:left; font-weight:normal; text-transform:none;">
-              <input type="checkbox" class="chk-lhp-opsi" value="batal_dok" onchange="syncUraianKombinasiLHP()" style="width:14px; height:14px; margin:0; flex-shrink:0;">
+              <input type="checkbox" class="chk-lhp-opsi" value="batal_dok" ${isChecked('batal_dok')} onchange="syncUraianKombinasiLHP()" style="width:14px; height:14px; margin:0; flex-shrink:0;">
               <span>Pembatalan Dokumen</span>
             </label>
             <label style="display:inline-flex; align-items:center; gap:6px; font-size:11px; cursor:pointer; margin:0; width:auto; text-align:left; font-weight:normal; text-transform:none;">
-              <input type="checkbox" class="chk-lhp-opsi" value="henti" onchange="syncUraianKombinasiLHP()" style="width:14px; height:14px; margin:0; flex-shrink:0;">
+              <input type="checkbox" class="chk-lhp-opsi" value="henti" ${isChecked('henti')} onchange="syncUraianKombinasiLHP()" style="width:14px; height:14px; margin:0; flex-shrink:0;">
               <span>Tidak Ditemukan Pelanggaran</span>
             </label>
           </div>
 
           <textarea id="input_Penyelesaian_Perkara" rows="5" class="form-control" style="width:100%; font-size:12px; line-height:1.5; resize:vertical;" placeholder="Uraian otomatis akan terbentuk di sini berdasarkan opsi yang dicentang..." oninput="saveDynamicVal('Penyelesaian_Perkara', this.value); saveDynamicVal('Alternatif_Penyelesaian_Perkara', this.value);">${escText(penyelesaianVal)}</textarea>
-        </div>
+      </div>
     `;
     }
 }
@@ -555,7 +592,6 @@ export function syncUraianKombinasiLHP() {
         }
     }
 }
-window.syncUraianKombinasiLHP = syncUraianKombinasiLHP;
 export function renderItems(items) {
     let c = document.getElementById('items');
     if (!c)
@@ -837,73 +873,112 @@ export function renderTLFormSection(type) {
         };
         const toLetter = (i) => String.fromCharCode(97 + i) + '.';
         container.innerHTML = `
-      <div style="background:#0f172a; border:1px solid var(--border-color); padding:10px; border-radius:6px; margin-bottom:12px;">
-        <span style="font-size:11px; font-weight:700; color:var(--primary);"><i class="fi fi-rr-document"></i> NOMOR & TANGGAL BAST</span>
-        <div class="grid" style="margin-top:8px;">
-          <div>
-            <label>Nomor BAST (Cukup Angka)</label>
-            <input id="input_TL_BAST_PEMILIK_Num" placeholder="Contoh: 1" value="${escText(defaultNoBast)}" oninput="saveDynamicValTL('TL_BAST_Num', this.value); showTLReportView('BAST_PEMILIK');">
-          </div>
-          <div>
-            <label>Tanggal BAST</label>
-            <input type="date" id="input_TL_Tanggal_Surat" value="${escText(defaultTglBast)}" onchange="window.onTanggalBastChange(this.value)">
-          </div>
-        </div>
-        <div class="grid" style="margin-top:8px;">
-          <div>
-            <label>Hari BAST</label>
-            <input id="input_TL_Hari_BAST" class="lowercase-input" value="${escText(rec.TL_Hari_BAST || '')}" oninput="saveDynamicValTL('TL_Hari_BAST', this.value.toLowerCase()); showTLReportView('BAST_PEMILIK');">
-          </div>
-          <div>
-            <label>Ejaan Huruf Tanggal</label>
-            <input id="input_TL_Tgl_Huruf_BAST" class="lowercase-input" value="${escText(rec.TL_Tgl_Huruf_BAST || '')}" oninput="saveDynamicValTL('TL_Tgl_Huruf_BAST', this.value.toLowerCase()); showTLReportView('BAST_PEMILIK');">
-          </div>
-        </div>
-      </div>
-
-      <div style="border:1px solid var(--border-color); padding:10px; border-radius:6px; margin-bottom:10px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-          <span style="font-size:11px; font-weight:700; color:#cbd5e1;">1. SARANA PENGANGKUT</span>
-          <button type="button" class="btn primary" onclick="addBastItem('sarkut')" style="padding:2px 8px; font-size:11px;">+ Tambah Sarkut (b, c..)</button>
-        </div>
-        ${rec.TL_BAST_SarkutList.map((s, idx) => `
-          <div style="background:#1e293b; padding:8px; border-radius:4px; margin-bottom:6px;">
-            <div style="font-weight:bold; font-size:11px; margin-bottom:4px; color:var(--primary);">${toLetter(idx)} Sarkut #${idx + 1}</div>
-            <div class="grid">
-              <div><label>Jenis Sarkut</label><input value="${escText(s.jenis)}" oninput="rec.TL_BAST_SarkutList[${idx}].jenis = this.value; savePerkaraToStorage(); showTLReportView('BAST_PEMILIK');"></div>
-              <div><label>No. Reg/Polisi</label><input value="${escText(s.nopol)}" oninput="rec.TL_BAST_SarkutList[${idx}].nopol = this.value; savePerkaraToStorage(); showTLReportView('BAST_PEMILIK');"></div>
-            </div>
-            ${rec.TL_BAST_SarkutList.length > 1 ? `<button type="button" class="btn danger" onclick="delBastItem('sarkut', ${idx})" style="margin-top:6px; padding:2px 8px; font-size:11px;">Hapus</button>` : ''}
-          </div>
-        `).join('')}
-      </div>
-
       <div style="border:1px solid var(--border-color); padding:10px; border-radius:6px; margin-bottom:10px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
           <span style="font-size:11px; font-weight:700; color:#cbd5e1;">2. BARANG</span>
           <button type="button" class="btn primary" onclick="addBastItem('barang')" style="padding:2px 8px; font-size:11px;">+ Tambah Barang (b, c..)</button>
         </div>
-        ${rec.TL_BAST_BarangList.map((b, idx) => `
-          <div style="background:#1e293b; padding:8px; border-radius:4px; margin-bottom:6px;">
-            <div style="font-weight:bold; font-size:11px; margin-bottom:4px; color:var(--primary);">${toLetter(idx)} Barang #${idx + 1}</div>
-            <div class="grid">
-              <div>
-                <label>Jml/Kemasan (Dropdown/Edit)</label>
-                <input list="kemasanOptions" value="${escText(b.kemasan)}" oninput="rec.TL_BAST_BarangList[${idx}].kemasan = this.value; savePerkaraToStorage(); showTLReportView('BAST_PEMILIK');">
-                <datalist id="kemasanOptions">
-                  <option value="5 koli">
-                  <option value="12 koli">
-                  <option value="1 x 40 ft Peti Kemas">
-                  <option value="1 x 20 ft Peti Kemas">
-                  <option value="Curah">
-                </datalist>
+        ${rec.TL_BAST_BarangList.map(function (b, idx) {
+            var isFcl = b.jenisKemasan && (b.jenisKemasan.toUpperCase().includes('FCL') || b.jenisKemasan.toLowerCase().includes('peti kemas'));
+            return `
+            <div style="background:#1e293b; padding:10px; border-radius:6px; margin-bottom:8px; border:1px solid #334155;">
+              <div style="font-weight:bold; font-size:11px; margin-bottom:6px; color:var(--primary); display:flex; justify-content:space-between;">
+                <span>${toLetter(idx)} Barang #${idx + 1}</span>
               </div>
-              <div><label>Jumlah/Jenis Barang</label><input value="${escText(b.uraian)}" oninput="rec.TL_BAST_BarangList[${idx}].uraian = this.value; savePerkaraToStorage(); showTLReportView('BAST_PEMILIK');"></div>
+
+              <!-- Jml/Kemasan -->
+              <div style="background:rgba(15, 23, 42, 0.6); padding:8px; border-radius:4px; border:1px solid #334155; margin-bottom:8px;">
+                <div style="font-size:10px; font-weight:700; color:#fbbf24; margin-bottom:4px; text-transform:uppercase;">Jml/Kemasan</div>
+                <div class="grid" style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:6px;">
+                  <div>
+                    <label style="font-size:10px; color:#94a3b8;">Jumlah Kemasan</label>
+                    <input value="${escText(b.jumlahKemasan ? b.jumlahKemasan : '')}" placeholder="Contoh: 1" oninput="rec.TL_BAST_BarangList[${idx}].jumlahKemasan = this.value; savePerkaraToStorage(); renderTLFormSection('BAST_PEMILIK'); showTLReportView('BAST_PEMILIK');" style="width:100%; padding:6px; background:#0f172a; color:#fff; border:1px solid #475569; border-radius:4px; font-size:11px;">
+                  </div>
+                  <div>
+                    <label style="font-size:10px; color:#94a3b8;">Jenis Kemasan</label>
+                    <select onchange="rec.TL_BAST_BarangList[${idx}].jenisKemasan = this.value; savePerkaraToStorage(); renderTLFormSection('BAST_PEMILIK'); showTLReportView('BAST_PEMILIK');" style="width:100%; padding:6px; background:#0f172a; color:#fff; border:1px solid #475569; border-radius:4px; font-size:11px;">
+                      <option value="">Pilih Jenis Kemasan...</option>
+                      <option value="FCL" ${b.jenisKemasan === 'FCL' ? 'selected' : ''}>FCL</option>
+                      <option value="LCL" ${b.jenisKemasan === 'LCL' ? 'selected' : ''}>LCL</option>
+                      <option value="LOSS CARGO" ${b.jenisKemasan === 'LOSS CARGO' ? 'selected' : ''}>LOSS CARGO</option>
+                      <option value="Peti Kemas" ${b.jenisKemasan === 'Peti Kemas' ? 'selected' : ''}>Peti Kemas</option>
+                      <option value="Palet" ${b.jenisKemasan === 'Palet' ? 'selected' : ''}>Palet</option>
+                      <option value="Carton" ${b.jenisKemasan === 'Carton' ? 'selected' : ''}>Carton</option>
+                    </select>
+                  </div>
+                </div>
+
+                ${isFcl ? `
+                  <div style="margin-bottom:6px;">
+                    <label style="font-size:10px; color:#93c5fd;">Nomor Peti Kemas / Kontainer</label>
+                    <input value="${escText(b.nomorKontainer ? b.nomorKontainer : '')}" placeholder="Contoh: OOCL 234567 / 40 feet" oninput="rec.TL_BAST_BarangList[${idx}].nomorKontainer = this.value; savePerkaraToStorage(); renderTLFormSection('BAST_PEMILIK'); showTLReportView('BAST_PEMILIK');" style="width:100%; padding:6px; background:#0f172a; color:#fff; border:1px solid #3b82f6; border-radius:4px; font-size:11px;">
+                  </div>
+                ` : ''}
+
+                <div style="margin-top:6px;">
+                  <label style="font-size:10px; color:#93c5fd;">Preview Jml/Kemasan</label>
+                  <input value="${escText(b.kemasan ? b.kemasan : '')}" oninput="rec.TL_BAST_BarangList[${idx}].kemasan = this.value; savePerkaraToStorage(); showTLReportView('BAST_PEMILIK');" style="width:100%; padding:6px; background:#0f172a; color:#93c5fd; border:1px solid #3b82f6; border-radius:4px; font-size:11px;">
+                </div>
+              </div>
+
+              <!-- Jumlah/Jenis Barang -->
+              <div style="background:rgba(15, 23, 42, 0.6); padding:8px; border-radius:4px; border:1px solid #334155; margin-bottom:8px;">
+                <div style="font-size:10px; font-weight:700; color:#fbbf24; margin-bottom:4px; text-transform:uppercase;">Jumlah/Jenis Barang</div>
+                <div class="grid" style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:6px;">
+                  <div>
+                    <label style="font-size:10px; color:#94a3b8;">Jumlah Barang</label>
+                    <input value="${escText(b.jumlahBarang ? b.jumlahBarang : '')}" placeholder="Contoh: 12" oninput="rec.TL_BAST_BarangList[${idx}].jumlahBarang = this.value; savePerkaraToStorage(); renderTLFormSection('BAST_PEMILIK'); showTLReportView('BAST_PEMILIK');" style="width:100%; padding:6px; background:#0f172a; color:#fff; border:1px solid #475569; border-radius:4px; font-size:11px;">
+                  </div>
+                  <div>
+                    <label style="font-size:10px; color:#94a3b8;">Jenis Koli / Satuan</label>
+                    <select id="bast_satuan_barang_${idx}" onchange="rec.TL_BAST_BarangList[${idx}].satuanBarang = this.value; savePerkaraToStorage(); renderTLFormSection('BAST_PEMILIK'); showTLReportView('BAST_PEMILIK');" style="width:100%; padding:6px; background:#0f172a; color:#fff; border:1px solid #475569; border-radius:4px; font-size:11px;">
+                      <option value="${escText(b.satuanBarang ? b.satuanBarang : '')}">${escText(b.satuanBarang ? b.satuanBarang : 'Pilih Satuan...')}</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div style="margin-bottom:6px;">
+                  <label style="font-size:10px; color:#94a3b8;">Nama Barang</label>
+                  <div style="display:flex; gap:8px; align-items:center;">
+                    <input value="${escText(b.namaBarang ? b.namaBarang : '')}" placeholder="Contoh: Sepatu / Pakaian" oninput="rec.TL_BAST_BarangList[${idx}].namaBarang = this.value; savePerkaraToStorage(); renderTLFormSection('BAST_PEMILIK'); showTLReportView('BAST_PEMILIK');" style="flex:1; padding:6px; background:#0f172a; color:#fff; border:1px solid #475569; border-radius:4px; font-size:11px;">
+                    <label style="display:inline-flex; align-items:center; gap:4px; font-size:10px; cursor:pointer; color:#cbd5e1; white-space:nowrap; margin:0;">
+                      <input type="checkbox" ${b.pakaiOpsiDll ? 'checked' : ''} onchange="rec.TL_BAST_BarangList[${idx}].pakaiOpsiDll = this.checked; savePerkaraToStorage(); renderTLFormSection('BAST_PEMILIK'); showTLReportView('BAST_PEMILIK');">
+                      <span>...dll.</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div style="margin-bottom:6px;">
+                  <label style="font-size:10px; color:#cbd5e1;">Pilihan Tambahan Akhiran (Opsional)</label>
+                  <select onchange="rec.TL_BAST_BarangList[${idx}].tambahanAkhiran = this.value; savePerkaraToStorage(); renderTLFormSection('BAST_PEMILIK'); showTLReportView('BAST_PEMILIK');" style="width:100%; padding:6px; background:#0f172a; color:#fff; border:1px solid #475569; border-radius:4px; font-size:11px;">
+                    <option value="" ${!b.tambahanAkhiran ? 'selected' : ''}>- Tanpa Tambahan Akhiran -</option>
+                    <option value=" / Kain / Garmen" ${b.tambahanAkhiran === ' / Kain / Garmen' ? 'selected' : ''}> / Kain / Garmen</option>
+                    <option value=" / Barang Campuran" ${b.tambahanAkhiran === ' / Barang Campuran' ? 'selected' : ''}> / Barang Campuran</option>
+                  </select>
+                </div>
+
+                <div style="margin-bottom:6px;">
+                  <label style="font-size:10px; color:#34d399;">Uraian Barang</label>
+                  <input value="${escText(b.uraian ? b.uraian : '')}" placeholder="Ketik atau sesuaikan uraian barang..." oninput="rec.TL_BAST_BarangList[${idx}].uraian = this.value; savePerkaraToStorage(); showTLReportView('BAST_PEMILIK');" style="width:100%; padding:6px; background:#0f172a; color:#34d399; border:1px solid #34d399; border-radius:4px; font-size:11px;">
+                </div>
+              </div>
+
+              ${rec.TL_BAST_BarangList.length > 1 ? `<button type="button" class="btn danger" onclick="delBastItem('barang', ${idx})" style="padding:2px 8px; font-size:10px;">Hapus Barang Ini</button>` : ''}
             </div>
-            ${rec.TL_BAST_BarangList.length > 1 ? `<button type="button" class="btn danger" onclick="delBastItem('barang', ${idx})" style="margin-top:6px; padding:2px 8px; font-size:11px;">Hapus</button>` : ''}
-          </div>
-        `).join('')}
+          `;
+        }).join('')}
       </div>
+
+      <script>
+        setTimeout(function() {
+          if (typeof cloneDropdown === 'function') {
+            var selects = document.querySelectorAll("[id^='bast_satuan_barang_']");
+            for (var i = 0; i < selects.length; i++) {
+              cloneDropdown('Jenis_Koli_Select', selects[i].id);
+            }
+          }
+        }, 100);
+      </script>
 
       <div style="border:1px solid var(--border-color); padding:10px; border-radius:6px; margin-bottom:10px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
@@ -1326,4 +1401,5 @@ window.addSplitPegawai = addSplitPegawai;
 window.delSplitPegawai = delSplitPegawai;
 window.addSprinPegawai = addSprinPegawai;
 window.delSprinPegawai = delSprinPegawai;
+window.syncUraianKombinasiLHP = syncUraianKombinasiLHP;
 //# sourceMappingURL=editor.js.map
