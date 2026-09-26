@@ -144,147 +144,146 @@
             <input type="text" placeholder="Cari data perkara, LP, SBP...">
           </div>
 
-<!-- KONTENER PROFIL PENGGUNA -->
-        <div class="user-profile-wrapper" style="display: flex; align-items: center; gap: 10px; margin-left: auto;">
-          <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 3px; line-height: 1.1;">
-            <span id="nav_user_name" style="font-size: 13px; font-weight: 700; color: #f8fafc; letter-spacing: 0.2px;">
-              Penyidik1
-            </span>
-            
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <span id="nav_user_role" style="font-size: 10px; font-weight: 600; background: #064e3b; color: #34d399; border: 1px solid #059669; padding: 2px 8px; border-radius: 9999px; text-transform: uppercase; letter-spacing: 0.3px;">
-                Penyidik
+          <!-- KONTENER PROFIL PENGGUNA -->
+          <div class="user-profile-wrapper" style="display: flex; align-items: center; gap: 10px; margin-left: auto;">
+            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 3px; line-height: 1.1;">
+              <span id="nav_user_name" style="font-size: 13px; font-weight: 700; color: #f8fafc; letter-spacing: 0.2px;">
+                Penyidik1
               </span>
               
-              <span id="nav_system_status" style="font-size: 10px; font-weight: 600; color: #10b981; display: inline-flex; align-items: center; gap: 4px;">
-                <span style="width: 7px; height: 7px; background-color: #10b981; border-radius: 50%; display: inline-block; box-shadow: 0 0 6px #10b981;"></span>
-                Online
-              </span>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span id="nav_user_role" style="font-size: 10px; font-weight: 600; background: #064e3b; color: #34d399; border: 1px solid #059669; padding: 2px 8px; border-radius: 9999px; text-transform: uppercase; letter-spacing: 0.3px;">
+                  Penyidik
+                </span>
+                
+                <span id="nav_system_status" style="font-size: 10px; font-weight: 600; color: #10b981; display: inline-flex; align-items: center; gap: 4px;">
+                  <span style="width: 7px; height: 7px; background-color: #10b981; border-radius: 50%; display: inline-block; box-shadow: 0 0 6px #10b981;"></span>
+                  Online
+                </span>
+              </div>
+            </div>
+
+            <div class="user-profile-widget-icononly" onclick="toggleUserDropdown(event)" title="Klik untuk lihat akun" style="cursor: pointer; flex-shrink: 0;">
+              <span class="user-avatar-text" id="sidebarAvatarText">P</span>
+            </div>
+
+            <div class="user-dropdown-menu" id="userDropdownMenu">
+              <div class="dropdown-header-info">
+                <div style="font-size: 12px; font-weight: 800; color: var(--text-main);" id="dropdownUserName">Penyidik1</div>
+                <div style="font-size: 10px; color: var(--text-muted);" id="dropdownUserEmail">penyidik1@kemenkeu.go.id</div>
+                <span class="role-badge-pill" id="dropdownUserRole">Penyidik</span>
+              </div>
+              <button type="button" class="dropdown-item" onclick="openProfileSettingTab()">
+                <i class="fi fi-rr-user-gear"></i>
+                <span>Pengaturan Profil</span>
+              </button>
+              <button type="button" class="dropdown-item danger" onclick="handleLogout()">
+                <i class="fi fi-rr-exit"></i>
+                <span>Logout</span>
+              </button>
             </div>
           </div>
-
-          <div class="user-profile-widget-icononly" onclick="toggleUserDropdown(event)" title="Klik untuk lihat akun" style="cursor: pointer; flex-shrink: 0;">
-            <span class="user-avatar-text" id="sidebarAvatarText">P</span>
-          </div>
-
-          <div class="user-dropdown-menu" id="userDropdownMenu">
-            <div class="dropdown-header-info">
-              <div style="font-size: 12px; font-weight: 800; color: var(--text-main);" id="dropdownUserName">Penyidik1</div>
-              <div style="font-size: 10px; color: var(--text-muted);" id="dropdownUserEmail">penyidik1@kemenkeu.go.id</div>
-              <span class="role-badge-pill" id="dropdownUserRole">Penyidik</span>
-            </div>
-            <button type="button" class="dropdown-item" onclick="openProfileSettingTab()">
-              <i class="fi fi-rr-user-gear"></i>
-              <span>Pengaturan Profil</span>
-            </button>
-            <button type="button" class="dropdown-item danger" onclick="handleLogout()">
-              <i class="fi fi-rr-exit"></i>
-              <span>Logout</span>
-            </button>
-          </div>
-        </div> <!-- Penutup user-profile-wrapper -->
-      </header>
-    </div>
+        </header>
+      </div>
 
       <main>
         <section id="dasbor" class="tab-pane active panel">
-  <h2>Dashboard Analisis Perkara</h2>
-  <p class="small" style="margin-bottom:16px;">Pemantauan statistik penindakan, sebaran penyelesaian perkara, dan estimasi kerugian negara.</p>
-  
-  <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 20px;">
-    
-    <div class="stat-card interactive-stat">
-      <div class="stat-card-header">
-        <h4>Total Register Perkara</h4>
-        <div class="arrow-btn"><i class="fi fi-rr-arrow-up-right"></i></div>
-      </div>
-      <div class="value" id="statLP">0</div>
-      <div style="margin-top:10px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.06); font-size:11px; display:flex; flex-direction:column; gap:4px;">
-        <div style="display:flex; justify-content:space-between;">
-          <span style="color:var(--text-muted, #94a3b8);">Terbit Dokumen LP:</span>
-          <b id="dash_cnt_lp" style="color:var(--text-main, #f8fafc);">0</b>
-        </div>
-        <div style="display:flex; justify-content:space-between;">
-          <span style="color:var(--text-muted, #94a3b8);">Terbit Dokumen SBP:</span>
-          <b id="dash_cnt_sbp" style="color:var(--text-main, #f8fafc);">0</b>
-        </div>
-      </div>
-    </div>
-    
-    <div class="stat-card interactive-stat">
-      <div class="stat-card-header">
-        <h4>Total Kerugian Negara</h4>
-        <div class="arrow-btn"><i class="fi fi-rr-arrow-up-right"></i></div>
-      </div>
-      <div class="value" id="statKerugian" style="font-size:20px; color:#ef4444;">Rp 0</div>
-      <div class="stat-badge">Estimasi Taksiran Potensi</div>
-    </div>
+          <h2>Dashboard Analisis Perkara</h2>
+          <p class="small" style="margin-bottom:16px;">Pemantauan statistik penindakan, sebaran penyelesaian perkara, dan estimasi kerugian negara.</p>
+          
+          <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 20px;">
+            <div class="stat-card interactive-stat">
+              <div class="stat-card-header">
+                <h4>Total Register Perkara</h4>
+                <div class="arrow-btn"><i class="fi fi-rr-arrow-up-right"></i></div>
+              </div>
+              <div class="value" id="statLP">0</div>
+              <div style="margin-top:10px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.06); font-size:11px; display:flex; flex-direction:column; gap:4px;">
+                <div style="display:flex; justify-content:space-between;">
+                  <span style="color:var(--text-muted, #94a3b8);">Terbit Dokumen LP:</span>
+                  <b id="dash_cnt_lp" style="color:var(--text-main, #f8fafc);">0</b>
+                </div>
+                <div style="display:flex; justify-content:space-between;">
+                  <span style="color:var(--text-muted, #94a3b8);">Terbit Dokumen SBP:</span>
+                  <b id="dash_cnt_sbp" style="color:var(--text-main, #f8fafc);">0</b>
+                </div>
+              </div>
+            </div>
+            
+            <div class="stat-card interactive-stat">
+              <div class="stat-card-header">
+                <h4>Total Kerugian Negara</h4>
+                <div class="arrow-btn"><i class="fi fi-rr-arrow-up-right"></i></div>
+              </div>
+              <div class="value" id="statKerugian" style="font-size:20px; color:#ef4444;">Rp 0</div>
+              <div class="stat-badge">Estimasi Taksiran Potensi</div>
+            </div>
 
-    <div class="stat-card interactive-stat">
-      <div class="stat-card-header">
-        <h4>Penindakan</h4>
-        <div class="arrow-btn"><i class="fi fi-rr-arrow-up-right"></i></div>
-      </div>
-      <div style="display:flex; flex-direction:column; gap:5px; font-size:11px; margin-top:4px;">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <span><i class="fi fi-rr-shield-check" style="color:#10b981; margin-right:4px;"></i> Mandiri / Biasa:</span>
-          <b id="dash_cnt_mandiri" style="color:#10b981;">0</b>
-        </div>
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <span><i class="fi fi-rr-search-alt" style="color:#f59e0b; margin-right:4px;"></i> Operasi NHI:</span>
-          <b id="dash_cnt_nhi" style="color:#f59e0b;">0</b>
-        </div>
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <span><i class="fi fi-rr-paper-plane" style="color:#6366f1; margin-right:4px;"></i> Limpahan Instansi:</span>
-          <b id="dash_cnt_limpahan" style="color:#6366f1;">0</b>
-        </div>
-      </div>
-    </div>
+            <div class="stat-card interactive-stat">
+              <div class="stat-card-header">
+                <h4>Penindakan</h4>
+                <div class="arrow-btn"><i class="fi fi-rr-arrow-up-right"></i></div>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:5px; font-size:11px; margin-top:4px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <span><i class="fi fi-rr-shield-check" style="color:#10b981; margin-right:4px;"></i> Mandiri / Biasa:</span>
+                  <b id="dash_cnt_mandiri" style="color:#10b981;">0</b>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <span><i class="fi fi-rr-search-alt" style="color:#f59e0b; margin-right:4px;"></i> Operasi NHI:</span>
+                  <b id="dash_cnt_nhi" style="color:#f59e0b;">0</b>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <span><i class="fi fi-rr-paper-plane" style="color:#6366f1; margin-right:4px;"></i> Limpahan Instansi:</span>
+                  <b id="dash_cnt_limpahan" style="color:#6366f1;">0</b>
+                </div>
+              </div>
+            </div>
 
-    <div class="stat-card interactive-stat">
-      <div class="stat-card-header">
-        <h4>Rincian Tindak Lanjut</h4>
-        <div class="arrow-btn"><i class="fi fi-rr-arrow-up-right"></i></div>
-      </div>
-      <div class="stat-tl-list" id="statTLBreakdown" style="font-size:11px;">
-        <div><span>BDN:</span><b id="tl_bdn_cnt">0</b></div>
-        <div><span>SPSA:</span><b id="tl_spsa_cnt">0</b></div>
-        <div><span>BAST Pemilik:</span><b id="tl_bast_cnt">0</b></div>
-        <div><span>BAST Limpah:</span><b id="tl_limpah_cnt">0</b></div>
-        <div><span>Lainnya:</span><b id="tl_other_cnt">0</b></div>
-      </div>
-    </div>
-  </div>
+            <div class="stat-card interactive-stat">
+              <div class="stat-card-header">
+                <h4>Rincian Tindak Lanjut</h4>
+                <div class="arrow-btn"><i class="fi fi-rr-arrow-up-right"></i></div>
+              </div>
+              <div class="stat-tl-list" id="statTLBreakdown" style="font-size:11px;">
+                <div><span>BDN:</span><b id="tl_bdn_cnt">0</b></div>
+                <div><span>SPSA:</span><b id="tl_spsa_cnt">0</b></div>
+                <div><span>BAST Pemilik:</span><b id="tl_bast_cnt">0</b></div>
+                <div><span>BAST Limpah:</span><b id="tl_limpah_cnt">0</b></div>
+                <div><span>Lainnya:</span><b id="tl_other_cnt">0</b></div>
+              </div>
+            </div>
+          </div>
 
-  <div class="panel interactive-stat" style="margin-bottom:0; background:#0f172a; border:1px solid var(--border-color, #334155); border-radius:10px; padding:16px;">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-      <div>
-        <h3 style="margin:0; font-size:14px; font-weight:600; display:flex; align-items:center; gap:6px; color:var(--text-main, #f8fafc);">
-          <i class="fi fi-rr-time-past" style="color:var(--primary, #38bdf8);"></i> Perkara Terbaru (Recent Cases)
-        </h3>
-        <span class="small" style="color:var(--text-muted, #94a3b8); font-size:11px;">Menampilkan maksimal 3 berkas perkara yang terakhir kali direkam</span>
-      </div>
-      <button type="button" class="btn secondary" style="font-size:11px; padding:4px 10px;" onclick="document.querySelector('[data-target=\'#data\']').click()">
-        Lihat Semua Perkara <i class="fi fi-rr-arrow-small-right"></i>
-      </button>
-    </div>
+          <div class="panel interactive-stat" style="margin-bottom:0; background:#0f172a; border:1px solid var(--border-color, #334155); border-radius:10px; padding:16px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+              <div>
+                <h3 style="margin:0; font-size:14px; font-weight:600; display:flex; align-items:center; gap:6px; color:var(--text-main, #f8fafc);">
+                  <i class="fi fi-rr-time-past" style="color:var(--primary, #38bdf8);"></i> Perkara Terbaru (Recent Cases)
+                </h3>
+                <span class="small" style="color:var(--text-muted, #94a3b8); font-size:11px;">Menampilkan maksimal 3 berkas perkara yang terakhir kali direkam</span>
+              </div>
+              <button type="button" class="btn secondary" style="font-size:11px; padding:4px 10px;" onclick="document.querySelector('[data-target=\'#data\']').click()">
+                Lihat Semua Perkara <i class="fi fi-rr-arrow-small-right"></i>
+              </button>
+            </div>
 
-    <div style="overflow-x:auto;">
-      <table class="rtable" style="width:100%; border-collapse:collapse; font-size:12px;">
-        <thead>
-          <tr style="border-bottom:1px solid rgba(255,255,255,0.08); text-align:left; color:var(--text-muted, #94a3b8);">
-            <th style="padding:8px 6px;">NO. LP / SBP</th>
-            <th style="padding:8px 6px;">NAMA PELAKU</th>
-            <th style="padding:8px 6px;">KOMODITI</th>
-            <th style="padding:8px 6px;">STATUS TAHAPAN</th>
-            <th style="padding:8px 6px; text-align:right;">AKSI</th>
-          </tr>
-        </thead>
-        <tbody id="dashboardRecentCasesBody"></tbody>
-      </table>
-    </div>
-  </div>
-</section>
+            <div style="overflow-x:auto;">
+              <table class="rtable" style="width:100%; border-collapse:collapse; font-size:12px;">
+                <thead>
+                  <tr style="border-bottom:1px solid rgba(255,255,255,0.08); text-align:left; color:var(--text-muted, #94a3b8);">
+                    <th style="padding:8px 6px;">NO. LP / SBP</th>
+                    <th style="padding:8px 6px;">NAMA PELAKU</th>
+                    <th style="padding:8px 6px;">KOMODITI</th>
+                    <th style="padding:8px 6px;">STATUS TAHAPAN</th>
+                    <th style="padding:8px 6px; text-align:right;">AKSI</th>
+                  </tr>
+                </thead>
+                <tbody id="dashboardRecentCasesBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
 
         <section id="pengaturan" class="tab-pane panel">
           <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -827,9 +826,7 @@
           <div class="grid" style="grid-template-columns: 180px 1fr; gap: 8px;">
             <div>
               <label>Jenis Identitas</label>
-              <select id="dsp_jenis_identitas" class="form-control">
-                <option value="-">- Pilih -</option>
-              </select>
+              <select id="dsp_jenis_identitas" class="form-control"></select>
             </div>
             <div>
               <label>Nomor Identitas</label>
@@ -840,18 +837,14 @@
 
         <div style="grid-column: span 2;">
           <label>Jenis Perkara</label>
-          <select id="dsp_jenis_perkara_select" class="form-control" onchange="syncDspJenisPerkara(this.value)">
-            <option value="-">- Pilih Jenis Perkara -</option>
-          </select>
+          <select id="dsp_jenis_perkara_select" class="form-control" onchange="syncDspJenisPerkara(this.value)"></select>
           <input id="dsp_jenis_perkara" class="form-control" style="display:none; margin-top:4px;">
         </div>
 
         <div style="grid-column: span 2;">
           <label>No. & Jenis Dokumen Pemberitahuan</label>
           <div style="display:flex; gap:6px;">
-            <select id="dsp_jenis_dok_select" class="form-control" onchange="toggleDspJenisDokumen(this.value)" style="width:160px;">
-              <option value="Tanpa Dokumen">Tanpa Dokumen</option>
-            </select>
+            <select id="dsp_jenis_dok_select" class="form-control" onchange="toggleDspJenisDokumen(this.value)" style="width:160px;"></select>
             <input id="dsp_jenis_dok_manual" class="form-control" placeholder="Ketik jenis..." style="display:none; width:120px;" oninput="syncDspDokumenPemberitahuan()">
             <input id="dsp_nomor_dok" class="form-control" placeholder="Nomor Dokumen..." oninput="syncDspDokumenPemberitahuan()" style="flex:1;" disabled>
           </div>
@@ -867,11 +860,9 @@
 
         <div style="grid-column: span 2;">
           <label>Komoditi</label>
-          <select id="dsp_komoditi_select" class="form-control" onchange="syncKomoditi(this.value)">
-          <option value="-">- Pilih Komoditi -</option>
-        </select>
-         <input id="Komoditi" class="form-control" style="display:none;">
-       </div>
+          <select id="dsp_komoditi_select" class="form-control" onchange="syncKomoditi(this.value)"></select>
+          <input id="Komoditi" class="form-control" style="display:none;">
+        </div>
 
         <div style="grid-column: span 2; background:#0f172a; padding:12px; border-radius:var(--radius-sm, 6px); border:1px solid var(--border-color, #334155); margin-bottom:6px;">
           <label style="color:var(--primary, #3b82f6); margin-bottom:6px; display:block; font-weight:700;">Generator Auto Teks Uraian Barang & Kemasan</label>
@@ -882,9 +873,7 @@
             </div>
             <div>
               <label>Jenis Koli / Kemasan</label>
-              <select id="dsp_jenis_koli_select" class="form-control" onchange="handleDspJenisKoliChange(this.value)">
-                <option value="-">- Pilih Jenis Koli -</option>
-              </select>
+              <select id="dsp_jenis_koli_select" class="form-control" onchange="handleDspJenisKoliChange(this.value)"></select>
               <input id="dsp_jenis_koli" class="form-control" placeholder="Ketik jenis koli..." style="margin-top:4px; display:none;" oninput="generateDspUraianBarangOtomatis()">
             </div>
             <div>
@@ -1007,94 +996,37 @@
         </div>
         <div>
           <label>Asal Perkara</label>
-          <select id="Asal_Perkara_Select" onchange="toggleAsalPerkaraManual(this.value)">
-            <option value="-">-</option>
-            <option value="Seksi Penindakan">Seksi Penindakan</option>
-            <option value="Instansi/Unit Lain">Instansi/Unit Lain</option>
-            <option value="LAINNYA">Lainnya (Edit Manual)</option>
-          </select>
+          <select id="Asal_Perkara_Select" onchange="toggleAsalPerkaraManual(this.value)"></select>
           <input id="Asal_Perkara" placeholder="Ketik Asal Perkara..." style="margin-top:4px; display:none;">
         </div>
 
         <div>
           <label>Jenis Penindakan</label>
-          <select id="Jenis_Penindakan_Select" onchange="syncJenisPenindakan(this.value)">
-            <option value="-">-</option>
-            <option value="Pemeriksaan, penegahan, dan penyegelan barang">Pemeriksaan, penegahan, dan penyegelan barang</option>
-            <option value="Penegahan dan penyegelan barang">Penegahan dan penyegelan barang</option>
-          </select>
+          <select id="Jenis_Penindakan_Select" onchange="syncJenisPenindakan(this.value)"></select>
           <input id="Jenis_Penindakan" style="display:none;">
         </div>
 
         <div>
           <label>Jenis Pelanggaran</label>
-          <select id="Jenis_Pelanggaran_Select" onchange="syncJenisPelanggaran(this.value)">
-            <option value="-">-</option>
-            <option value="Kepabeanan">Kepabeanan</option>
-            <option value="Cukai">Cukai</option>
-          </select>
+          <select id="Jenis_Pelanggaran_Select" onchange="syncJenisPelanggaran(this.value)"></select>
           <input id="Jenis_Pelanggaran" style="display:none;">
         </div>
 
         <div>
           <label>Jenis Perkara</label>
-          <select id="Jenis_Perkara_Select" onchange="syncJenisPerkara(this.value)">
-            <option value="-">-</option>
-            <option value="Cukai - HT">Cukai - HT</option>
-            <option value="Cukai - EA">Cukai - EA</option>
-            <option value="Cukai - MMEA">Cukai - MMEA</option>
-            <option value="Impor - Umum">Impor - Umum</option>
-            <option value="Impor - Barang Penumpang">Impor - Barang Penumpang</option>
-            <option value="Impor - Barang Kiriman">Impor - Barang Kiriman</option>
-            <option value="Ekspor - Umum">Ekspor - Umum</option>
-            <option value="Ekspor - Barang Penumpang">Ekspor - Barang Penumpang</option>
-            <option value="Ekspor - Barang Kiriman">Ekspor - Barang Kiriman</option>
-            <option value="Fasilitas - FTZ">Fasilitas - FTZ</option>
-            <option value="Fasilitas - Impor Sementara">Fasilitas - Impor Sementara</option>
-          </select>
+          <select id="Jenis_Perkara_Select" onchange="syncJenisPerkara(this.value)"></select>
           <input id="Jenis_Perkara" style="display:none;">
         </div>
 
         <div>
           <label>Status Penangkapan</label>
-          <select id="Status_Penangkapan_Select" onchange="syncStatusPenangkapan(this.value)">
-            <option value="-">-</option>
-            <option value="Penindakan Biasa">Penindakan Biasa</option>
-            <option value="NHI">NHI</option>
-            <option value="Limpahan Instansi Lain">Limpahan Instansi Lain</option>
-          </select>
+          <select id="Status_Penangkapan_Select" onchange="syncStatusPenangkapan(this.value)"></select>
           <input id="Status_Penangkapan" style="display:none;">
         </div>
 
         <div style="grid-column: span 2;">
           <label>Modus Operandi</label>
-          <select id="Modus_Operandi_Select" onchange="syncModusOperandi(this.value); generateKronologisOtomatis(); autoGenerateAndAddMasterPasal(this.value);">
-            <option value="-">-</option>
-            <option value="barang impor sementara yang belum dilakukan pemenuhan kewajiban kepabeanan melebihi jangka waktu">Barang impor sementara yang belum dilakukan pemenuhan kewajiban kepabeanan melebihi jangka waktu</option>
-            <option value="belum adanya penyelesaian kewajiban kepabeanan">Belum adanya penyelesaian kewajiban kepabeanan</option>
-            <option value="ditemukan adanya selisih lebih jumlah muatan dari luar daerah pabean ke kawasan perdagangan bebas batam">Ditemukan adanya selisih lebih jumlah muatan dari luar daerah pabean ke kawasan perdagangan bebas batam</option>
-            <option value="pemasukan barang ke kawasan perdagangan bebas dan pelabuhan bebas dari luar daerah pabean tanpa perizinan berusaha dari badan pengusahaan">Pemasukan barang ke kawasan perdagangan bebas dan pelabuhan bebas dari luar daerah pabean tanpa perizinan berusaha dari badan pengusahaan</option>
-            <option value="pemasukan barang larangan dan pembatasan dari kawasan perdagangan bebas dan pelabuhan bebas lain ke kawasan perdagangan bebas dan pelabuhan bebas batam tanpa/salah pemberitahuan pabean">Pemasukan barang larangan dan pembatasan dari kawasan perdagangan bebas dan pelabuhan bebas lain ke kawasan perdagangan bebas dan pelabuhan bebas batam tanpa/salah pemberitahuan pabean</option>
-            <option value="pemasukan barang larangan dan pembatasan dari luar daerah pabean ke kawasan perdagangan bebas dan pelabuhan bebas batam tanpa kelengkapan dokumen perizinan dari instansi terkait">Pemasukan barang larangan dan pembatasan dari luar daerah pabean ke kawasan perdagangan bebas dan pelabuhan bebas batam tanpa kelengkapan dokumen perizinan dari instansi terkait</option>
-            <option value="pemasukan barang larangan dan pembatasan dari luar daerah pabean ke kawasan perdagangan bebas dan pelabuhan bebas batam tanpa/salah pemberitahuan pabean">Pemasukan barang larangan dan pembatasan dari luar daerah pabean ke kawasan perdagangan bebas dan pelabuhan bebas batam tanpa/salah pemberitahuan pabean</option>
-            <option value="pemasukan barang larangan dan pembatasan dari tempat lain dalam daerah pabean ke kawasan perdagangan bebas dan pelabuhan bebas batam tanpa/salah pemberitahuan pabean">Pemasukan barang larangan dan pembatasan dari tempat lain dalam daerah pabean ke kawasan perdagangan bebas dan pelabuhan bebas batam tanpa/salah pemberitahuan pabean</option>
-            <option value="pemasukan workshop container dari luar daerah pabean ke kawasan perdagangan bebas dan pelabuhan bebas batam tanpa/salah pemberitahuan pabean">Pemasukan workshop container dari luar daerah pabean ke kawasan perdagangan bebas dan pelabuhan bebas batam tanpa/salah pemberitahuan pabean</option>
-            <option value="pembawaan uang tunai berupa uang kertas asing dari luar daerah pabean ke kawasan perdagangan dan pelabuhan bebas batam yang telah diberitahukan namun tidak memiliki persetujuan atas pembawaan uang tunai berupa uang kertas asing dari bank indonesia">Pembawaan uang tunai berupa uang kertas asing dari luar daerah pabean ke kawasan perdagangan dan pelabuhan bebas batam yang telah diberitahukan namun tidak memiliki persetujuan atas pembawaan uang tunai berupa uang kertas asing dari bank indonesia</option>
-            <option value="pembawaan uang tunai berupa uang kertas asing dari luar daerah pabean ke kawasan perdagangan dan pelabuhan bebas batam yang tidak diberitahukan melebihi seratus juta rupiah atau setara dengan itu">Pembawaan uang tunai berupa uang kertas asing dari luar daerah pabean ke kawasan perdagangan dan pelabuhan bebas batam yang tidak diberitahukan melebihi seratus juta rupiah atau setara dengan itu</option>
-            <option value="pembawaan uang tunai berupa uang kertas asing dari kawasan perdagangan dan pelabuhan bebas batam ke luar daerah pabean yang tidak diberitahukan melebihi seratus juta rupiah atau setara dengan itu">Pembawaan uang tunai berupa uang kertas asing dari kawasan perdagangan dan pelabuhan bebas batam ke luar daerah pabean yang tidak diberitahukan melebihi seratus juta rupiah atau setara dengan itu</option>
-            <option value="pembongkaran barang impor yang tidak diberitahukan di dokumen pemberitahuan kepabeanan">Pembongkaran barang impor yang tidak diberitahukan di dokumen pemberitahuan kepabeanan</option>
-            <option value="pengangkutan barang yang tidak diberitahukan dalam outward manifest">Pengangkutan barang yang tidak diberitahukan dalam outward manifest</option>
-            <option value="pengangkutan bkc tanpa dilengkapi dokumen pelindung pengangkutan dan pengeluaran barang larangan dan pembatasan dari kawasan perdagangan bebas dan pelabuhan bebas batam ke tempat lain dalam daerah pabean tanpa pemberitahuan pabean">Pengangkutan bkc tanpa dilengkapi dokumen pelindung pengangkutan dan pengeluaran barang larangan dan pembatasan dari kawasan perdagangan bebas dan pelabuhan bebas batam ke tempat lain dalam daerah pabean tanpa pemberitahuan pabean</option>
-            <option value="pengeluaran barang larangan dan pembatasan dari kawasan perdagangan bebas dan pelabuhan bebas batam ke luar daerah pabean tanpa/salah pemberitahuan pabean">Pengeluaran barang larangan dan pembatasan dari kawasan perdagangan bebas dan pelabuhan bebas batam ke luar daerah pabean tanpa/salah pemberitahuan pabean</option>
-            <option value="pengeluaran barang larangan dan pembatasan dari kawasan perdagangan bebas dan pelabuhan bebas batam ke tempat lain dalam daerah pabean tanpa/salah pemberitahuan pabean">Pengeluaran barang larangan dan pembatasan dari kawasan perdagangan bebas dan pelabuhan bebas batam ke tempat lain dalam daerah pabean tanpa/salah pemberitahuan pabean</option>
-            <option value="penyediaan dan atau penimbunan barang kena cukai yang tidak dilekati pita cukai atau tidak dibubuhi tanda pelunasan cukai lainnya dan/atau salah etiket dan/atau tidak memiliki nppbkc">Penyediaan dan atau penimbunan barang kena cukai yang tidak dilekati pita cukai atau tidak dibubuhi tanda pelunasan cukai lainnya dan/atau salah etiket dan/atau tidak memiliki nppbkc</option>
-            <option value="penyerahan barang kena cukai hasil produksi di tempat lain dalam daerah pabean yang dimasukkan ke kawasan perdagangan bebas dan pelabuhan bebas batam dan belum dilunasi pita cukai-nya">Penyerahan barang kena cukai hasil produksi di tempat lain dalam daerah pabean yang dimasukkan ke kawasan perdagangan bebas dan pelabuhan bebas batam dan belum dilunasi pita cukai-nya</option>
-            <option value="penyerahan barang kena cukai yang tidak dilekati pita cukai atau tidak dibubuhi tanda pelunasan cukai lainnya">Penyerahan barang kena cukai yang tidak dilekati pita cukai atau tidak dibubuhi tanda pelunasan cukai lainnya</option>
-            <option value="penyerahan barang kena cukai yang tidak dilekati pita cukai atau tidak dibubuhi tanda pelunasan cukai lainnya dan pemasukan barang larangan dan pembatasan dari luar daerah pabean ke kawasan perdagangan bebas dan pelabuhan bebas batam tanpa/salah pemberitahuan pabean">Penyerahan barang kena cukai yang tidak dilekati pita cukai atau tidak dibubuhi tanda pelunasan cukai lainnya dan pemasukan barang larangan dan pembatasan dari luar daerah pabean ke kawasan perdagangan bebas dan pelabuhan bebas batam tanpa/salah pemberitahuan pabean</option>
-            <option value="penyerahan barang kena cukai yang tidak dilekati pita cukai atau tidak dibubuhi tanda pelunasan cukai lainnya dan pemasukan barang larangan dan pembatasan dari tempat lain dalam daerah pabean ke kawasan perdagangan bebas dan pelabuhan bebas batam tanpa/salah pemberitahuan pabean">Penyerahan barang kena cukai yang tidak dilekati pita cukai atau tidak dibubuhi tanda pelunasan cukai lainnya dan pemasukan barang larangan dan pembatasan dari tempat lain dalam daerah pabean ke kawasan perdagangan bebas dan pelabuhan bebas batam tanpa/salah pemberitahuan pabean</option>
-            <option value="penyerahan barang kena cukai yang tidak dilekati pita cukai atau tidak dibubuhi tanda pelunasan cukai lainnya dan pengeluaran barang larangan dan pembatasan dari kawasan perdagangan bebas dan pelabuhan bebas batam ke tempat lain dalam daerah pabean tanpa/salah pemberitahuan pabean">Penyerahan barang kena cukai yang tidak dilekati pita cukai atau tidak dibubuhi tanda pelunasan cukai lainnya dan pengeluaran barang larangan dan pembatasan dari kawasan perdagangan bebas dan pelabuhan bebas batam ke tempat lain dalam daerah pabean tanpa/salah pemberitahuan pabean</option>
-            <option value="penyerahan barang kena cukai yang tidak dilekati pita cukai atau tidak dibubuhi tanda pelunasan cukai lainnya dan pengeluaran barang larangan dan pembatasan dari kawasan perdagangan bebas dan pelabuhan bebas batam ke kawasan perdagangan bebas dan pelabuhan lainnya tanpa/salah pemberitahuan pabean">Penyerahan barang kena cukai yang tidak dilekati pita cukai atau tidak dibubuhi tanda pelunasan cukai lainnya dan pengeluaran barang larangan dan pembatasan dari kawasan perdagangan bebas dan pelabuhan bebas batam ke kawasan perdagangan bebas dan pelabuhan lainnya tanpa/salah pemberitahuan pabean</option>
-          </select>
+          <select id="Modus_Operandi_Select" onchange="syncModusOperandi(this.value); generateKronologisOtomatis(); autoGenerateAndAddMasterPasal(this.value);"></select>
           <textarea id="Modus_Operandi" style="display:none;"></textarea>
         </div>
 
@@ -1110,18 +1042,12 @@
         
         <div>
           <label>Umur Pelaku</label>
-          <select id="Umur_Pelaku">
-            <option value="-">- Pilih Usia -</option>
-          </select>
+          <select id="Umur_Pelaku"></select>
         </div>
 
         <div>
           <label>Jenis Kelamin Pelaku</label>
-          <select id="Jenis_Kelamin_Pelaku">
-            <option value="-">-</option>
-            <option value="Laki-Laki">Laki-Laki</option>
-            <option value="Perempuan">Perempuan</option>
-          </select>
+          <select id="Jenis_Kelamin_Pelaku"></select>
         </div>
 
         <div><label>Tempat/Tanggal Lahir</label><input id="TTL"></div>
@@ -1129,14 +1055,7 @@
         <div style="grid-column: span 2;">
           <label>Identitas Pelaku</label>
           <div style="display:flex; gap:6px;">
-            <select id="Jenis_Identitas_Select" onchange="syncIdentitasValue()" style="width:160px;">
-              <option value="NIK">NIK</option>
-              <option value="Paspor">Paspor</option>
-              <option value="NIB">NIB</option>
-              <option value="NPWP">NPWP</option>
-              <option value="SIM">SIM</option>
-              <option value="Identitas Lain">Identitas Lain</option>
-            </select>
+            <select id="Jenis_Identitas_Select" onchange="syncIdentitasValue()" style="width:160px;"></select>
             <input id="Nomor_Identitas_Input" placeholder="Masukkan nomor identitas..." style="flex:1;" oninput="syncIdentitasValue()">
           </div>
           <input type="hidden" id="Nomor_Identitas">
@@ -1144,15 +1063,7 @@
 
         <div>
           <label>Pekerjaan Pelaku</label>
-          <select id="Pekerjaan_Select" onchange="togglePekerjaanManual(this.value)">
-            <option value="-">-</option>
-            <option value="Wiraswasta">Wiraswasta</option>
-            <option value="Pelajar">Pelajar</option>
-            <option value="Ibu Rumah Tangga">Ibu Rumah Tangga</option>
-            <option value="PNS">PNS</option>
-            <option value="Tidak Bekerja">Tidak Bekerja</option>
-            <option value="LAINNYA">Pekerjaan Lain (Edit Manual)</option>
-          </select>
+          <select id="Pekerjaan_Select" onchange="togglePekerjaanManual(this.value)"></select>
           <input id="Pekerjaan" placeholder="Ketik Pekerjaan Lain..." style="margin-top:4px; display:none;">
         </div>
 
@@ -1177,32 +1088,6 @@
         <div>
           <label>Komoditi</label>
           <select id="Komoditi_Select" onchange="syncKomoditi(this.value)">
-            <option value="-">- Pilih Komoditi -</option>
-            <option value="Hasil Tembakau - Sigaret Kretek Mesin (SKM)">Hasil Tembakau - Sigaret Kretek Mesin (SKM)</option>
-            <option value="Hasil Tembakau - Sigaret Putih Mesin (SPM)">Hasil Tembakau - Sigaret Putih Mesin (SPM)</option>
-            <option value="Hasil Tembakau - Sigaret Kretek Tangan (SKT)">Hasil Tembakau - Sigaret Kretek Tangan (SKT)</option>
-            <option value="Hasil Tembakau - Tembakau Iris (TIS)">Hasil Tembakau - Tembakau Iris (TIS)</option>
-            <option value="Hasil Tembakau - Rokok Elektrik (REL / Vapors)">Hasil Tembakau - Rokok Elektrik (REL / Vapors)</option>
-            <option value="Minuman Mengandung Etil Alkohol (MMEA) Golongan A">Minuman Mengandung Etil Alkohol (MMEA) Golongan A</option>
-            <option value="Minuman Mengandung Etil Alkohol (MMEA) Golongan B">Minuman Mengandung Etil Alkohol (MMEA) Golongan B</option>
-            <option value="Minuman Mengandung Etil Alkohol (MMEA) Golongan C">Minuman Mengandung Etil Alkohol (MMEA) Golongan C</option>
-            <option value="Etil Alkohol (EA)">Etil Alkohol (EA)</option>
-            <option value="Telepon Seluler, Komputer, dan Tablet (HKT)">Telepon Seluler, Komputer, dan Tablet (HKT)</option>
-            <option value="Barang Kiriman Pos / E-Commerce Umum">Barang Kiriman Pos / E-Commerce Umum</option>
-            <option value="Tekstil dan Produk Tekstil (TPT) / Kain / Garmen">Tekstil dan Produk Tekstil (TPT) / Kain / Garmen</option>
-            <option value="Pakaian Bekas / Ballpress / Textile Impor Ilegal">Pakaian Bekas / Ballpress / Textile Impor Ilegal</option>
-            <option value="Suku Cadang / Spare Part Mesin Industri & Pabrik">Suku Cadang / Spare Part Mesin Industri & Pabrik</option>
-            <option value="Suku Cadang / Spare Part Kendaraan Bermotor (Automotive Parts)">Suku Cadang / Spare Part Kendaraan Bermotor (Automotive Parts)</option>
-            <option value="Narkotika, Psikotropika, dan Prekursor (NPP)">Narkotika, Psikotropika, dan Prekursor (NPP)</option>
-            <option value="Kosmetik, Skincare, dan Produk Kecantikan Tanpa Izin">Kosmetik, Skincare, dan Produk Kecantikan Tanpa Izin</option>
-            <option value="Obat-obatan, Suplemen, dan Alat Kesehatan">Obat-obatan, Suplemen, dan Alat Kesehatan</option>
-            <option value="Produk Makanan, Minuman, dan Suplemen Olahan">Produk Makanan, Minuman, dan Suplemen Olahan</option>
-            <option value="Besi, Baja, Besi Tua (Scrap), dan Produk Metalurgi">Besi, Baja, Besi Tua (Scrap), dan Produk Metalurgi</option>
-            <option value="Valuta Asing / Uang Kertas Asing (UKA) / Tunai">Valuta Asing / Uang Kertas Asing (UKA) / Tunai</option>
-            <option value="Bahan Kimia Berbahaya dan Bahan Beracun (B3)">Bahan Kimia Berbahaya dan Bahan Beracun (B3)</option>
-            <option value="Produk Hasil Perikanan, Pertanian, dan Hewan (Karantina)">Produk Hasil Perikanan, Pertanian, dan Hewan (Karantina)</option>
-            <option value="Tumbuhan dan Satwa Liar (TSL) Dilindungi">Tumbuhan dan Satwa Liar (TSL) Dilindungi</option>
-            <option value="Barang Campuran / Lainnya">Barang Campuran / Lainnya</option>
             <optgroup label="KOMODITI TAMBAHAN (KUSTOM)" id="optgroup_custom_komoditi"></optgroup>
           </select>
           <input id="Komoditi" style="display:none;">
@@ -1222,34 +1107,7 @@
             </div>
             <div>
               <label>Jenis Koli / Kemasan</label>
-              <select id="Jenis_Koli_Select" onchange="handleJenisKoliSelectChange(this.value)">
-                <option value="-">- Pilih Jenis Koli -</option>
-                <option value="koli">Koli</option>
-                <option value="karton">Karton</option>
-                <option value="box">Box / Dus</option>
-                <option value="karung">Karung</option>
-                <option value="peti">Peti</option>
-                <option value="pallet">Pallet</option>
-                <option value="bag">Bag / Kantong</option>
-                <option value="bundel">Bundel</option>
-                <option value="pcs">Pcs</option>
-                <option value="pack">Pack</option>
-                <option value="roll">Roll</option>
-                <option value="drum">Drum</option>
-                <option value="jerigen">Jerigen</option>
-                <option value="botol">Botol</option>
-                <option value="kaleng">Kaleng</option>
-                <option value="lembar">Lembar</option>
-                <option value="batang">Batang</option>
-                <option value="slop">Slop</option>
-                <option value="unit">Unit</option>
-                <option value="set">Set</option>
-                <option value="pk">Pk</option>
-                <option value="npr">Npr</option>
-                <option value="kg">Kg</option>
-                <option value="liter">Liter</option>
-                <option value="LAINNYA">Satuan Lainnya (Manual)</option>
-              </select>
+              <select id="Jenis_Koli_Select" onchange="handleJenisKoliSelectChange(this.value)"></select>
               <input id="Jenis_Koli" placeholder="Ketik jenis koli..." style="margin-top:4px; display:none;" oninput="generateUraianBarangOtomatis()">
             </div>
             <div>
@@ -1302,12 +1160,7 @@
         
         <div>
           <label>Ukuran Kontainer</label>
-          <select id="Ukuran_Kontainer_Select" onchange="toggleUkuranKontainerManual(this.value)">
-            <option value="-">-</option>
-            <option value="20 feet">20 Feet</option>
-            <option value="40 feet">40 Feet</option>
-            <option value="LAINNYA">Ukuran Lain (Edit Manual)</option>
-          </select>
+          <select id="Ukuran_Kontainer_Select" onchange="toggleUkuranKontainerManual(this.value)"></select>
           <input id="Ukuran_Kontainer" placeholder="Ketik Ukuran Kontainer Lain..." style="margin-top:4px; display:none;">
         </div>
 
@@ -1320,21 +1173,7 @@
         <div style="grid-column: span 2;">
           <label>No. Dokumen Pemberitahuan</label>
           <div style="display:flex; gap:6px;">
-            <select id="Jenis_Dok_Pemberitahuan_Select" onchange="toggleJenisDokumen(this.value)" style="width:160px;">
-              <option value="Tanpa Dokumen">Tanpa Dokumen</option>
-              <option value="-">- Pilih Jenis -</option>
-              <option value="CN">CN</option>
-              <option value="PIBK">PIBK</option>
-              <option value="BC 1.0">BC 1.0</option>
-              <option value="BC 1.1">BC 1.1</option>
-              <option value="BC 2.0">BC 2.0</option>
-              <option value="BC 2.3">BC 2.3</option>
-              <option value="BC 3.0">BC 3.0</option>
-              <option value="PPFTZ-01">PPFTZ-01</option>
-              <option value="PPFTZ-02">PPFTZ-02</option>
-              <option value="PPFTZ-03">PPFTZ-03</option>
-              <option value="LAINNYA">DLL (Manual)</option>
-            </select>
+            <select id="Jenis_Dok_Pemberitahuan_Select" onchange="toggleJenisDokumen(this.value)" style="width:160px;"></select>
             <input id="Jenis_Dok_Pemberitahuan_Manual" placeholder="Ketik jenis..." style="display:none; width:120px;" oninput="syncDokumenPemberitahuan()">
             <input id="Nomor_Dok_Pemberitahuan" placeholder="Nomor Dokumen..." oninput="syncDokumenPemberitahuan()" style="flex:1;">
           </div>
@@ -1346,16 +1185,7 @@
         <div style="grid-column: span 2;">
           <label>Dokumen Pelengkap Pabean</label>
           <div style="display:flex; gap:6px; flex-wrap:wrap;">
-            <select id="Jenis_Dok_Pelengkap_Select" onchange="handleJenisDokPelengkapChange(this.value)" style="width:200px;">
-              <option value="-">- (Tanpa Dokumen Pelengkap)</option>
-              <option value="Invoice">Invoice</option>
-              <option value="Packing List">Packing List</option>
-              <option value="Bill of Lading">Bill of Lading (B/L)</option>
-              <option value="Persetujuan Impor">Persetujuan Impor (PI)</option>
-              <option value="Persetujuan Ekspor">Persetujuan Ekspor (PE)</option>
-              <option value="Izin Karantina">Izin Karantina</option>
-              <option value="LAINNYA">Dokumen Pelengkap Lainnya (Manual)</option>
-            </select>
+            <select id="Jenis_Dok_Pelengkap_Select" onchange="handleJenisDokPelengkapChange(this.value)" style="width:200px;"></select>
             <input id="Jenis_Dok_Pelengkap_Manual" placeholder="Ketik jenis dokumen..." style="display:none; width:170px;" oninput="syncDokumenPelengkap()">
             <input id="Nomor_Dok_Pelengkap" placeholder="Nomor Dokumen..." style="flex:1; min-width:140px;" oninput="syncDokumenPelengkap()" disabled>
             <input type="date" id="Tanggal_Dok_Pelengkap" style="width:140px;" onchange="syncDokumenPelengkap()" disabled>
@@ -1366,68 +1196,76 @@
 
       <h3 style="margin-top:16px;">Susunan Pejabat & Pelaksana Penandatangan</h3>
 
-      <h4 style="font-size:11px; color:var(--primary); margin:10px 0 4px;">1. KEPALA BIDANG PENINDAKAN DAN PENYIDIKAN (KABID)</h4>
+      <!-- 1. PEJABAT ESELON III/IV (KABID P2 / KASI P2) -->
+      <h4 style="font-size:11px; color:var(--primary); margin:10px 0 4px;">1. PEJABAT ESELON III/IV (KEPALA BIDANG P2 / KEPALA SEKSI P2)</h4>
       <div class="grid4">
-        <div><label>Nama Kabid</label><input id="form_kabid"></div>
-        <div><label>NIP Kabid</label><input id="form_nip_kabid"></div>
-        <div><label>Jabatan Kabid</label><input id="form_jabatan_kabid" value="Kepala Bidang Penindakan dan Penyidikan" readonly></div>
-        <div><label>Golongan Kabid</label><input id="form_gol_kabid"></div>
+        <div><label>Nama Pejabat</label><input id="form_kabid" placeholder="Nama Lengkap & Gelar"></div>
+        <div><label>NIP</label><input id="form_nip_kabid" placeholder="NIP 18 Digit"></div>
+        <div><label>Jabatan</label><select id="form_jabatan_kabid"></select></div>
+        <div><label>Pangkat / Golongan</label><select id="form_gol_kabid"></select></div>
       </div>
 
-      <h4 style="font-size:11px; color:var(--primary); margin:10px 0 4px;">2. KEPALA SEKSI PENYIDIKAN (SEKSI)</h4>
+      <!-- 2. PEJABAT ESELON IV / FUNGSIONAL AHLI PERTAMA -->
+      <h4 style="font-size:11px; color:var(--primary); margin:10px 0 4px;">2. PEJABAT ESELON IV / FUNGSIONAL AHLI PERTAMA (KEPALA SEKSI PENYIDIKAN / PBC AHLI PERTAMA)</h4>
       <div class="grid4">
-        <div><label>Nama Seksi</label><input id="form_nama_seksi"></div>
-        <div><label>NIP Seksi</label><input id="form_nip_seksi"></div>
-        <div><label>Jabatan Seksi</label><input id="form_jabatan_seksi" value="Kepala Seksi Penyidikan"></div>
-        <div><label>Golongan Seksi</label><input id="form_gol_seksi"></div>
+        <div><label>Nama Pejabat / Pegawai</label><input id="form_nama_seksi" placeholder="Nama Lengkap & Gelar"></div>
+        <div><label>NIP</label><input id="form_nip_seksi" placeholder="NIP 18 Digit"></div>
+        <div><label>Jabatan</label><select id="form_jabatan_seksi"></select></div>
+        <div><label>Pangkat / Golongan</label><select id="form_gol_seksi"></select></div>
       </div>
 
+      <!-- 3. KETUA TIM PENELITI (KETUA TIM) -->
       <h4 style="font-size:11px; color:var(--primary); margin:10px 0 4px;">3. KETUA TIM PENELITI (KETUA TIM)</h4>
       <div class="grid4">
-        <div><label>Nama Ketua Tim</label><input id="form_ketua_tim"></div>
-        <div><label>NIP Ketua Tim</label><input id="form_nip_ketua_tim"></div>
-        <div><label>Jabatan Ketua Tim</label><input id="form_jabatan_ketua_tim" value="Ketua Tim Peneliti"></div>
-        <div><label>Golongan Ketua Tim</label><input id="form_gol_ketua_tim"></div>
+        <div><label>Nama Petugas</label><input id="form_ketua_tim" placeholder="Nama Lengkap & Gelar"></div>
+        <div><label>NIP</label><input id="form_nip_ketua_tim" placeholder="NIP 18 Digit"></div>
+        <div><label>Jabatan</label><select id="form_jabatan_ketua_tim"></select></div>
+        <div><label>Pangkat / Golongan</label><select id="form_gol_ketua_tim"></select></div>
       </div>
 
-      <h4 style="font-size:11px; color:var(--primary); margin:10px 0 4px;">4. PEMBUAT LPP / PELAKSANA</h4>
+      <!-- 4. PEMBUAT LPP / PELAKSANA -->
+      <h4 style="font-size:11px; color:var(--primary); margin:10px 0 4px;">4. ANGGOTA TIM PENELITI / PEMBUAT LPP</h4>
       <div class="grid4">
-        <div><label>Nama Pembuat LPP</label><input id="form_pembuat_lpp"></div>
-        <div><label>NIP Pembuat LPP</label><input id="form_nip_pembuat_lpp"></div>
-        <div><label>Jabatan Pembuat LPP</label><input id="form_jabatan_pembuat_lpp" value="Petugas LPP"></div>
-        <div><label>Golongan Pembuat LPP</label><input id="form_gol_pembuat_lpp"></div>
+        <div><label>Nama Petugas</label><input id="form_pembuat_lpp" placeholder="Nama Lengkap & Gelar"></div>
+        <div><label>NIP</label><input id="form_nip_pembuat_lpp" placeholder="NIP 18 Digit"></div>
+        <div><label>Jabatan</label><select id="form_jabatan_pembuat_lpp"></select></div>
+        <div><label>Pangkat / Golongan</label><select id="form_gol_pembuat_lpp"></select></div>
       </div>
 
-      <h4 style="font-size:11px; color:var(--primary); margin:10px 0 4px;">5. PETUGAS LPF</h4>
+      <!-- 5. PETUGAS LPF -->
+      <h4 style="font-size:11px; color:var(--primary); margin:10px 0 4px;">5. ANGGOTA TIM PENELITI / PETUGAS LPF</h4>
       <div class="grid4">
-        <div><label>Nama Petugas LPF</label><input id="form_petugas_lpf"></div>
-        <div><label>NIP Petugas LPF</label><input id="form_nip_petugas_lpf"></div>
-        <div><label>Jabatan Petugas LPF</label><input id="form_jabatan_lpf" value="Petugas LPF"></div>
-        <div><label>Golongan Petugas LPF</label><input id="form_gol_petugas_lpf"></div>
+        <div><label>Nama Petugas</label><input id="form_petugas_lpf" placeholder="Nama Lengkap & Gelar"></div>
+        <div><label>NIP</label><input id="form_nip_petugas_lpf" placeholder="NIP 18 Digit"></div>
+        <div><label>Jabatan</label><select id="form_jabatan_lpf"></select></div>
+        <div><label>Pangkat / Golongan</label><select id="form_gol_petugas_lpf"></select></div>
       </div>
 
+      <!-- 6. PETUGAS PENINDAKAN 1 -->
       <h4 style="font-size:11px; color:var(--primary); margin:10px 0 4px;">6. PETUGAS PENINDAKAN 1</h4>
       <div class="grid4">
-        <div><label>Nama Indak 1</label><input id="form_indak_1"></div>
-        <div><label>NIP Indak 1</label><input id="form_nip_indak_1"></div>
-        <div><label>Jabatan Indak 1</label><input id="form_jabatan_indak_1" value="Petugas Penindakan 1"></div>
-        <div><label>Golongan Indak 1</label><input id="form_gol_indak_1"></div>
+        <div><label>Nama Petugas</label><input id="form_indak_1" placeholder="Nama Lengkap & Gelar"></div>
+        <div><label>NIP</label><input id="form_nip_indak_1" placeholder="NIP 18 Digit"></div>
+        <div><label>Jabatan</label><select id="form_jabatan_indak_1"></select></div>
+        <div><label>Pangkat / Golongan</label><select id="form_gol_indak_1"></select></div>
       </div>
 
+      <!-- 7. PETUGAS PENINDAKAN 2 -->
       <h4 style="font-size:11px; color:var(--primary); margin:10px 0 4px;">7. PETUGAS PENINDAKAN 2</h4>
       <div class="grid4">
-        <div><label>Nama Indak 2</label><input id="form_indak_2"></div>
-        <div><label>NIP Indak 2</label><input id="form_nip_indak_2"></div>
-        <div><label>Jabatan Indak 2</label><input id="form_jabatan_indak_2" value="Petugas Penindakan 2"></div>
-        <div><label>Golongan Indak 2</label><input id="form_gol_indak_2"></div>
+        <div><label>Nama Petugas</label><input id="form_indak_2" placeholder="Nama Lengkap & Gelar"></div>
+        <div><label>NIP</label><input id="form_nip_indak_2" placeholder="NIP 18 Digit"></div>
+        <div><label>Jabatan</label><select id="form_jabatan_indak_2"></select></div>
+        <div><label>Pangkat / Golongan</label><select id="form_gol_indak_2"></select></div>
       </div>
 
-      <h4 style="font-size:11px; color:var(--primary); margin:10px 0 4px;">8. PELAKSANA LAINNYA (INDAK LAINNYA)</h4>
+      <!-- 8. PELAKSANA LAINNYA (INDAK LAINNYA) -->
+      <h4 style="font-size:11px; color:var(--primary); margin:10px 0 4px;">8. PETUGAS PENINDAKAN 3 / PENCACAH</h4>
       <div class="grid4">
-        <div><label>Nama Pelaksana Lainnya</label><input id="form_indak_lainnya"></div>
-        <div><label>NIP Pelaksana Lainnya</label><input id="form_nip_indak_lainnya"></div>
-        <div><label>Jabatan Pelaksana Lainnya</label><input id="form_jabatan_indak_lainnya" value="Petugas Penindakan 3"></div>
-        <div><label>Golongan Pelaksana Lainnya</label><input id="form_gol_indak_lainnya"></div>
+        <div><label>Nama Petugas</label><input id="form_indak_lainnya" placeholder="Nama Lengkap & Gelar"></div>
+        <div><label>NIP</label><input id="form_nip_indak_lainnya" placeholder="NIP 18 Digit"></div>
+        <div><label>Jabatan</label><select id="form_jabatan_indak_lainnya"></select></div>
+        <div><label>Pangkat / Golongan</label><select id="form_gol_indak_lainnya"></select></div>
       </div>
 
     </div>

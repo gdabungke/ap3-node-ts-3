@@ -1,8 +1,10 @@
 import { store, savePerkaraToStorage, loadPerkaraFromStorage } from '../state/store.js';
-import { defaultPasalClusters, defaultKantorList } from '../config/constants.js';
-import { escText, getVal, formatDate, formatDateIndo, formatModusVerb, terbilangHuruf, generateNextBookingNumber, validateMasterOperationalData } from '../utils/formatters.js';
+import { defaultPasalClusters, defaultKantorList, MASTER_ASAL_PERKARA, MASTER_JENIS_PENINDAKAN, MASTER_JENIS_PELANGGARAN, MASTER_JENIS_PERKARA, MASTER_STATUS_PENANGKAPAN, MASTER_MODUS_OPERANDI, MASTER_UMUR_PELAKU, MASTER_JENIS_KELAMIN, MASTER_PEKERJAAN, MASTER_SATUAN_KOLI, MASTER_JENIS_DOKUMEN_PABEAN, MASTER_DOKUMEN_PELENGKAP, MASTER_JENIS_IDENTITAS, MASTER_UKURAN_KONTAINER, MASTER_KOMODITI, MASTER_GOLONGAN_PANGKAT, MASTER_JABATAN_DINAS, MASTER_JABATAN_TIM_PENELITI, populateSelectElement } from '../config/constants.js';
+import { escText, getVal, formatDate, formatDateIndo, formatModusVerb, terbilangHuruf } from '../utils/formatters.js';
 import { showToast, showToastConfirm } from './ui.js';
 import { refreshReportTableUI, updateReportLive } from './editor.js';
+import { validateMasterOperationalData } from '../utils/validators.js';
+import { generateNextBookingNumber } from '../utils/generators.js';
 let currentPerkaraPage = 1;
 const rowsPerPagePerkara = 5;
 // Helper untuk mengambil dan menyimpan data referensi ke server backend
@@ -32,15 +34,46 @@ async function saveServerConfig(key, val) {
         console.error(`Gagal menyimpan ${key} ke server:`, e);
     }
 }
+// Inisialisasi dropdown form perkara dari data master terpusat
+export function initPerkaraDropdownsFromMaster() {
+    populateSelectElement('Asal_Perkara_Select', MASTER_ASAL_PERKARA, '', '-');
+    populateSelectElement('Jenis_Penindakan_Select', MASTER_JENIS_PENINDAKAN, '', '-');
+    populateSelectElement('Jenis_Pelanggaran_Select', MASTER_JENIS_PELANGGARAN, '', '-');
+    populateSelectElement('Jenis_Perkara_Select', MASTER_JENIS_PERKARA, '', '-');
+    populateSelectElement('Status_Penangkapan_Select', MASTER_STATUS_PENANGKAPAN, '', '-');
+    populateSelectElement('Modus_Operandi_Select', MASTER_MODUS_OPERANDI, '', '-');
+    populateSelectElement('Umur_Pelaku', MASTER_UMUR_PELAKU, '', '- Pilih Usia -');
+    populateSelectElement('Jenis_Kelamin_Pelaku', MASTER_JENIS_KELAMIN, '', '-');
+    populateSelectElement('Jenis_Identitas_Select', MASTER_JENIS_IDENTITAS, 'NIK', '');
+    populateSelectElement('Pekerjaan_Select', MASTER_PEKERJAAN, '', '-');
+    populateSelectElement('Komoditi_Select', MASTER_KOMODITI, '', '- Pilih Komoditi -');
+    populateSelectElement('Ukuran_Kontainer_Select', MASTER_UKURAN_KONTAINER, '', '-');
+    populateSelectElement('Jenis_Koli_Select', MASTER_SATUAN_KOLI, '', '- Pilih Jenis Koli -');
+    populateSelectElement('Jenis_Dok_Pemberitahuan_Select', MASTER_JENIS_DOKUMEN_PABEAN, 'Tanpa Dokumen', '');
+    populateSelectElement('Jenis_Dok_Pelengkap_Select', MASTER_DOKUMEN_PELENGKAP, '-', '- (Tanpa Dokumen Pelengkap)');
+    // 1. Kumpulkan seluruh master opsi jabatan
+    const allJabatan = Array.from(new Set([...MASTER_JABATAN_DINAS, ...MASTER_JABATAN_TIM_PENELITI]));
+    // 2. Populasi Dropdown Jabatan
+    populateSelectElement('form_jabatan_kabid', allJabatan, 'Kepala Bidang Penindakan dan Penyidikan', '- Pilih Jabatan -');
+    populateSelectElement('form_jabatan_seksi', allJabatan, 'Kepala Seksi Penyidikan', '- Pilih Jabatan -');
+    populateSelectElement('form_jabatan_ketua_tim', allJabatan, 'Ketua Tim Peneliti', '- Pilih Jabatan -');
+    populateSelectElement('form_jabatan_pembuat_lpp', allJabatan, 'Petugas LPP', '- Pilih Jabatan -');
+    populateSelectElement('form_jabatan_lpf', allJabatan, 'Petugas LPF', '- Pilih Jabatan -');
+    populateSelectElement('form_jabatan_indak_1', allJabatan, 'Petugas Penindakan 1', '- Pilih Jabatan -');
+    populateSelectElement('form_jabatan_indak_2', allJabatan, 'Petugas Penindakan 2', '- Pilih Jabatan -');
+    populateSelectElement('form_jabatan_indak_lainnya', allJabatan, 'Petugas Penindakan 3', '- Pilih Jabatan -');
+    // 3. Populasi Dropdown Pangkat / Golongan (II/a s.d IV/c)
+    populateSelectElement('form_gol_kabid', MASTER_GOLONGAN_PANGKAT, 'Pembina (IV/a)', '- Pilih Golongan -');
+    populateSelectElement('form_gol_seksi', MASTER_GOLONGAN_PANGKAT, 'Penata (III/c)', '- Pilih Golongan -');
+    populateSelectElement('form_gol_ketua_tim', MASTER_GOLONGAN_PANGKAT, '', '- Pilih Golongan -');
+    populateSelectElement('form_gol_pembuat_lpp', MASTER_GOLONGAN_PANGKAT, '', '- Pilih Golongan -');
+    populateSelectElement('form_gol_petugas_lpf', MASTER_GOLONGAN_PANGKAT, '', '- Pilih Golongan -');
+    populateSelectElement('form_gol_indak_1', MASTER_GOLONGAN_PANGKAT, '', '- Pilih Golongan -');
+    populateSelectElement('form_gol_indak_2', MASTER_GOLONGAN_PANGKAT, '', '- Pilih Golongan -');
+    populateSelectElement('form_gol_indak_lainnya', MASTER_GOLONGAN_PANGKAT, '', '- Pilih Golongan -');
+}
 export function populateAgeDropdown() {
-    let select = document.getElementById('Umur_Pelaku');
-    if (!select)
-        return;
-    let optionsHtml = `<option value="-">- Pilih Usia -</option>`;
-    for (let i = 17; i <= 90; i++) {
-        optionsHtml += `<option value="${i}">${i} Tahun</option>`;
-    }
-    select.innerHTML = optionsHtml;
+    populateSelectElement('Umur_Pelaku', MASTER_UMUR_PELAKU, '', '- Pilih Usia -');
 }
 export function updateHariSBP() {
     let tgl = document.getElementById('Tanggal_SBP') ? document.getElementById('Tanggal_SBP').value : '';
@@ -249,6 +282,7 @@ export function toggleAsalPerkaraManual(val) {
     if (val === 'LAINNYA') {
         manualInput.style.display = 'block';
         manualInput.value = '';
+        manualInput.focus();
     }
     else {
         manualInput.style.display = 'none';
@@ -262,6 +296,7 @@ export function togglePekerjaanManual(val) {
     if (val === 'LAINNYA') {
         manualInput.style.display = 'block';
         manualInput.value = '';
+        manualInput.focus();
     }
     else {
         manualInput.style.display = 'none';
@@ -275,6 +310,7 @@ export function toggleUkuranKontainerManual(val) {
     if (val === 'LAINNYA') {
         manualInput.style.display = 'block';
         manualInput.value = '';
+        manualInput.focus();
     }
     else {
         manualInput.style.display = 'none';
@@ -637,7 +673,6 @@ export function updateDashboardStats() {
         else {
             let recentItems = filteredData.slice(-3).reverse();
             recentTbody.innerHTML = recentItems.map((rec) => {
-                let realIndex = store.databasePerkara.indexOf(rec);
                 let statusBadgeHtml = '';
                 let hasReport = (rec.No_LPP && rec.No_LPP !== '-') || (rec.Nomor_LHP && rec.Nomor_LHP !== '-');
                 if (hasReport || (rec.statusAlur && rec.statusAlur.includes('DIVALIDASI'))) {
@@ -671,7 +706,7 @@ export function updateDashboardStats() {
               ${statusBadgeHtml}
             </td>
             <td style="padding:8px 6px; text-align:right;">
-              <button type="button" class="btn secondary" style="font-size:10px; padding:3px 8px;" onclick="bukaPerkaraDariDashboard(${realIndex})">
+              <button type="button" class="btn secondary" style="font-size:10px; padding:3px 8px;" onclick="bukaPerkaraDariDashboard(${store.databasePerkara.indexOf(rec)})">
                 <i class="fi fi-rr-arrow-right"></i> Buka
               </button>
             </td>
@@ -727,58 +762,82 @@ export function loadRecordToCurrentView(rec) {
     setSafe('Jenis_Penindakan', rec.Jenis_Penindakan);
     let jpVal = rec.Jenis_Perkara || rec.jenis_perkara || '';
     setSafe('Jenis_Perkara', jpVal);
-    let elJP = document.getElementById('Jenis_Perkara') || document.getElementById('Jenis_Perkara_Select') || document.getElementById('dsp_jenis_perkara_select');
-    if (elJP) {
-        if (elJP.tagName === 'SELECT') {
-            let optMatch = Array.from(elJP.options).find((opt) => opt.value.trim().toLowerCase() === jpVal.trim().toLowerCase() ||
-                opt.textContent.trim().toLowerCase() === jpVal.trim().toLowerCase());
-            if (optMatch)
-                elJP.value = optMatch.value;
-        }
-        else {
-            elJP.value = jpVal;
-        }
-        elJP.dispatchEvent(new Event('change'));
+    let elJP = document.getElementById('Jenis_Perkara_Select');
+    if (elJP && jpVal) {
+        populateSelectElement('Jenis_Perkara_Select', MASTER_JENIS_PERKARA, jpVal, '-');
     }
     setSafe('Status_Penangkapan', rec.Status_Penangkapan);
+    let elStatusP = document.getElementById('Status_Penangkapan_Select');
+    if (elStatusP && rec.Status_Penangkapan) {
+        populateSelectElement('Status_Penangkapan_Select', MASTER_STATUS_PENANGKAPAN, rec.Status_Penangkapan, '-');
+    }
     setSafe('Jenis_Pelanggaran', rec.Jenis_Pelanggaran);
+    let elJenisPel = document.getElementById('Jenis_Pelanggaran_Select');
+    if (elJenisPel && rec.Jenis_Pelanggaran) {
+        populateSelectElement('Jenis_Pelanggaran_Select', MASTER_JENIS_PELANGGARAN, rec.Jenis_Pelanggaran, '-');
+    }
     setSafe('Pasal_Pelanggaran', rec.Pasal_Pelanggaran);
     setSafe('Modus_Operandi', rec.Modus_Operandi);
     let selModus = document.getElementById('Modus_Operandi_Select');
     if (selModus && rec.Modus_Operandi) {
-        selModus.value = rec.Modus_Operandi;
+        populateSelectElement('Modus_Operandi_Select', MASTER_MODUS_OPERANDI, rec.Modus_Operandi, '-');
     }
     setSafe('Kronologis', rec.Kronologis);
     setSafe('Jenis_Pelanggaran_Pasal', rec.Jenis_Pelanggaran_Pasal);
     setSafe('Lokasi_Penindakan', rec.Lokasi_Penindakan);
     setSafe('Nama_Pelaku', rec.Nama_Pelaku);
     setSafe('Umur_Pelaku', rec.Umur_Pelaku || '-');
+    let selUmur = document.getElementById('Umur_Pelaku');
+    if (selUmur) {
+        populateSelectElement('Umur_Pelaku', MASTER_UMUR_PELAKU, rec.Umur_Pelaku || '', '- Pilih Usia -');
+    }
     setSafe('Jenis_Kelamin_Pelaku', rec.Jenis_Kelamin_Pelaku || '-');
+    let selJK = document.getElementById('Jenis_Kelamin_Pelaku');
+    if (selJK) {
+        populateSelectElement('Jenis_Kelamin_Pelaku', MASTER_JENIS_KELAMIN, rec.Jenis_Kelamin_Pelaku || '', '-');
+    }
     setSafe('TTL', rec.TTL);
     let rawIdentitas = String(rec.Nomor_Identitas || '');
     if (rawIdentitas.includes(' : ')) {
         let parts = rawIdentitas.split(' : ');
         let jenisIdentitasSelect = document.getElementById('Jenis_Identitas_Select');
-        if (jenisIdentitasSelect)
-            jenisIdentitasSelect.value = parts[0];
+        if (jenisIdentitasSelect) {
+            populateSelectElement('Jenis_Identitas_Select', MASTER_JENIS_IDENTITAS, parts[0], '');
+        }
         setSafe('Nomor_Identitas_Input', parts[1]);
     }
     else {
         let jenisIdentitasSelect = document.getElementById('Jenis_Identitas_Select');
-        if (jenisIdentitasSelect)
-            jenisIdentitasSelect.value = 'NIK';
+        if (jenisIdentitasSelect) {
+            populateSelectElement('Jenis_Identitas_Select', MASTER_JENIS_IDENTITAS, 'NIK', '');
+        }
         setSafe('Nomor_Identitas_Input', rawIdentitas);
     }
     setSafe('Nomor_Identitas', rawIdentitas);
     setSafe('Pekerjaan', rec.Pekerjaan);
+    let selPekerjaan = document.getElementById('Pekerjaan_Select');
+    let inputPekerjaan = document.getElementById('Pekerjaan');
+    if (selPekerjaan) {
+        populateSelectElement('Pekerjaan_Select', MASTER_PEKERJAAN, rec.Pekerjaan || '', '-');
+        if (rec.Pekerjaan && !MASTER_PEKERJAAN.includes(rec.Pekerjaan)) {
+            selPekerjaan.value = 'LAINNYA';
+            if (inputPekerjaan) {
+                inputPekerjaan.style.display = 'block';
+                inputPekerjaan.value = rec.Pekerjaan;
+            }
+        }
+        else if (inputPekerjaan) {
+            inputPekerjaan.style.display = 'none';
+        }
+    }
     setSafe('Alamat_Pelaku', rec.Alamat_Pelaku);
     setSafe('Nomor_Telepon', rec.Nomor_Telepon);
     setSafe('Nomor_Rekening', rec.Nomor_Rekening);
     setSafe('Pengulangan_Pelanggaran', rec.Pengulangan_Pelanggaran);
     setSafe('Komoditi', rec.Komoditi);
     let selKomoditi = document.getElementById('Komoditi_Select');
-    if (selKomoditi && rec.Komoditi) {
-        selKomoditi.value = rec.Komoditi;
+    if (selKomoditi) {
+        populateSelectElement('Komoditi_Select', MASTER_KOMODITI, rec.Komoditi || '', '- Pilih Komoditi -');
     }
     setSafe('Kerugian_Negara', rec.Kerugian_Negara);
     setSafe('Jumlah_Koli', rec.Jumlah_Koli);
@@ -786,18 +845,13 @@ export function loadRecordToCurrentView(rec) {
     let selectKoli = document.getElementById('Jenis_Koli_Select');
     let inputKoli = document.getElementById('Jenis_Koli');
     if (selectKoli && inputKoli) {
+        populateSelectElement('Jenis_Koli_Select', MASTER_SATUAN_KOLI, jenisVal, '- Pilih Jenis Koli -');
         inputKoli.value = jenisVal;
-        let matchOpt = Array.from(selectKoli.options).some(opt => opt.value.toLowerCase() === jenisVal.toLowerCase());
-        if (matchOpt && jenisVal) {
-            selectKoli.value = jenisVal.toLowerCase();
-            inputKoli.style.display = 'none';
-        }
-        else if (jenisVal && jenisVal !== '-') {
+        if (jenisVal && !MASTER_SATUAN_KOLI.includes(jenisVal.toLowerCase()) && jenisVal !== '-') {
             selectKoli.value = 'LAINNYA';
             inputKoli.style.display = 'block';
         }
         else {
-            selectKoli.value = '-';
             inputKoli.style.display = 'none';
         }
     }
@@ -813,13 +867,29 @@ export function loadRecordToCurrentView(rec) {
     setSafe('Pengangkut', rec.Pengangkut);
     setSafe('No_Kontainer', rec.No_Kontainer);
     setSafe('Ukuran_Kontainer', rec.Ukuran_Kontainer);
+    let selUkuranK = document.getElementById('Ukuran_Kontainer_Select');
+    let inputUkuranK = document.getElementById('Ukuran_Kontainer');
+    if (selUkuranK) {
+        populateSelectElement('Ukuran_Kontainer_Select', MASTER_UKURAN_KONTAINER, rec.Ukuran_Kontainer || '', '-');
+        if (rec.Ukuran_Kontainer && !MASTER_UKURAN_KONTAINER.includes(rec.Ukuran_Kontainer)) {
+            selUkuranK.value = 'LAINNYA';
+            if (inputUkuranK) {
+                inputUkuranK.style.display = 'block';
+                inputUkuranK.value = rec.Ukuran_Kontainer;
+            }
+        }
+        else if (inputUkuranK) {
+            inputUkuranK.style.display = 'none';
+        }
+    }
     setSafe('Kantor', rec.Kantor);
     let dokPabVal = String(rec.Dokumen_Pemberitahuan || rec.Dokumen_Yang_Ada || '');
     let jenisDokSelect = document.getElementById('Jenis_Dok_Pemberitahuan_Select');
     let nomorDokInput = document.getElementById('Nomor_Dok_Pemberitahuan');
     if (dokPabVal.toLowerCase().includes('tanpa dokumen') || !dokPabVal || dokPabVal === '-') {
-        if (jenisDokSelect)
-            jenisDokSelect.value = 'Tanpa Dokumen';
+        if (jenisDokSelect) {
+            populateSelectElement('Jenis_Dok_Pemberitahuan_Select', MASTER_JENIS_DOKUMEN_PABEAN, 'Tanpa Dokumen', '');
+        }
         if (nomorDokInput) {
             nomorDokInput.value = '';
             nomorDokInput.disabled = true;
@@ -827,7 +897,7 @@ export function loadRecordToCurrentView(rec) {
         setSafe('Dokumen_Pemberitahuan', 'Tanpa Dokumen');
     }
     else {
-        let match = dokPabVal.match(/^(BC\s*[\d\.]+|SPPBMCP|PIB|PEB)/i);
+        let match = dokPabVal.match(/^(BC\s*[\d\.]+|SPPBMCP|PIBK|CN|PPFTZ-\d{2})/i);
         let extractedJenis = match ? match[0].trim() : '';
         let extractedNomor = dokPabVal;
         if (extractedJenis) {
@@ -835,8 +905,7 @@ export function loadRecordToCurrentView(rec) {
             extractedNomor = sisa.replace(/^[\s\-–—:]*/, '').replace(/^nomor\s*/i, '').replace(/^no\.?\s*/i, '').trim();
         }
         if (jenisDokSelect) {
-            let matchedOpt = Array.from(jenisDokSelect.options).find(opt => opt.value.toLowerCase() === (extractedJenis || dokPabVal).toLowerCase());
-            jenisDokSelect.value = matchedOpt ? matchedOpt.value : (extractedJenis || 'LAINNYA');
+            populateSelectElement('Jenis_Dok_Pemberitahuan_Select', MASTER_JENIS_DOKUMEN_PABEAN, extractedJenis || dokPabVal, '');
         }
         if (nomorDokInput) {
             nomorDokInput.disabled = false;
@@ -855,7 +924,7 @@ export function loadRecordToCurrentView(rec) {
     let noPelengkap = document.getElementById('Nomor_Dok_Pelengkap');
     let tglPelengkap = document.getElementById('Tanggal_Dok_Pelengkap');
     if (selPelengkap) {
-        selPelengkap.value = rec.Jenis_Dok_Pelengkap_Select || '-';
+        populateSelectElement('Jenis_Dok_Pelengkap_Select', MASTER_DOKUMEN_PELENGKAP, rec.Jenis_Dok_Pelengkap_Select || '-', '- (Tanpa Dokumen Pelengkap)');
         if (selPelengkap.value === '-') {
             if (manualPelengkap)
                 manualPelengkap.style.display = 'none';
@@ -899,37 +968,47 @@ export function loadRecordToCurrentView(rec) {
     setSafe('Hari_Cacah', String(rec.Hari_Cacah || '').toLowerCase());
     setSafe('TeksTanggal', String(rec.TeksTanggal || '').toLowerCase());
     setSafe('Tanggal_LHP', rec.Tanggal_LHP);
+    const allJabatan = Array.from(new Set([...MASTER_JABATAN_DINAS, ...MASTER_JABATAN_TIM_PENELITI]));
+    // 1. Pejabat 1 (Eselon III/IV)
     setSafe('form_kabid', rec.kabid);
     setSafe('form_nip_kabid', rec.nip_kabid);
-    setSafe('form_gol_kabid', rec.gol_kabid);
+    populateSelectElement('form_jabatan_kabid', allJabatan, rec.jabatan_kabid || 'Kepala Bidang Penindakan dan Penyidikan', '- Pilih Jabatan -');
+    populateSelectElement('form_gol_kabid', MASTER_GOLONGAN_PANGKAT, rec.gol_kabid || '', '- Pilih Golongan -');
+    // 2. Pejabat 2 (Eselon IV / Fungsional Ahli Pertama)
     setSafe('form_nama_seksi', rec.nama_seksi);
     setSafe('form_nip_seksi', rec.nip_seksi);
-    setSafe('form_jabatan_seksi', rec.jabatan_seksi || 'Kepala Seksi Penyidikan');
-    setSafe('form_gol_seksi', rec.gol_seksi);
+    populateSelectElement('form_jabatan_seksi', allJabatan, rec.jabatan_seksi || 'Kepala Seksi Penyidikan', '- Pilih Jabatan -');
+    populateSelectElement('form_gol_seksi', MASTER_GOLONGAN_PANGKAT, rec.gol_seksi || '', '- Pilih Golongan -');
+    // 3. Ketua Tim
     setSafe('form_ketua_tim', rec.ketua_tim);
     setSafe('form_nip_ketua_tim', rec.nip_ketua_tim);
-    setSafe('form_jabatan_ketua_tim', rec.jabatan_ketua_tim || 'Ketua Tim Peneliti');
-    setSafe('form_gol_ketua_tim', rec.gol_gol_ketua_tim);
+    populateSelectElement('form_jabatan_ketua_tim', allJabatan, rec.jabatan_ketua_tim || 'Ketua Tim Peneliti', '- Pilih Jabatan -');
+    populateSelectElement('form_gol_ketua_tim', MASTER_GOLONGAN_PANGKAT, rec.gol_ketua_tim || '', '- Pilih Golongan -');
+    // 4. Pembuat LPP
     setSafe('form_pembuat_lpp', rec.pembuat_lpp);
     setSafe('form_nip_pembuat_lpp', rec.nip_pembuat_lpp);
-    setSafe('form_jabatan_pembuat_lpp', rec.jabatan_pembuat_lpp || 'Petugas LPP');
-    setSafe('form_gol_pembuat_lpp', rec.gol_pembuat_lpp);
+    populateSelectElement('form_jabatan_pembuat_lpp', allJabatan, rec.jabatan_pembuat_lpp || 'Petugas LPP', '- Pilih Jabatan -');
+    populateSelectElement('form_gol_pembuat_lpp', MASTER_GOLONGAN_PANGKAT, rec.gol_pembuat_lpp || '', '- Pilih Golongan -');
+    // 5. Petugas LPF
     setSafe('form_petugas_lpf', rec.petugas_lpf);
     setSafe('form_nip_petugas_lpf', rec.nip_petugas_lpf);
-    setSafe('form_jabatan_petugas_lpf', rec.jabatan_petugas_lpf || 'Petugas LPF');
-    setSafe('form_gol_petugas_lpf', rec.gol_petugas_lpf);
+    populateSelectElement('form_jabatan_lpf', allJabatan, rec.jabatan_petugas_lpf || 'Petugas LPF', '- Pilih Jabatan -');
+    populateSelectElement('form_gol_petugas_lpf', MASTER_GOLONGAN_PANGKAT, rec.gol_petugas_lpf || '', '- Pilih Golongan -');
+    // 6. Indak 1
     setSafe('form_indak_1', rec.indak_1);
     setSafe('form_nip_indak_1', rec.nip_indak_1);
-    setSafe('form_jabatan_indak_1', rec.jabatan_indak_1 || 'Petugas Penindakan 1');
-    setSafe('form_gol_indak_1', rec.gol_indak_1);
+    populateSelectElement('form_jabatan_indak_1', allJabatan, rec.jabatan_indak_1 || 'Petugas Penindakan 1', '- Pilih Jabatan -');
+    populateSelectElement('form_gol_indak_1', MASTER_GOLONGAN_PANGKAT, rec.gol_indak_1 || '', '- Pilih Golongan -');
+    // 7. Indak 2
     setSafe('form_indak_2', rec.indak_2);
     setSafe('form_nip_indak_2', rec.nip_indak_2);
-    setSafe('form_jabatan_indak_2', rec.jabatan_indak_2 || 'Petugas Penindakan 2');
-    setSafe('form_gol_indak_2', rec.gol_gol_indak_2);
+    populateSelectElement('form_jabatan_indak_2', allJabatan, rec.jabatan_indak_2 || 'Petugas Penindakan 2', '- Pilih Jabatan -');
+    populateSelectElement('form_gol_indak_2', MASTER_GOLONGAN_PANGKAT, rec.gol_indak_2 || '', '- Pilih Golongan -');
+    // 8. Pelaksana Lainnya / Pencacah
     setSafe('form_indak_lainnya', rec.indak_lainnya);
     setSafe('form_nip_indak_lainnya', rec.nip_indak_lainnya);
-    setSafe('form_jabatan_indak_lainnya', rec.jabatan_indak_lainnya || 'Petugas Penindakan 3');
-    setSafe('form_gol_indak_lainnya', rec.gol_indak_lainnya);
+    populateSelectElement('form_jabatan_indak_lainnya', allJabatan, rec.jabatan_indak_lainnya || 'Petugas Penindakan 3', '- Pilih Jabatan -');
+    populateSelectElement('form_gol_indak_lainnya', MASTER_GOLONGAN_PANGKAT, rec.gol_indak_lainnya || '', '- Pilih Golongan -');
     let defaultCatatanLPP = "Laporan penerimaan perkara diterima, segera lanjutkan dengan penelitian formal dan pengumpulan bahan keterangan lebih lanjut.";
     let defaultCatatanLPF = "Setuju dengan usulan tim peneliti, segera tindak lanjuti proses administrasi penanganan perkara sesuai ketentuan yang berlaku.";
     setSafe('Catatan_LPP', (rec.Catatan_LPP && rec.Catatan_LPP !== '-') ? rec.Catatan_LPP : defaultCatatanLPP);
@@ -956,7 +1035,6 @@ export function renderPerkaraTable() {
         renderPerkaraPagination(totalPages, filtered.length);
         return;
     }
-    // Cek apakah user yang login memiliki hak akses Admin / Kasi
     let isAdmin = store.currentUser && (store.currentUser.role === 'Admin' || store.currentUser.role === 'Kepala Seksi Penyidikan');
     tbody.innerHTML = paginatedData.map((rec, index) => {
         let i = startIdx + index;
@@ -974,13 +1052,11 @@ export function renderPerkaraTable() {
             : `<span style="font-size:11px; color:var(--text-muted, #94a3b8);">-</span>`;
         let cleanLP = String(rec.NoLP_LP_1 || '-').replace(/^LP-?/i, '');
         let cleanSBP = String(rec.Nomor_SBP || '-').replace(/^SBP-?/i, '');
-        // Tombol Edit selalu muncul untuk semua user
         let actionButtons = `
       <button type="button" class="btn warning" style="padding:4px 8px; font-size:10px;" onclick="editPerkara(${originalIndex})">
         <i class="fi fi-rr-edit"></i> Edit
       </button>
     `;
-        // Tombol Hapus HANYA ditambahkan jika yang login adalah Admin / Kasi
         if (isAdmin) {
             actionButtons += `
         <button type="button" class="btn danger" style="padding:4px 8px; font-size:10px;" onclick="deletePerkara(${originalIndex})">
@@ -1069,16 +1145,13 @@ export function addNewPerkaraModal() {
     let editIdx = document.getElementById('editingRecordIndex');
     if (editIdx)
         editIdx.value = "-1";
+    initPerkaraDropdownsFromMaster();
     let inputs = document.querySelectorAll('#perkaraModal input:not([readonly]), #perkaraModal textarea');
     inputs.forEach((el) => {
         if (el.type === 'checkbox')
             el.checked = false;
         else
             el.value = '';
-    });
-    let selects = document.querySelectorAll('#perkaraModal select');
-    selects.forEach((el) => {
-        el.selectedIndex = 0;
     });
     if (document.getElementById('Jenis_Koli'))
         document.getElementById('Jenis_Koli').style.display = 'none';
@@ -1122,9 +1195,6 @@ export function addNewPerkaraModal() {
     if (catLpfEl && !catLpfEl.value) {
         catLpfEl.value = "Setuju dengan usulan tim peneliti, segera tindak lanjuti proses penyusunan administrasi penanganan perkara sesuai ketentuan yang berlaku.";
     }
-    // ==========================================
-    // SISIPKAN VALIDASI BLUR REAL-TIME DI SINI
-    // ==========================================
     let inputNoSprin = document.getElementById('No_SPRIN_Indak');
     let inputTglSprin = document.getElementById('Tanggal_SPRIN_Indak');
     let inputNoSbp = document.getElementById('Nomor_SBP');
@@ -1153,7 +1223,6 @@ export function addNewPerkaraModal() {
     };
     setupPerkaraBlur(inputNoSprin, inputTglSprin, 'SPRIN INDAK', 'noSprin', 'tglSprin');
     setupPerkaraBlur(inputNoSbp, inputTglSbp, 'SBP', 'noSbp', 'tglSbp');
-    // ==========================================
     updateLiveCodePreviews();
     let modal = document.getElementById('perkaraModal');
     if (modal)
@@ -1171,6 +1240,7 @@ export function editPerkara(idx) {
     let title = document.getElementById('modalTitle');
     if (title)
         title.textContent = `Edit Data Perkara LP-${rec.NoLP_LP_1 || ''}`;
+    initPerkaraDropdownsFromMaster();
     loadRecordToCurrentView(rec);
     updateLiveCodePreviews();
     let modal = document.getElementById('perkaraModal');
@@ -1254,7 +1324,6 @@ export function executePerkaraSubmission() {
         let tglSbpVal = document.getElementById('Tanggal_SBP')?.value || '';
         let noLpVal = (document.getElementById('NoLP_LP_1')?.value || '').trim() || '1';
         let tglLpVal = document.getElementById('Tanggal_LP_LP_1')?.value || '';
-        // Auto-booking murni mengambil nomor urutnya saja (tanpa embel-embel format tahun/kategori di database)
         let noLppVal = (existingRec && existingRec.No_LPP) ? existingRec.No_LPP : generateNextBookingNumber('', 'No_LPP', '', 3);
         let tglLppVal = (existingRec && existingRec.Tanggal_LPP) ? existingRec.Tanggal_LPP : tglLpVal;
         let noLpfVal = (existingRec && existingRec.No_LPF) ? existingRec.No_LPF : generateNextBookingNumber('', 'No_LPF', '', 3);
@@ -1267,9 +1336,6 @@ export function executePerkaraSubmission() {
         let tglBa = document.getElementById('Tanggal_BA')?.value || '';
         let noLhp = (document.getElementById('Nomor_LHP')?.value || '').trim();
         let tglLhp = document.getElementById('Tanggal_LHP')?.value || '';
-        // ==========================================
-        // VALIDASI MENGGUNAKAN MASTER TERPUSAT
-        // ==========================================
         let docsToValidate = [
             { num: noSprinVal, date: tglSprinVal, numKey: 'No_SPRIN_Indak', dateKey: 'Tanggal_SPRIN_Indak', label: 'Nomor SPRIN INDAK' },
             { num: noSbpVal, date: tglSbpVal, numKey: 'Nomor_SBP', dateKey: 'Tanggal_SBP', label: 'Nomor SBP' },
@@ -1297,7 +1363,6 @@ export function executePerkaraSubmission() {
             showToast("VALIDASI DITOLAK", validationResult.message, "danger");
             return;
         }
-        // ==========================================
         const valSafe = (id) => {
             let el = document.getElementById(id);
             return el ? el.value.trim() : '';
@@ -1370,6 +1435,7 @@ export function executePerkaraSubmission() {
             Tanggal_LHP: tglLhp,
             kabid: valSafe('form_kabid'),
             nip_kabid: valSafe('form_nip_kabid'),
+            jabatan_kabid: valSafe('form_jabatan_kabid'),
             gol_kabid: valSafe('form_gol_kabid'),
             nama_seksi: valSafe('form_nama_seksi'),
             nip_seksi: valSafe('form_nip_seksi'),
@@ -1385,7 +1451,7 @@ export function executePerkaraSubmission() {
             gol_pembuat_lpp: valSafe('form_gol_pembuat_lpp'),
             petugas_lpf: valSafe('form_petugas_lpf'),
             nip_petugas_lpf: valSafe('form_nip_petugas_lpf'),
-            jabatan_petugas_lpf: valSafe('form_jabatan_petugas_lpf'),
+            jabatan_petugas_lpf: valSafe('form_jabatan_lpf'),
             gol_petugas_lpf: valSafe('form_gol_petugas_lpf'),
             indak_1: valSafe('form_indak_1'),
             nip_indak_1: valSafe('form_nip_indak_1'),
@@ -1453,7 +1519,7 @@ export function exportDataToExcel() {
             idx + 1,
             `"LP-${rec.NoLP_LP_1 || '-'}"`,
             `"${rec.Tanggal_LP_LP_1 || '-'}"`,
-            `"SBP-${rec.Nomor_SBP || '-'}"`,
+            `"${rec.Nomor_SBP || '-'}"`,
             `"${rec.Tanggal_SBP || '-'}"`,
             `"${(rec.Nama_Pelaku || '-').replace(/"/g, '""')}"`,
             `"${(rec.Nomor_Identitas || '-').replace(/"/g, '""')}"`,
@@ -1553,7 +1619,6 @@ window.closeModal = closeModal;
 window.confirmAndSubmitPerkara = confirmAndSubmitPerkara;
 window.executePerkaraSubmission = executePerkaraSubmission;
 window.submitPerkaraForm = submitPerkaraForm;
-window.changePerkaraPage = changePerkaraPage;
 window.exportDataToExcel = exportDataToExcel;
 window.exportDataToPDF = exportDataToPDF;
 window.syncStatusPenangkapan = syncStatusPenangkapan;
@@ -1581,4 +1646,5 @@ window.autoGenerateAndAddMasterPasal = autoGenerateAndAddMasterPasal;
 window.syncKondisiBarang = syncKondisiBarang;
 window.syncPasalPelanggaran = syncPasalPelanggaran;
 window.addCustomKantor = addCustomKantor;
+window.initPerkaraDropdownsFromMaster = initPerkaraDropdownsFromMaster;
 //# sourceMappingURL=perkara.js.map

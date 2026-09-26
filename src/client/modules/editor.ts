@@ -1,8 +1,34 @@
 import { store, savePerkaraToStorage } from '../state/store.js';
-import { escText, getVal, formatDate, formatDateIndo, autoGenerateTeksTanggalBA, generateNextBookingNumber } from '../utils/formatters.js';
-import { autoPaginateReports, applyPageNumbers, navigatePreviewPage, updatePreviewHeaderUI, updateTLPreviewHeaderUI, renderPageSelector } from './ui.js';
+import { 
+  escText, 
+  getVal, 
+  formatDate, 
+  formatDateIndo, 
+  autoGenerateTeksTanggalBA,
+  terbilangHuruf
+} from '../utils/formatters.js';
+import { generateNextBookingNumber } from '../utils/generators.js';
+import { 
+  autoPaginateReports, 
+  applyPageNumbers, 
+  navigatePreviewPage, 
+  updatePreviewHeaderUI, 
+  updateTLPreviewHeaderUI, 
+  renderPageSelector 
+} from './ui.js';
 import { getDocNum, LPP, LPF, SPLIT, SPRIN_CACAH, BA, LHP } from '../templates/laporan.js';
 import { getTLNumFormat, BAST_PEMILIK, BA_SEGEL, KEP_BDN, SPSA, BAST_LIMPAH } from '../templates/tindaklanjut.js';
+import {
+  MASTER_SATUAN_KOLI,
+  MASTER_JENIS_KEMASAN,
+  MASTER_RANGKA_PENYERAHAN,
+  MASTER_AKHIRAN_BARANG,
+  MASTER_GOLONGAN_PANGKAT,
+  MASTER_JABATAN_DINAS,
+  MASTER_JABATAN_TIM_PENELITI,
+  renderMasterOptions,
+  populateSelectElement
+} from '../config/constants.js';
 
 export function saveDynamicVal(id: string, val: string): void {
   let el = document.getElementById(id) as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
@@ -296,7 +322,6 @@ export function renderDynamicInputs(type: string): void {
   let activeRec = store.databasePerkara[store.activeRecordIndex];
 
   if (type === 'LPP') {
-    // Auto-generate nomor LPP jika di record masih kosong/-
     if (!activeRec.No_LPP || activeRec.No_LPP === '-' || activeRec.No_LPP === '') {
       activeRec.No_LPP = generateNextBookingNumber('', 'No_LPP', '', 3);
       savePerkaraToStorage();
@@ -330,7 +355,6 @@ export function renderDynamicInputs(type: string): void {
       </div>
     `;
   } else if (type === 'LPF') {
-    // Auto-generate nomor LPF jika di record masih kosong/-
     if (!activeRec.No_LPF || activeRec.No_LPF === '-' || activeRec.No_LPF === '') {
       activeRec.No_LPF = generateNextBookingNumber('', 'No_LPF', '', 3);
       savePerkaraToStorage();
@@ -358,7 +382,6 @@ export function renderDynamicInputs(type: string): void {
       </div>
     `;
   } else if (type === 'SPLIT') {
-    // Auto-generate nomor SPLIT jika di record masih kosong/-
     if (!activeRec.Nomor_SPLIT || activeRec.Nomor_SPLIT === '-' || activeRec.Nomor_SPLIT === '') {
       activeRec.Nomor_SPLIT = generateNextBookingNumber('', 'Nomor_SPLIT', '', 3);
       savePerkaraToStorage();
@@ -420,7 +443,6 @@ export function renderDynamicInputs(type: string): void {
     let hariCacahVal = activeRec.Hari_Cacah || '';
     let teksTanggalVal = activeRec.TeksTanggal || '';
 
-    // Jika tarikh sudah ada tetapi hari/teks tanggal belum terisi, jana secara automatik
     if (tanggalBaVal && (!hariCacahVal || !teksTanggalVal)) {
       const r = autoGenerateTeksTanggalBA(tanggalBaVal);
       hariCacahVal = hariCacahVal || r.hari.toLowerCase();
@@ -463,7 +485,6 @@ export function renderDynamicInputs(type: string): void {
     let tanggalLhpVal = activeRec.Tanggal_LHP && activeRec.Tanggal_LHP !== '-' ? activeRec.Tanggal_LHP : ((document.getElementById('Tanggal_LP_LP_1') as HTMLInputElement)?.value || '');
     let penyelesaianVal = activeRec.Penyelesaian_Perkara || activeRec.Alternatif_Penyelesaian_Perkara || '';
 
-    // Fungsi helper untuk mengecek apakah opsi checkbox sebelumnya pernah dicentang
     const isChecked = (val: string) => penyelesaianVal.toLowerCase().includes(val.toLowerCase()) ? 'checked' : '';
 
     container.innerHTML = recordSelectorHtml + `
@@ -563,7 +584,9 @@ export function syncUraianKombinasiLHP(): void {
   else if (active.ur || (active.ur && active.musnah)) {
     hasil.push("Memberikan rekomendasi penyelesaian perkara melalui asas Ultimum Remedium (Pasal 40B UU Cukai jo. UU HPP) dengan mewajibkan pembayaran sanksi denda sebesar 4 (empat) kali nilai cukai.");
     hasil.push("Terhadap Barang Kena Cukai (BKC) hasil penindakan dirampas untuk negara, ditetapkan sebagai Barang Milik Negara (BMN), dan selanjutnya diusulkan untuk dilakukan pemusnahan.");
-    hasil.push("Apabila sanksi denda tidak diselesaikan dalam jangka waktu yang ditentukan, proses perkara segera ditingkatkan ke tahap Penyidikan.");
+    if (active.sidik) {
+      hasil.push("Apabila sanksi denda tidak diselesaikan dalam jangka waktu yang ditentukan, proses perkara segera ditingkatkan ke tahap Penyidikan.");
+    }
   }
   else if (active.reekspor && active.keluar_sebagian) {
     hasil.push("Terhadap barang impor yang terkena ketentuan larangan dan pembatasan (lartas) direkomendasikan untuk diekspor kembali (re-ekspor) ke negara asal dalam batas waktu yang ditentukan.");
@@ -662,7 +685,7 @@ export function addSplitPegawai(): void {
       { nama: getVal('form_pembuat_lpp'), nip: getVal('form_nip_pembuat_lpp'), jabatan: getVal('form_jabatan_pembuat_lpp') || 'Petugas LPP' }
     ];
   }
-  rec.splitPegawaiList.push({ nama: '', nip: '', jabatan: '' });
+  rec.splitPegawaiList.push({ nama: '', nip: '', jabatan: 'Anggota Tim Peneliti' });
   savePerkaraToStorage();
   renderSplitPegawaiList();
   updateReportLive();
@@ -683,13 +706,19 @@ export function renderSplitPegawaiList(): void {
   }
 
   let list = rec.splitPegawaiList;
+  const allJabatan = Array.from(new Set([...MASTER_JABATAN_DINAS, ...MASTER_JABATAN_TIM_PENELITI]));
 
   container.innerHTML = list.map((p: any, i: number) => `
     <div class="item">
       <div class="grid3">
         <div><label>Nama Pegawai #${i+1}</label><input value="${escText(p.nama || '')}" data-pi="${i}" data-pk="nama"></div>
         <div><label>NIP Pegawai #${i+1}</label><input value="${escText(p.nip || '')}" data-pi="${i}" data-pk="nip"></div>
-        <div><label>Jabatan Pegawai #${i+1}</label><input value="${escText(p.jabatan || '')}" data-pi="${i}" data-pk="jabatan"></div>
+        <div>
+          <label>Jabatan Pegawai #${i+1}</label>
+          <select data-pi="${i}" data-pk="jabatan" style="width:100%; padding:6px; background:#0f172a; color:#fff; border:1px solid #475569; border-radius:4px; font-size:11px;">
+            ${renderMasterOptions(allJabatan, p.jabatan || 'Anggota Tim Peneliti', '- Pilih Jabatan -')}
+          </select>
+        </div>
       </div>
       <button type="button" class="btn danger" onclick="delSplitPegawai(${i})" style="margin-top:8px;">
         <i class="fi fi-rr-trash"></i> HAPUS PEGAWAI
@@ -697,8 +726,8 @@ export function renderSplitPegawaiList(): void {
     </div>
   `).join('');
 
-  container.querySelectorAll('input[data-pi]').forEach((inp: any) => {
-    inp.oninput = () => {
+  container.querySelectorAll('input[data-pi], select[data-pi]').forEach((inp: any) => {
+    inp.onchange = inp.oninput = () => {
       if (store.activeRecordIndex >= 0 && store.databasePerkara[store.activeRecordIndex]) {
         let r = store.databasePerkara[store.activeRecordIndex];
         if (!r.splitPegawaiList) r.splitPegawaiList = [];
@@ -735,7 +764,7 @@ export function addSprinPegawai(): void {
       { nama: getVal('form_indak_lainnya'), nip: getVal('form_nip_indak_lainnya'), pangkat: getVal('form_gol_indak_lainnya'), jabatan: getVal('form_jabatan_indak_lainnya') || 'Petugas Penindakan 3' }
     ];
   }
-  rec.sprinPegawaiList.push({ nama: '', nip: '', pangkat: '', jabatan: '' });
+  rec.sprinPegawaiList.push({ nama: '', nip: '', pangkat: '', jabatan: 'Petugas Pencacah' });
   savePerkaraToStorage();
   renderSprinPegawaiList();
   updateReportLive();
@@ -758,14 +787,25 @@ export function renderSprinPegawaiList(): void {
   }
 
   let list = rec.sprinPegawaiList;
+  const allJabatan = Array.from(new Set([...MASTER_JABATAN_DINAS, ...MASTER_JABATAN_TIM_PENELITI]));
 
   container.innerHTML = list.map((p: any, i: number) => `
     <div class="item">
       <div class="grid4">
         <div><label>Nama Pegawai #${i + 1}</label><input value="${escText(p.nama || '')}" data-spi="${i}" data-spk="nama"></div>
         <div><label>NIP Pegawai #${i + 1}</label><input value="${escText(p.nip || '')}" data-spi="${i}" data-spk="nip"></div>
-        <div><label>Pangkat/Gol. #${i + 1}</label><input value="${escText(p.pangkat || '')}" data-spi="${i}" data-spk="pangkat"></div>
-        <div><label>Jabatan #${i + 1}</label><input value="${escText(p.jabatan || '')}" data-spi="${i}" data-spk="jabatan"></div>
+        <div>
+          <label>Pangkat/Gol. #${i + 1}</label>
+          <select data-spi="${i}" data-spk="pangkat" style="width:100%; padding:6px; background:#0f172a; color:#fff; border:1px solid #475569; border-radius:4px; font-size:11px;">
+            ${renderMasterOptions(MASTER_GOLONGAN_PANGKAT, p.pangkat || '', '- Pilih Golongan -')}
+          </select>
+        </div>
+        <div>
+          <label>Jabatan #${i + 1}</label>
+          <select data-spi="${i}" data-spk="jabatan" style="width:100%; padding:6px; background:#0f172a; color:#fff; border:1px solid #475569; border-radius:4px; font-size:11px;">
+            ${renderMasterOptions(allJabatan, p.jabatan || 'Petugas Pencacah', '- Pilih Jabatan -')}
+          </select>
+        </div>
       </div>
       <button type="button" class="btn danger" onclick="delSprinPegawai(${i})" style="margin-top:8px;">
         <i class="fi fi-rr-trash"></i> Hapus Pegawai
@@ -773,8 +813,8 @@ export function renderSprinPegawaiList(): void {
     </div>
   `).join('');
 
-  container.querySelectorAll('input[data-spi]').forEach((inp: any) => {
-    inp.oninput = () => {
+  container.querySelectorAll('input[data-spi], select[data-spi]').forEach((inp: any) => {
+    inp.onchange = inp.oninput = () => {
       if (store.activeRecordIndex >= 0 && store.databasePerkara[store.activeRecordIndex]) {
         let r = store.databasePerkara[store.activeRecordIndex];
         if (!r.sprinPegawaiList) r.sprinPegawaiList = [];
@@ -807,63 +847,60 @@ export function renderTLFormSection(type: string): void {
   }
   let rec = store.databasePerkara[store.activeRecordIndex];
 
-   if (type === 'BAST_PEMILIK') {
+  if (type === 'BAST_PEMILIK') {
     if (!rec.TL_BAST_SarkutList) {
       rec.TL_BAST_SarkutList = [{ jenis: rec.TL_Nama_Sarkut || rec.Pengangkut || '-', nopol: rec.TL_No_Reg_Sarkut || '-' }];
     }
     if (!rec.TL_BAST_BarangList) {
-      let jmlKoli = rec.Jumlah_Koli || '12';
-      let teksJml = (window as any).tanggalKeTeks ? (window as any).tanggalKeTeks(jmlKoli) : 'dua belas';
+      let jmlKoli = rec.Jumlah_Koli || '1';
+      let teksJml = terbilangHuruf(jmlKoli);
       let jenisKoli = rec.Jenis_Koli || 'koli';
-      let komoditi = rec.Komoditi || rec.Uraian_Barang || 'Sepatu';
+      let komoditi = rec.Komoditi || rec.Uraian_Barang || 'Barang Bukti';
       
       let defKemasan = (rec.No_Kontainer && rec.No_Kontainer !== '-') ? `${rec.No_Kontainer} / ${rec.Ukuran_Kontainer || ''}` : `${jmlKoli} ${jenisKoli}`;
       let defBarang = `${jmlKoli} (${teksJml}) ${jenisKoli} ${komoditi}`;
-      rec.TL_BAST_BarangList = [{ kemasan: defKemasan, uraian: defBarang }];
+      rec.TL_BAST_BarangList = [{ 
+        jumlahKemasan: jmlKoli,
+        jenisKemasan: (rec.No_Kontainer && rec.No_Kontainer !== '-') ? 'FCL' : 'LCL',
+        nomorKontainer: rec.No_Kontainer || '',
+        kemasan: defKemasan,
+        jumlahBarang: jmlKoli,
+        satuanBarang: jenisKoli,
+        namaBarang: komoditi,
+        pakaiOpsiDll: false,
+        tambahanAkhiran: '',
+        uraian: defBarang 
+      }];
     }
     if (!rec.TL_BAST_DokumenList) {
       let jns = rec.Dokumen_Pemberitahuan || 'BC 2.0';
-      let no = rec.Nomor_Dok_Pemberitahuan || '12345';
-      let tgl = rec.Tanggal_Dokumen_Pemberitahuan ? formatDateIndo(rec.Tanggal_Dokumen_Pemberitahuan) : '12 Januari 2026';
+      let no = rec.Nomor_Dok_Pemberitahuan || '-';
+      let tgl = rec.Tanggal_Dokumen_Pemberitahuan ? formatDateIndo(rec.Tanggal_Dokumen_Pemberitahuan) : '-';
       rec.TL_BAST_DokumenList = [{ uraian: `Eks. ${jns} nomor ${no} tanggal ${tgl}` }];
     }
     if (!rec.TL_BAST_OrangList) {
       rec.TL_BAST_OrangList = [{ nama: '-', identitas: '-' }];
     }
 
-    let defaultNoBast = rec.TL_BAST_Num || rec.NoLP_LP_1 || '';
-    let defaultTglBast = rec.TL_Tanggal_Surat || rec.Tanggal_LP_LP_1 || '';
-
-    let opsiRangka = [
-      'Penyelesaian kewajiban pabean dalam bentuk berupa SPSA',
-      'Tidak ditemukan pelanggaran',
-      'Penyelesaian kewajiban pabean dalam bentuk pembuatan dokumen pemberitahuan pabean',
-      'Penyelesaian pemenuhan larangan dan/atau pembatasan',
-      'Pengeluaran barang sebagian atas barang yang tidak terkena larangan dan/atau pembatasan',
-      'Penyelesaian lainnya'
-    ];
-    let selectedRangka = rec.TL_Rangka_Penyerahan || opsiRangka[0];
-    let isManualRangka = !opsiRangka.slice(0, 5).includes(selectedRangka);
-    let optionsHtml = opsiRangka.map(o => `<option value="${o}" ${(isManualRangka && o === 'Penyelesaian lainnya') || selectedRangka === o ? 'selected' : ''}>${o}</option>`).join('');
+    let selectedRangka = rec.TL_Rangka_Penyerahan || MASTER_RANGKA_PENYERAHAN[0];
+    let isManualRangka = !MASTER_RANGKA_PENYERAHAN.includes(selectedRangka as any);
 
     (window as any).onTanggalBastChange = function(val: string) {
       saveDynamicValTL('TL_Tanggal_Surat', val);
       if (!val) return;
-      if (typeof autoGenerateTeksTanggalBA === 'function') {
-        const res = autoGenerateTeksTanggalBA(val);
-        saveDynamicValTL('TL_Hari_BAST', res.hari);
-        saveDynamicValTL('TL_Tgl_Huruf_BAST', res.teksLengkap);
-        let elHari = document.getElementById('input_TL_Hari_BAST') as HTMLInputElement;
-        if (elHari) elHari.value = res.hari;
-        let elTeks = document.getElementById('input_TL_Tgl_Huruf_BAST') as HTMLInputElement;
-        if (elTeks) elTeks.value = res.teksLengkap;
-      }
+      const res = autoGenerateTeksTanggalBA(val);
+      saveDynamicValTL('TL_Hari_BAST', res.hari);
+      saveDynamicValTL('TL_Tgl_Huruf_BAST', res.teksLengkap);
+      let elHari = document.getElementById('input_TL_Hari_BAST') as HTMLInputElement;
+      if (elHari) elHari.value = res.hari;
+      let elTeks = document.getElementById('input_TL_Tgl_Huruf_BAST') as HTMLInputElement;
+      if (elTeks) elTeks.value = res.teksLengkap;
       showTLReportView('BAST_PEMILIK');
     };
 
     (window as any).addBastItem = function(category: string) {
       if (category === 'sarkut') rec.TL_BAST_SarkutList.push({ jenis: '', nopol: '' });
-      if (category === 'barang') rec.TL_BAST_BarangList.push({ kemasan: '', uraian: '' });
+      if (category === 'barang') rec.TL_BAST_BarangList.push({ kemasan: '', uraian: '', jumlahKemasan: '', jenisKemasan: 'LCL', jumlahBarang: '', satuanBarang: 'koli', namaBarang: '' });
       if (category === 'dokumen') rec.TL_BAST_DokumenList.push({ uraian: '' });
       if (category === 'orang') rec.TL_BAST_OrangList.push({ nama: '', identitas: '' });
       savePerkaraToStorage();
@@ -881,13 +918,43 @@ export function renderTLFormSection(type: string): void {
       showTLReportView('BAST_PEMILIK');
     };
 
+    // Fungsi otomatis penghasil teks uraian barang BAST
+    (window as any).updateBastBarangOtomatis = function(idx: number) {
+      let b = rec.TL_BAST_BarangList[idx];
+      if (!b) return;
+
+      // 1. Teks Kemasan
+      if (b.jenisKemasan === 'FCL' && b.nomorKontainer) {
+        b.kemasan = `${b.nomorKontainer}`;
+      } else if (b.jumlahKemasan && b.jenisKemasan) {
+        b.kemasan = `${b.jumlahKemasan} ${b.jenisKemasan}`;
+      }
+
+      // 2. Teks Uraian Barang
+      let jml = String(b.jumlahBarang || '').trim();
+      let satuan = b.satuanBarang || '';
+      let nama = (b.namaBarang || '').trim();
+
+      if (jml || nama) {
+        let tHuruf = jml ? ` (${terbilangHuruf(jml)})` : '';
+        let base = `${jml}${tHuruf} ${satuan} ${nama}`.replace(/\s+/g, ' ').trim();
+        if (b.pakaiOpsiDll) base += ', dll.';
+        if (b.tambahanAkhiran) base += b.tambahanAkhiran;
+        b.uraian = base;
+      }
+
+      savePerkaraToStorage();
+      renderTLFormSection('BAST_PEMILIK');
+      showTLReportView('BAST_PEMILIK');
+    };
+
     const toLetter = (i: number) => String.fromCharCode(97 + i) + '.';
 
     container.innerHTML = `
       <div style="border:1px solid var(--border-color); padding:10px; border-radius:6px; margin-bottom:10px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
           <span style="font-size:11px; font-weight:700; color:#cbd5e1;">2. BARANG</span>
-          <button type="button" class="btn primary" onclick="addBastItem('barang')" style="padding:2px 8px; font-size:11px;">+ Tambah Barang (b, c..)</button>
+          <button type="button" class="btn primary" onclick="addBastItem('barang')" style="padding:2px 8px; font-size:11px;">+ Tambah Barang</button>
         </div>
         ${rec.TL_BAST_BarangList.map(function(b: any, idx: number) {
           var isFcl = b.jenisKemasan && (b.jenisKemasan.toUpperCase().includes('FCL') || b.jenisKemasan.toLowerCase().includes('peti kemas'));
@@ -904,18 +971,12 @@ export function renderTLFormSection(type: string): void {
                 <div class="grid" style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:6px;">
                   <div>
                     <label style="font-size:10px; color:#94a3b8;">Jumlah Kemasan</label>
-                    <input value="${escText(b.jumlahKemasan ? b.jumlahKemasan : '')}" placeholder="Contoh: 1" oninput="rec.TL_BAST_BarangList[${idx}].jumlahKemasan = this.value; savePerkaraToStorage(); renderTLFormSection('BAST_PEMILIK'); showTLReportView('BAST_PEMILIK');" style="width:100%; padding:6px; background:#0f172a; color:#fff; border:1px solid #475569; border-radius:4px; font-size:11px;">
+                    <input value="${escText(b.jumlahKemasan || '')}" placeholder="Contoh: 1" oninput="rec.TL_BAST_BarangList[${idx}].jumlahKemasan = this.value; updateBastBarangOtomatis(${idx});" style="width:100%; padding:6px; background:#0f172a; color:#fff; border:1px solid #475569; border-radius:4px; font-size:11px;">
                   </div>
                   <div>
                     <label style="font-size:10px; color:#94a3b8;">Jenis Kemasan</label>
-                    <select onchange="rec.TL_BAST_BarangList[${idx}].jenisKemasan = this.value; savePerkaraToStorage(); renderTLFormSection('BAST_PEMILIK'); showTLReportView('BAST_PEMILIK');" style="width:100%; padding:6px; background:#0f172a; color:#fff; border:1px solid #475569; border-radius:4px; font-size:11px;">
-                      <option value="">Pilih Jenis Kemasan...</option>
-                      <option value="FCL" ${b.jenisKemasan === 'FCL' ? 'selected' : ''}>FCL</option>
-                      <option value="LCL" ${b.jenisKemasan === 'LCL' ? 'selected' : ''}>LCL</option>
-                      <option value="LOSS CARGO" ${b.jenisKemasan === 'LOSS CARGO' ? 'selected' : ''}>LOSS CARGO</option>
-                      <option value="Peti Kemas" ${b.jenisKemasan === 'Peti Kemas' ? 'selected' : ''}>Peti Kemas</option>
-                      <option value="Palet" ${b.jenisKemasan === 'Palet' ? 'selected' : ''}>Palet</option>
-                      <option value="Carton" ${b.jenisKemasan === 'Carton' ? 'selected' : ''}>Carton</option>
+                    <select onchange="rec.TL_BAST_BarangList[${idx}].jenisKemasan = this.value; updateBastBarangOtomatis(${idx});" style="width:100%; padding:6px; background:#0f172a; color:#fff; border:1px solid #475569; border-radius:4px; font-size:11px;">
+                      ${renderMasterOptions(MASTER_JENIS_KEMASAN, b.jenisKemasan || '', '- Pilih Kemasan -')}
                     </select>
                   </div>
                 </div>
@@ -923,13 +984,13 @@ export function renderTLFormSection(type: string): void {
                 ${isFcl ? `
                   <div style="margin-bottom:6px;">
                     <label style="font-size:10px; color:#93c5fd;">Nomor Peti Kemas / Kontainer</label>
-                    <input value="${escText(b.nomorKontainer ? b.nomorKontainer : '')}" placeholder="Contoh: OOCL 234567 / 40 feet" oninput="rec.TL_BAST_BarangList[${idx}].nomorKontainer = this.value; savePerkaraToStorage(); renderTLFormSection('BAST_PEMILIK'); showTLReportView('BAST_PEMILIK');" style="width:100%; padding:6px; background:#0f172a; color:#fff; border:1px solid #3b82f6; border-radius:4px; font-size:11px;">
+                    <input value="${escText(b.nomorKontainer || '')}" placeholder="Contoh: OOCL 234567 / 40 feet" oninput="rec.TL_BAST_BarangList[${idx}].nomorKontainer = this.value; updateBastBarangOtomatis(${idx});" style="width:100%; padding:6px; background:#0f172a; color:#fff; border:1px solid #3b82f6; border-radius:4px; font-size:11px;">
                   </div>
                 ` : ''}
 
                 <div style="margin-top:6px;">
                   <label style="font-size:10px; color:#93c5fd;">Preview Jml/Kemasan</label>
-                  <input value="${escText(b.kemasan ? b.kemasan : '')}" oninput="rec.TL_BAST_BarangList[${idx}].kemasan = this.value; savePerkaraToStorage(); showTLReportView('BAST_PEMILIK');" style="width:100%; padding:6px; background:#0f172a; color:#93c5fd; border:1px solid #3b82f6; border-radius:4px; font-size:11px;">
+                  <input value="${escText(b.kemasan || '')}" oninput="rec.TL_BAST_BarangList[${idx}].kemasan = this.value; savePerkaraToStorage(); showTLReportView('BAST_PEMILIK');" style="width:100%; padding:6px; background:#0f172a; color:#93c5fd; border:1px solid #3b82f6; border-radius:4px; font-size:11px;">
                 </div>
               </div>
 
@@ -939,12 +1000,12 @@ export function renderTLFormSection(type: string): void {
                 <div class="grid" style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:6px;">
                   <div>
                     <label style="font-size:10px; color:#94a3b8;">Jumlah Barang</label>
-                    <input value="${escText(b.jumlahBarang ? b.jumlahBarang : '')}" placeholder="Contoh: 12" oninput="rec.TL_BAST_BarangList[${idx}].jumlahBarang = this.value; savePerkaraToStorage(); renderTLFormSection('BAST_PEMILIK'); showTLReportView('BAST_PEMILIK');" style="width:100%; padding:6px; background:#0f172a; color:#fff; border:1px solid #475569; border-radius:4px; font-size:11px;">
+                    <input value="${escText(b.jumlahBarang || '')}" placeholder="Contoh: 12" oninput="rec.TL_BAST_BarangList[${idx}].jumlahBarang = this.value; updateBastBarangOtomatis(${idx});" style="width:100%; padding:6px; background:#0f172a; color:#fff; border:1px solid #475569; border-radius:4px; font-size:11px;">
                   </div>
                   <div>
                     <label style="font-size:10px; color:#94a3b8;">Jenis Koli / Satuan</label>
-                    <select id="bast_satuan_barang_${idx}" onchange="rec.TL_BAST_BarangList[${idx}].satuanBarang = this.value; savePerkaraToStorage(); renderTLFormSection('BAST_PEMILIK'); showTLReportView('BAST_PEMILIK');" style="width:100%; padding:6px; background:#0f172a; color:#fff; border:1px solid #475569; border-radius:4px; font-size:11px;">
-                      <option value="${escText(b.satuanBarang ? b.satuanBarang : '')}">${escText(b.satuanBarang ? b.satuanBarang : 'Pilih Satuan...')}</option>
+                    <select onchange="rec.TL_BAST_BarangList[${idx}].satuanBarang = this.value; updateBastBarangOtomatis(${idx});" style="width:100%; padding:6px; background:#0f172a; color:#fff; border:1px solid #475569; border-radius:4px; font-size:11px;">
+                      ${renderMasterOptions(MASTER_SATUAN_KOLI, b.satuanBarang || '', '- Pilih Satuan -')}
                     </select>
                   </div>
                 </div>
@@ -952,9 +1013,9 @@ export function renderTLFormSection(type: string): void {
                 <div style="margin-bottom:6px;">
                   <label style="font-size:10px; color:#94a3b8;">Nama Barang</label>
                   <div style="display:flex; gap:8px; align-items:center;">
-                    <input value="${escText(b.namaBarang ? b.namaBarang : '')}" placeholder="Contoh: Sepatu / Pakaian" oninput="rec.TL_BAST_BarangList[${idx}].namaBarang = this.value; savePerkaraToStorage(); renderTLFormSection('BAST_PEMILIK'); showTLReportView('BAST_PEMILIK');" style="flex:1; padding:6px; background:#0f172a; color:#fff; border:1px solid #475569; border-radius:4px; font-size:11px;">
+                    <input value="${escText(b.namaBarang || '')}" placeholder="Contoh: Sepatu / Pakaian" oninput="rec.TL_BAST_BarangList[${idx}].namaBarang = this.value; updateBastBarangOtomatis(${idx});" style="flex:1; padding:6px; background:#0f172a; color:#fff; border:1px solid #475569; border-radius:4px; font-size:11px;">
                     <label style="display:inline-flex; align-items:center; gap:4px; font-size:10px; cursor:pointer; color:#cbd5e1; white-space:nowrap; margin:0;">
-                      <input type="checkbox" ${b.pakaiOpsiDll ? 'checked' : ''} onchange="rec.TL_BAST_BarangList[${idx}].pakaiOpsiDll = this.checked; savePerkaraToStorage(); renderTLFormSection('BAST_PEMILIK'); showTLReportView('BAST_PEMILIK');">
+                      <input type="checkbox" ${b.pakaiOpsiDll ? 'checked' : ''} onchange="rec.TL_BAST_BarangList[${idx}].pakaiOpsiDll = this.checked; updateBastBarangOtomatis(${idx});">
                       <span>...dll.</span>
                     </label>
                   </div>
@@ -962,7 +1023,7 @@ export function renderTLFormSection(type: string): void {
 
                 <div style="margin-bottom:6px;">
                   <label style="font-size:10px; color:#cbd5e1;">Pilihan Tambahan Akhiran (Opsional)</label>
-                  <select onchange="rec.TL_BAST_BarangList[${idx}].tambahanAkhiran = this.value; savePerkaraToStorage(); renderTLFormSection('BAST_PEMILIK'); showTLReportView('BAST_PEMILIK');" style="width:100%; padding:6px; background:#0f172a; color:#fff; border:1px solid #475569; border-radius:4px; font-size:11px;">
+                  <select onchange="rec.TL_BAST_BarangList[${idx}].tambahanAkhiran = this.value; updateBastBarangOtomatis(${idx});" style="width:100%; padding:6px; background:#0f172a; color:#fff; border:1px solid #475569; border-radius:4px; font-size:11px;">
                     <option value="" ${!b.tambahanAkhiran ? 'selected' : ''}>- Tanpa Tambahan Akhiran -</option>
                     <option value=" / Kain / Garmen" ${b.tambahanAkhiran === ' / Kain / Garmen' ? 'selected' : ''}> / Kain / Garmen</option>
                     <option value=" / Barang Campuran" ${b.tambahanAkhiran === ' / Barang Campuran' ? 'selected' : ''}> / Barang Campuran</option>
@@ -971,7 +1032,7 @@ export function renderTLFormSection(type: string): void {
 
                 <div style="margin-bottom:6px;">
                   <label style="font-size:10px; color:#34d399;">Uraian Barang</label>
-                  <input value="${escText(b.uraian ? b.uraian : '')}" placeholder="Ketik atau sesuaikan uraian barang..." oninput="rec.TL_BAST_BarangList[${idx}].uraian = this.value; savePerkaraToStorage(); showTLReportView('BAST_PEMILIK');" style="width:100%; padding:6px; background:#0f172a; color:#34d399; border:1px solid #34d399; border-radius:4px; font-size:11px;">
+                  <input value="${escText(b.uraian || '')}" placeholder="Ketik atau sesuaikan uraian barang..." oninput="rec.TL_BAST_BarangList[${idx}].uraian = this.value; savePerkaraToStorage(); showTLReportView('BAST_PEMILIK');" style="width:100%; padding:6px; background:#0f172a; color:#34d399; border:1px solid #34d399; border-radius:4px; font-size:11px;">
                 </div>
               </div>
 
@@ -981,21 +1042,10 @@ export function renderTLFormSection(type: string): void {
         }).join('')}
       </div>
 
-      <script>
-        setTimeout(function() {
-          if (typeof cloneDropdown === 'function') {
-            var selects = document.querySelectorAll("[id^='bast_satuan_barang_']");
-            for (var i = 0; i < selects.length; i++) {
-              cloneDropdown('Jenis_Koli_Select', selects[i].id);
-            }
-          }
-        }, 100);
-      </script>
-
       <div style="border:1px solid var(--border-color); padding:10px; border-radius:6px; margin-bottom:10px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
           <span style="font-size:11px; font-weight:700; color:#cbd5e1;">3. DOKUMEN</span>
-          <button type="button" class="btn primary" onclick="addBastItem('dokumen')" style="padding:2px 8px; font-size:11px;">+ Tambah Dokumen (b, c..)</button>
+          <button type="button" class="btn primary" onclick="addBastItem('dokumen')" style="padding:2px 8px; font-size:11px;">+ Tambah Dokumen</button>
         </div>
         ${rec.TL_BAST_DokumenList.map((d: any, idx: number) => `
           <div style="background:#1e293b; padding:8px; border-radius:4px; margin-bottom:6px;">
@@ -1009,7 +1059,7 @@ export function renderTLFormSection(type: string): void {
       <div style="border:1px solid var(--border-color); padding:10px; border-radius:6px; margin-bottom:10px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
           <span style="font-size:11px; font-weight:700; color:#cbd5e1;">4. ORANG</span>
-          <button type="button" class="btn primary" onclick="addBastItem('orang')" style="padding:2px 8px; font-size:11px;">+ Tambah Orang (b, c..)</button>
+          <button type="button" class="btn primary" onclick="addBastItem('orang')" style="padding:2px 8px; font-size:11px;">+ Tambah Orang</button>
         </div>
         ${rec.TL_BAST_OrangList.map((o: any, idx: number) => `
           <div style="background:#1e293b; padding:8px; border-radius:4px; margin-bottom:6px;">
@@ -1048,7 +1098,7 @@ export function renderTLFormSection(type: string): void {
             }
             showTLReportView('BAST_PEMILIK');
           ">
-            ${optionsHtml}
+            ${renderMasterOptions(MASTER_RANGKA_PENYERAHAN, selectedRangka, '- Pilih Rangka Penyerahan -')}
           </select>
           <div id="wrapper_manual_rangka" style="display: ${isManualRangka ? 'block' : 'none'};">
             <input id="input_manual_rangka" placeholder="Ketik alasan lainnya..." value="${escText(selectedRangka)}" oninput="saveDynamicValTL('TL_Rangka_Penyerahan', this.value); showTLReportView('BAST_PEMILIK');">
@@ -1077,326 +1127,312 @@ export function renderTLFormSection(type: string): void {
       </div>
     `;
   } else if (type === 'BA_SEGEL') {
-  let rawDate = rec.TL_Tanggal_Surat || '';
-  let autoDateInfo = autoGenerateTeksTanggalBA(rawDate);
-  let displayHari = rec.TL_Segel_Hari || autoDateInfo.hari || '';
-  let displayTglHuruf = rec.TL_Segel_Tgl_Huruf || autoDateInfo.teksLengkap || '';
+    let rawDate = rec.TL_Tanggal_Surat || '';
+    let autoDateInfo = autoGenerateTeksTanggalBA(rawDate);
+    let displayHari = rec.TL_Segel_Hari || autoDateInfo.hari || '';
+    let displayTglHuruf = rec.TL_Segel_Tgl_Huruf || autoDateInfo.teksLengkap || '';
 
-  // Menarik nilai default dari Nomor_SPLIT dan Tanggal_SPLIT di modal perkara jika belum diisi manual di TL
-  let defaultSplitNo = rec.TL_Segel_No_SPLI || rec.Nomor_SPLIT || '';
-  let defaultSplitTgl = rec.TL_Segel_Tgl_SPLI || rec.Tanggal_SPLIT || '';
+    let defaultSplitNo = rec.TL_Segel_No_SPLI || rec.Nomor_SPLIT || '';
+    let defaultSplitTgl = rec.TL_Segel_Tgl_SPLI || rec.Tanggal_SPLIT || '';
 
-  container.innerHTML = `
-    <!-- 1. NOMOR & TANGGAL BA SEGEL -->
-    <div style="background:#0f172a; border:1px solid var(--border-color, #334155); padding:12px; border-radius:8px; margin-bottom:14px;">
-      <span style="font-size:11px; font-weight:700; color:#fbbf24; letter-spacing:0.5px; display:flex; align-items:center; gap:6px; margin-bottom:10px;">
-        <i class="fi fi-rr-document"></i> NOMOR & TANGGAL BA SEGEL
-      </span>
-      <div class="grid" style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:10px; margin-bottom:8px;">
-        <div>
-          <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Nomor BA Segel (Cukup Angka)</label>
-          <input value="${escText(rec.TL_Segel_Num || '')}" oninput="saveDynamicValTL('TL_Segel_Num', this.value)" placeholder="Contoh: 1" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
+    container.innerHTML = `
+      <div style="background:#0f172a; border:1px solid var(--border-color, #334155); padding:12px; border-radius:8px; margin-bottom:14px;">
+        <span style="font-size:11px; font-weight:700; color:#fbbf24; letter-spacing:0.5px; display:flex; align-items:center; gap:6px; margin-bottom:10px;">
+          <i class="fi fi-rr-document"></i> NOMOR & TANGGAL BA SEGEL
+        </span>
+        <div class="grid" style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:10px; margin-bottom:8px;">
+          <div>
+            <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Nomor BA Segel (Cukup Angka)</label>
+            <input value="${escText(rec.TL_Segel_Num || '')}" oninput="saveDynamicValTL('TL_Segel_Num', this.value)" placeholder="Contoh: 1" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
+          </div>
+          <div>
+            <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Tanggal Surat</label>
+            <input type="date" value="${escText(rawDate)}" oninput="
+              let val = this.value;
+              saveDynamicValTL('TL_Tanggal_Surat', val);
+              let gen = autoGenerateTeksTanggalBA(val);
+              let hariEl = document.getElementById('editorHariSegelInput') as HTMLInputElement;
+              let hurufEl = document.getElementById('editorHurufSegelInput') as HTMLInputElement;
+              if (hariEl) { hariEl.value = gen.hari; saveDynamicValTL('TL_Segel_Hari', gen.hari); }
+              if (hurufEl) { hurufEl.value = gen.teksLengkap; saveDynamicValTL('TL_Segel_Tgl_Huruf', gen.teksLengkap); }
+            " style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
+          </div>
         </div>
-        <div>
-          <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Tanggal Surat</label>
-          <input type="date" value="${escText(rawDate)}" oninput="
-            let val = this.value;
-            saveDynamicValTL('TL_Tanggal_Surat', val);
-            let gen = autoGenerateTeksTanggalBA(val);
-            let hariEl = document.getElementById('editorHariSegelInput') as HTMLInputElement;
-            let hurufEl = document.getElementById('editorHurufSegelInput') as HTMLInputElement;
-            if (hariEl) { hariEl.value = gen.hari; saveDynamicValTL('TL_Segel_Hari', gen.hari); }
-            if (hurufEl) { hurufEl.value = gen.teksLengkap; saveDynamicValTL('TL_Segel_Tgl_Huruf', gen.teksLengkap); }
-          " style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
+        <div class="grid" style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:10px; margin-bottom:8px;">
+          <div>
+            <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Hari Pembukaan Segel</label>
+            <input id="editorHariSegelInput" value="${escText(displayHari)}" oninput="saveDynamicValTL('TL_Segel_Hari', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
+          </div>
+          <div>
+            <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Nomor SPLIT (Otomatis dari Perkara)</label>
+            <input value="${escText(defaultSplitNo)}" oninput="saveDynamicValTL('TL_Segel_No_SPLI', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
+          </div>
         </div>
-      </div>
-      <div class="grid" style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:10px; margin-bottom:8px;">
-        <div>
-          <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Hari Pembukaan Segel</label>
-          <input id="editorHariSegelInput" value="${escText(displayHari)}" oninput="saveDynamicValTL('TL_Segel_Hari', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
-        </div>
-        <div>
-          <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Nomor SPLIT (Otomatis dari Perkara)</label>
-          <input value="${escText(defaultSplitNo)}" oninput="saveDynamicValTL('TL_Segel_No_SPLI', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
-        </div>
-      </div>
-      <div style="margin-bottom:8px;">
-        <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Tanggal Dalam Huruf</label>
-        <input id="editorHurufSegelInput" value="${escText(displayTglHuruf)}" oninput="saveDynamicValTL('TL_Segel_Tgl_Huruf', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
-      </div>
-      <div>
-        <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Tanggal SPLIT (Otomatis dari Perkara)</label>
-        <input type="date" value="${escText(defaultSplitTgl)}" oninput="saveDynamicValTL('TL_Segel_Tgl_SPLI', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
-      </div>
-    </div>
-
-    <!-- 2. A. SARANA PENGANGKUT -->
-    <div style="border:1px solid var(--border-color, #334155); padding:12px; border-radius:8px; margin-bottom:12px;">
-      <div style="font-size:11px; font-weight:700; color:#fbbf24; margin-bottom:8px; text-transform:uppercase;">A. Sarana Pengangkut</div>
-      <div class="grid" style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:10px; margin-bottom:8px;">
-        <div><label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Nama & Jenis Sarkut</label><input value="${escText(rec.TL_Segel_Nama_Sarkut || '')}" oninput="saveDynamicValTL('TL_Segel_Nama_Sarkut', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;"></div>
-        <div><label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">No. Register Sarkut</label><input value="${escText(rec.TL_Segel_Reg_Sarkut || '')}" oninput="saveDynamicValTL('TL_Segel_Reg_Sarkut', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;"></div>
-      </div>
-      <div class="grid" style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:10px; margin-bottom:8px;">
-        <div><label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Bendera</label><input value="${escText(rec.TL_Segel_Bendera || '')}" oninput="saveDynamicValTL('TL_Segel_Bendera', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;"></div>
-        <div><label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Nahkoda / Pilot / Pengemudi</label><input value="${escText(rec.TL_Segel_Nahkoda || '')}" oninput="saveDynamicValTL('TL_Segel_Nahkoda', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;"></div>
-      </div>
-      <div><label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Nomor Identitas Nahkoda</label><input value="${escText(rec.TL_Segel_Nik_Nahkoda || '')}" oninput="saveDynamicValTL('TL_Segel_Nik_Nahkoda', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;"></div>
-    </div>
-
-    <!-- 3. B. BARANG -->
-    <div style="border:1px solid var(--border-color, #334155); padding:12px; border-radius:8px; margin-bottom:12px;">
-      <div style="font-size:11px; font-weight:700; color:#fbbf24; margin-bottom:8px; text-transform:uppercase;">B. Barang</div>
-      <div class="grid" style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:10px; margin-bottom:8px;">
-        <div><label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Jml/Jenis/No Peti Kemas/Kemasan</label><input value="${escText(rec.TL_Segel_Jml_Barang || '')}" oninput="saveDynamicValTL('TL_Segel_Jml_Barang', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;"></div>
-        <div><label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Jumlah/Jenis Barang</label><input value="${escText(rec.TL_Segel_Jenis_Barang || '')}" oninput="saveDynamicValTL('TL_Segel_Jenis_Barang', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;"></div>
-      </div>
-      <div class="grid" style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:10px; margin-bottom:8px;">
-        <div><label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Jenis/No & Tgl Dokumen</label><input value="${escText(rec.TL_Segel_Dok_Barang || '')}" oninput="saveDynamicValTL('TL_Segel_Dok_Barang', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;"></div>
-        <div><label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Pemilik/Importir/Eksportir/Kuasa</label><input value="${escText(rec.TL_Segel_Pemilik_Barang || '')}" oninput="saveDynamicValTL('TL_Segel_Pemilik_Barang', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;"></div>
-      </div>
-      <div><label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Nomor Identitas (NPWP) Barang</label><input value="${escText(rec.TL_Segel_NPWP_Barang || '')}" oninput="saveDynamicValTL('TL_Segel_NPWP_Barang', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;"></div>
-    </div>
-
-    <!-- 4. C. BANGUNAN ATAU TEMPAT -->
-    <div style="border:1px solid var(--border-color, #334155); padding:12px; border-radius:8px; margin-bottom:12px;">
-      <div style="font-size:11px; font-weight:700; color:#fbbf24; margin-bottom:8px; text-transform:uppercase;">C. Bangunan Atau Tempat</div>
-      <div class="grid" style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:10px; margin-bottom:8px;">
-        <div><label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Alamat Bangunan/Tempat</label><input value="${escText(rec.TL_Segel_Alamat_Bangunan || '')}" oninput="saveDynamicValTL('TL_Segel_Alamat_Bangunan', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;"></div>
-        <div><label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">No. Reg Bangunan/NPPBKC/NPWP</label><input value="${escText(rec.TL_Segel_Reg_Bangunan || '')}" oninput="saveDynamicValTL('TL_Segel_Reg_Bangunan', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;"></div>
-      </div>
-      <div class="grid" style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:10px; margin-bottom:8px;">
-        <div><label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Nama Pemilik/Yang Menguasai</label><input value="${escText(rec.TL_Segel_Nama_Pemilik_Tempat || '')}" oninput="saveDynamicValTL('TL_Segel_Nama_Pemilik_Tempat', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;"></div>
-        <div><label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Nomor Identitas Pemilik Tempat</label><input value="${escText(rec.TL_Segel_Nik_Pemilik_Tempat || '')}" oninput="saveDynamicValTL('TL_Segel_Nik_Pemilik_Tempat', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;"></div>
-      </div>
-    </div>
-
-    <!-- 5. DATA SAKSI / PENGHADAP -->
-    <div style="border:1px solid var(--border-color, #334155); padding:12px; border-radius:8px; margin-bottom:12px;">
-      <div style="font-size:11px; font-weight:700; color:#fbbf24; margin-bottom:8px; text-transform:uppercase;">Data Saksi / Penghadap</div>
-      <div class="grid" style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:10px; margin-bottom:8px;">
-        <div><label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Nama Saksi / Penghadap</label><input value="${escText(rec.TL_Nama_Pemilik || '')}" oninput="saveDynamicValTL('TL_Nama_Pemilik', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;"></div>
-        <div><label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">NIK Saksi</label><input value="${escText(rec.TL_NIK_Pemilik || '')}" oninput="saveDynamicValTL('TL_NIK_Pemilik', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;"></div>
-      </div>
-      <div style="margin-bottom:8px;">
-        <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Pekerjaan Saksi</label>
-        <input value="${escText(rec.TL_Segel_Pekerjaan || '')}" oninput="saveDynamicValTL('TL_Segel_Pekerjaan', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
-      </div>
-      <div>
-        <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Alamat Saksi</label>
-        <textarea oninput="saveDynamicValTL('TL_Alamat_Pemilik', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px; min-height:60px;">${escText(rec.TL_Alamat_Pemilik || '')}</textarea>
-      </div>
-    </div>
-
-    <!-- 6. PETUGAS PENANDATANGAN -->
-    <div style="border:1px solid var(--border-color, #334155); padding:12px; border-radius:8px;">
-      <div style="font-size:11px; font-weight:700; color:#fbbf24; margin-bottom:8px; text-transform:uppercase;">Petugas Penandatangan</div>
-      <div class="grid" style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:10px; margin-bottom:8px;">
-        <div><label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Petugas Pembuka Segel 1 (Penerima 1)</label><input value="${escText(rec.TL_Segel_P1 || '')}" oninput="saveDynamicValTL('TL_Segel_P1', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;"></div>
-        <div><label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">NIP Petugas 1</label><input value="${escText(rec.TL_NIP_Segel_1 || '')}" oninput="saveDynamicValTL('TL_NIP_Segel_1', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;"></div>
-      </div>
-      <div class="grid" style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:10px;">
-        <div><label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Petugas Pembuka Segel 2 (Saksi Penerima 1)</label><input value="${escText(rec.TL_Segel_P2 || '')}" oninput="saveDynamicValTL('TL_Segel_P2', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;"></div>
-        <div><label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">NIP Petugas 2</label><input value="${escText(rec.TL_NIP_Segel_2 || '')}" oninput="saveDynamicValTL('TL_NIP_Segel_2', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;"></div>
-      </div>
-    </div>
-  `;
-  } else if (type === 'KEP_BDN') {
-  let listBarang = rec.KEP_List_Barang || [];
-  
-  let rowsInputHtml = listBarang.map((item: any, idx: number) => `
-    <tr data-idx="${idx}">
-      <td style="padding:4px;"><input value="${escText(item.jumlah || '')}" oninput="updateKEPBarang(${idx}, 'jumlah', this.value)" placeholder="Jumlah" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:6px; border-radius:4px; font-size:11px;"></td>
-      <td style="padding:4px;"><input value="${escText(item.uraian || '')}" oninput="updateKEPBarang(${idx}, 'uraian', this.value)" placeholder="Uraian Barang" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:6px; border-radius:4px; font-size:11px;"></td>
-      <td style="padding:4px;"><input value="${escText(item.kondisi || '')}" oninput="updateKEPBarang(${idx}, 'kondisi', this.value)" placeholder="Kondisi" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:6px; border-radius:4px; font-size:11px;"></td>
-      <td style="padding:4px;"><input value="${escText(item.asal || '')}" oninput="updateKEPBarang(${idx}, 'asal', this.value)" placeholder="Negara Asal" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:6px; border-radius:4px; font-size:11px;"></td>
-      <td style="padding:4px;"><input value="${escText(item.ket || '')}" oninput="updateKEPBarang(${idx}, 'ket', this.value)" placeholder="Ket" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:6px; border-radius:4px; font-size:11px;"></td>
-      <td style="padding:4px; text-align:center;"><button type="button" onclick="removeKEPBarang(${idx})" style="background:#dc2626; color:#fff; border:none; padding:6px 10px; border-radius:4px; cursor:pointer; font-size:11px;">Hapus</button></td>
-    </tr>
-  `).join('');
-
-  container.innerHTML = `
-    <!-- 1. NOMOR & TANGGAL KEPUTUSAN KEP -->
-    <div style="background:#0f172a; border:1px solid var(--border-color, #334155); padding:12px; border-radius:8px; margin-bottom:14px;">
-      <span style="font-size:11px; font-weight:700; color:#fbbf24; letter-spacing:0.5px; display:flex; align-items:center; gap:6px; margin-bottom:10px;">
-        <i class="fi fi-rr-document"></i> NOMOR & TANGGAL KEPUTUSAN KEP
-      </span>
-      <div class="grid" style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:10px; margin-bottom:8px;">
-        <div>
-          <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Nomor Keputusan KEP</label>
-          <input value="${escText(rec.KEP_Nomor_ND || '')}" oninput="saveDynamicValTL('KEP_Nomor_ND', this.value)" placeholder="Contoh: KEP-..." style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
-        </div>
-        <div>
-          <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Tanggal Keputusan KEP</label>
-          <input type="date" value="${escText(rec.KEP_Tanggal_ND || '')}" oninput="saveDynamicValTL('KEP_Tanggal_ND', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
-        </div>
-      </div>
-    </div>
-
-    <!-- 2. PEJABAT PENANDATANGAN -->
-    <div style="background:#0f172a; border:1px solid var(--border-color, #334155); padding:12px; border-radius:8px; margin-bottom:14px;">
-      <div style="font-size:11px; font-weight:700; color:#fbbf24; margin-bottom:8px; text-transform:uppercase;">Pejabat Penandatangan</div>
-      <div class="grid" style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:10px; margin-bottom:8px;">
-        <div>
-          <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Nama Kepala Kantor</label>
-          <input value="${escText(rec.Kepala_Kantor || '')}" oninput="saveDynamicValTL('Kepala_Kantor', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
-        </div>
-        <div>
-          <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">NIP Kepala Kantor</label>
-          <input value="${escText(rec.NIP_Kepala_Kantor || '')}" oninput="saveDynamicValTL('NIP_Kepala_Kantor', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
-        </div>
-      </div>
-    </div>
-
-    <!-- 3. DAFTAR BARANG YANG DIKUASAI NEGARA -->
-    <div style="background:#0f172a; border:1px solid var(--border-color, #334155); padding:12px; border-radius:8px;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-        <span style="font-size:11px; font-weight:700; color:#fbbf24; text-transform:uppercase;">Daftar Barang yang Dikuasai Negara</span>
-        <button type="button" onclick="addKEPBarang()" style="background:#2563eb; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:11px; font-weight:600;">+ Tambah Barang</button>
-      </div>
-      <div style="overflow-x:auto;">
-        <table style="width:100%; border-collapse:collapse; font-size:11px;">
-          <thead>
-            <tr style="color:#94a3b8; text-align:left; border-bottom:1px solid #334155;">
-              <th style="padding:6px; width:20%;">Jumlah</th>
-              <th style="padding:6px; width:30%;">Uraian</th>
-              <th style="padding:6px; width:15%;">Kondisi</th>
-              <th style="padding:6px; width:15%;">Asal</th>
-              <th style="padding:6px; width:10%;">Ket</th>
-              <th style="padding:6px; width:10%; text-align:center;">Aksi</th>
-            </tr>
-          </thead>
-          <tbody id="kep-barang-tbody">
-            ${rowsInputHtml || '<tr><td colspan="6" style="text-align:center; padding:10px; color:#64748b;">Belum ada data barang. Klik Tambah Barang.</td></tr>'}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  `;
-  } else if (type === 'SPSA') {
-  container.innerHTML = `
-    <!-- 1. INFORMASI NOMOR & TANGGAL SPSA -->
-    <div style="background:#0f172a; border:1px solid var(--border-color, #334155); padding:12px; border-radius:8px; margin-bottom:14px;">
-      <span style="font-size:11px; font-weight:700; color:#fbbf24; letter-spacing:0.5px; display:flex; align-items:center; gap:6px; margin-bottom:10px;">
-        <i class="fi fi-rr-document"></i> INFORMASI NOMOR & TANGGAL SPSA
-      </span>
-      <div class="grid" style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:10px; margin-bottom:8px;">
-        <div>
-          <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Nomor SPSA</label>
-          <input value="${escText(rec.SPSA_Nomor || '')}" oninput="saveDynamicValTL('SPSA_Nomor', this.value)" placeholder="Contoh: 01" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
-        </div>
-        <div>
-          <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Tanggal SPSA</label>
-          <input type="date" value="${escText(rec.SPSA_Tanggal || '')}" oninput="saveDynamicValTL('SPSA_Tanggal', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
-        </div>
-      </div>
-    </div>
-
-    <!-- 2. DETAIL DENDA & JATUH TEMPO -->
-    <div style="background:#0f172a; border:1px solid var(--border-color, #334155); padding:12px; border-radius:8px; margin-bottom:14px;">
-      <span style="font-size:11px; font-weight:700; color:#fbbf24; letter-spacing:0.5px; display:flex; align-items:center; gap:6px; margin-bottom:10px;">
-        <i class="fi fi-rr-money"></i> DETAIL DENDA & JATUH TEMPO
-      </span>
-      <div class="grid" style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:10px; margin-bottom:8px;">
-        <div>
-          <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Besaran Denda</label>
-          <input value="${escText(rec.SPSA_Denda || '')}" oninput="saveDynamicValTL('SPSA_Denda', this.value)" placeholder="Contoh: Rp 10.000.000,-" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
-        </div>
-        <div>
-          <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Jatuh Tempo Pembayaran</label>
-          <input type="date" value="${escText(rec.SPSA_Jatuh_Tempo || '')}" oninput="saveDynamicValTL('SPSA_Jatuh_Tempo', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
-        </div>
-      </div>
-    </div>
-
-    <!-- 3. PASAL & ALASAN PENETAPAN -->
-    <div style="background:#0f172a; border:1px solid var(--border-color, #334155); padding:12px; border-radius:8px;">
-      <span style="font-size:11px; font-weight:700; color:#fbbf24; letter-spacing:0.5px; display:flex; align-items:center; gap:6px; margin-bottom:10px;">
-        <i class="fi fi-rr-books"></i> PASAL & ALASAN PENETAPAN
-      </span>
-      <div style="margin-bottom:10px;">
-        <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Pasal Pelanggaran SPSA</label>
-        <textarea oninput="saveDynamicValTL('SPSA_Pasal_Pelanggaran', this.value)" rows="3" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px; font-family:inherit; font-size:11px;">${escText(rec.SPSA_Pasal_Pelanggaran || '')}</textarea>
-      </div>
-      <div>
-        <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Alasan Penetapan Denda</label>
-        <textarea oninput="saveDynamicValTL('SPSA_Alasan', this.value)" rows="3" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px; font-family:inherit; font-size:11px;">${escText(rec.SPSA_Alasan || '')}</textarea>
-      </div>
-    </div>
-  `;
-} else if (type === 'BAST_LIMPAH') {
-  container.innerHTML = `
-    <!-- 1. WAKTU & TANGGAL PELIMPAHAN -->
-    <div style="background:#0f172a; border:1px solid var(--border-color, #334155); padding:12px; border-radius:8px; margin-bottom:14px;">
-      <span style="font-size:11px; font-weight:700; color:#fbbf24; letter-spacing:0.5px; display:flex; align-items:center; gap:6px; margin-bottom:10px;">
-        <i class="fi fi-rr-calendar"></i> WAKTU & TANGGAL PELIMPAHAN
-      </span>
-      <div class="grid" style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:10px; margin-bottom:8px;">
-        <div>
-          <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Hari Pelimpahan</label>
-          <input value="${escText(rec.Limpah_Hari || '')}" oninput="saveDynamicValTL('Limpah_Hari', this.value)" placeholder="Contoh: Kamis" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
-        </div>
-        <div>
-          <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Tanggal Surat</label>
-          <input type="date" value="${escText(rec.Limpah_Tanggal || '')}" oninput="saveDynamicValTL('Limpah_Tanggal', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
-        </div>
-        <div style="grid-column: span 2;">
+        <div style="margin-bottom:8px;">
           <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Tanggal Dalam Huruf</label>
-          <input value="${escText(rec.Limpah_Tgl_Huruf || '')}" oninput="saveDynamicValTL('Limpah_Tgl_Huruf', this.value)" placeholder="Contoh: dua belas Desember tahun dua ribu dua puluh enam" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
+          <input id="editorHurufSegelInput" value="${escText(displayTglHuruf)}" oninput="saveDynamicValTL('TL_Segel_Tgl_Huruf', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
+        </div>
+        <div>
+          <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Tanggal SPLIT (Otomatis dari Perkara)</label>
+          <input type="date" value="${escText(defaultSplitTgl)}" oninput="saveDynamicValTL('TL_Segel_Tgl_SPLI', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
         </div>
       </div>
-    </div>
 
-    <!-- 2. DATA INSTANSI & PEJABAT PENERIMA (PIHAK KEDUA) -->
-    <div style="background:#0f172a; border:1px solid var(--border-color, #334155); padding:12px; border-radius:8px; margin-bottom:14px;">
-      <span style="font-size:11px; font-weight:700; color:#fbbf24; letter-spacing:0.5px; display:flex; align-items:center; gap:6px; margin-bottom:10px;">
-        <i class="fi fi-rr-building"></i> INSTANSI & PEJABAT PENERIMA (PIHAK KEDUA)
-      </span>
-      <div class="grid" style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:10px; margin-bottom:8px;">
-        <div style="grid-column: span 2;">
-          <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Nama Instansi / Lembaga</label>
-          <input value="${escText(rec.Instansi_Penerima || '')}" oninput="saveDynamicValTL('Instansi_Penerima', this.value)" placeholder="Contoh: Dinas LHK Provinsi Kepri" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
+      <div style="border:1px solid var(--border-color, #334155); padding:12px; border-radius:8px; margin-bottom:12px;">
+        <div style="font-size:11px; font-weight:700; color:#fbbf24; margin-bottom:8px; text-transform:uppercase;">A. Sarana Pengangkut</div>
+        <div class="grid" style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:10px; margin-bottom:8px;">
+          <div><label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Nama & Jenis Sarkut</label><input value="${escText(rec.TL_Segel_Nama_Sarkut || '')}" oninput="saveDynamicValTL('TL_Segel_Nama_Sarkut', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;"></div>
+          <div><label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">No. Register Sarkut</label><input value="${escText(rec.TL_Segel_Reg_Sarkut || '')}" oninput="saveDynamicValTL('TL_Segel_Reg_Sarkut', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;"></div>
         </div>
-        <div>
-          <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Nama Pejabat Penerima</label>
-          <input value="${escText(rec.Limpah_Pejabat_Penerima || '')}" oninput="saveDynamicValTL('Limpah_Pejabat_Penerima', this.value)" placeholder="Nama lengkap & gelar" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
+        <div class="grid" style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:10px; margin-bottom:8px;">
+          <div><label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Bendera</label><input value="${escText(rec.TL_Segel_Bendera || '')}" oninput="saveDynamicValTL('TL_Segel_Bendera', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;"></div>
+          <div><label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Nahkoda / Pilot / Pengemudi</label><input value="${escText(rec.TL_Segel_Nahkoda || '')}" oninput="saveDynamicValTL('TL_Segel_Nahkoda', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;"></div>
         </div>
-        <div>
-          <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">NIP Pejabat Penerima</label>
-          <input value="${escText(rec.Limpah_NIP_Penerima || '')}" oninput="saveDynamicValTL('Limpah_NIP_Penerima', this.value)" placeholder="NIP Pejabat" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
-        </div>
-        <div style="grid-column: span 2;">
-          <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Jabatan Pejabat Penerima</label>
-          <input value="${escText(rec.Limpah_Jabatan_Penerima || '')}" oninput="saveDynamicValTL('Limpah_Jabatan_Penerima', this.value)" placeholder="Contoh: Kepala Dinas / Penyidik Pegawai Negeri Sipil" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
-        </div>
+        <div><label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Nomor Identitas Nahkoda</label><input value="${escText(rec.TL_Segel_Nik_Nahkoda || '')}" oninput="saveDynamicValTL('TL_Segel_Nik_Nahkoda', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;"></div>
       </div>
-    </div>
 
-    <!-- 3. PETUGAS PELIMPAH BEA CUKAI (PIHAK PERTAMA) -->
-    <div style="background:#0f172a; border:1px solid var(--border-color, #334155); padding:12px; border-radius:8px;">
-      <span style="font-size:11px; font-weight:700; color:#fbbf24; letter-spacing:0.5px; display:flex; align-items:center; gap:6px; margin-bottom:10px;">
-        <i class="fi fi-rr-user"></i> PETUGAS PELIMPAH (PIHAK PERTAMA)
-      </span>
-      <div class="grid" style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:10px; margin-bottom:8px;">
-        <div>
-          <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Nama Petugas Pelimpah</label>
-          <input value="${escText(rec.Limpah_Petugas_1 || rec.ketua_tim || '')}" oninput="saveDynamicValTL('Limpah_Petugas_1', this.value)" placeholder="Nama Petugas" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
+      <div style="border:1px solid var(--border-color, #334155); padding:12px; border-radius:8px; margin-bottom:12px;">
+        <div style="font-size:11px; font-weight:700; color:#fbbf24; margin-bottom:8px; text-transform:uppercase;">B. Barang</div>
+        <div class="grid" style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:10px; margin-bottom:8px;">
+          <div><label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Jml/Jenis/No Peti Kemas/Kemasan</label><input value="${escText(rec.TL_Segel_Jml_Barang || '')}" oninput="saveDynamicValTL('TL_Segel_Jml_Barang', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;"></div>
+          <div><label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Jumlah/Jenis Barang</label><input value="${escText(rec.TL_Segel_Jenis_Barang || '')}" oninput="saveDynamicValTL('TL_Segel_Jenis_Barang', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;"></div>
         </div>
-        <div>
-          <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">NIP Petugas Pelimpah</label>
-          <input value="${escText(rec.Limpah_NIP_1 || '')}" oninput="saveDynamicValTL('Limpah_NIP_1', this.value)" placeholder="NIP Petugas" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
+        <div class="grid" style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:10px; margin-bottom:8px;">
+          <div><label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Jenis/No & Tgl Dokumen</label><input value="${escText(rec.TL_Segel_Dok_Barang || '')}" oninput="saveDynamicValTL('TL_Segel_Dok_Barang', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;"></div>
+          <div><label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Pemilik/Importir/Eksportir/Kuasa</label><input value="${escText(rec.TL_Segel_Pemilik_Barang || '')}" oninput="saveDynamicValTL('TL_Segel_Pemilik_Barang', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;"></div>
         </div>
-        <div>
-          <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Pangkat / Golongan</label>
-          <input value="${escText(rec.Limpah_Pangkat_1 || '')}" oninput="saveDynamicValTL('Limpah_Pangkat_1', this.value)" placeholder="Contoh: Penata Tk. I / III/d" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
+        <div><label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Nomor Identitas (NPWP) Barang</label><input value="${escText(rec.TL_Segel_NPWP_Barang || '')}" oninput="saveDynamicValTL('TL_Segel_NPWP_Barang', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;"></div>
+      </div>
+
+      <div style="border:1px solid var(--border-color, #334155); padding:12px; border-radius:8px; margin-bottom:12px;">
+        <div style="font-size:11px; font-weight:700; color:#fbbf24; margin-bottom:8px; text-transform:uppercase;">C. Bangunan Atau Tempat</div>
+        <div class="grid" style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:10px; margin-bottom:8px;">
+          <div><label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Alamat Bangunan/Tempat</label><input value="${escText(rec.TL_Segel_Alamat_Bangunan || '')}" oninput="saveDynamicValTL('TL_Segel_Alamat_Bangunan', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;"></div>
+          <div><label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">No. Reg Bangunan/NPPBKC/NPWP</label><input value="${escText(rec.TL_Segel_Reg_Bangunan || '')}" oninput="saveDynamicValTL('TL_Segel_Reg_Bangunan', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;"></div>
         </div>
-        <div>
-          <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Jabatan Petugas</label>
-          <input value="${escText(rec.Limpah_Jabatan_1 || '')}" oninput="saveDynamicValTL('Limpah_Jabatan_1', this.value)" placeholder="Contoh: Pemeriksa Bea dan Cukai" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
+        <div class="grid" style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:10px; margin-bottom:8px;">
+          <div><label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Nama Pemilik/Yang Menguasai</label><input value="${escText(rec.TL_Segel_Nama_Pemilik_Tempat || '')}" oninput="saveDynamicValTL('TL_Segel_Nama_Pemilik_Tempat', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;"></div>
+          <div><label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Nomor Identitas Pemilik Tempat</label><input value="${escText(rec.TL_Segel_Nik_Pemilik_Tempat || '')}" oninput="saveDynamicValTL('TL_Segel_Nik_Pemilik_Tempat', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;"></div>
         </div>
       </div>
-    </div>
-  `;
+
+      <div style="border:1px solid var(--border-color, #334155); padding:12px; border-radius:8px; margin-bottom:12px;">
+        <div style="font-size:11px; font-weight:700; color:#fbbf24; margin-bottom:8px; text-transform:uppercase;">Data Saksi / Penghadap</div>
+        <div class="grid" style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:10px; margin-bottom:8px;">
+          <div><label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Nama Saksi / Penghadap</label><input value="${escText(rec.TL_Nama_Pemilik || '')}" oninput="saveDynamicValTL('TL_Nama_Pemilik', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;"></div>
+          <div><label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">NIK Saksi</label><input value="${escText(rec.TL_NIK_Pemilik || '')}" oninput="saveDynamicValTL('TL_NIK_Pemilik', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;"></div>
+        </div>
+        <div style="margin-bottom:8px;">
+          <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Pekerjaan Saksi</label>
+          <input value="${escText(rec.TL_Segel_Pekerjaan || '')}" oninput="saveDynamicValTL('TL_Segel_Pekerjaan', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
+        </div>
+        <div>
+          <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Alamat Saksi</label>
+          <textarea oninput="saveDynamicValTL('TL_Alamat_Pemilik', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px; min-height:60px;">${escText(rec.TL_Alamat_Pemilik || '')}</textarea>
+        </div>
+      </div>
+
+      <div style="border:1px solid var(--border-color, #334155); padding:12px; border-radius:8px;">
+        <div style="font-size:11px; font-weight:700; color:#fbbf24; margin-bottom:8px; text-transform:uppercase;">Petugas Penandatangan</div>
+        <div class="grid" style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:10px; margin-bottom:8px;">
+          <div><label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Petugas Pembuka Segel 1 (Penerima 1)</label><input value="${escText(rec.TL_Segel_P1 || '')}" oninput="saveDynamicValTL('TL_Segel_P1', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;"></div>
+          <div><label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">NIP Petugas 1</label><input value="${escText(rec.TL_NIP_Segel_1 || '')}" oninput="saveDynamicValTL('TL_NIP_Segel_1', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;"></div>
+        </div>
+        <div class="grid" style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:10px;">
+          <div><label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Petugas Pembuka Segel 2 (Saksi Penerima 1)</label><input value="${escText(rec.TL_Segel_P2 || '')}" oninput="saveDynamicValTL('TL_Segel_P2', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;"></div>
+          <div><label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">NIP Petugas 2</label><input value="${escText(rec.TL_NIP_Segel_2 || '')}" oninput="saveDynamicValTL('TL_NIP_Segel_2', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;"></div>
+        </div>
+      </div>
+    `;
+  } else if (type === 'KEP_BDN') {
+    let listBarang = rec.KEP_List_Barang || [];
+    
+    let rowsInputHtml = listBarang.map((item: any, idx: number) => `
+      <tr data-idx="${idx}">
+        <td style="padding:4px;"><input value="${escText(item.jumlah || '')}" oninput="updateKEPBarang(${idx}, 'jumlah', this.value)" placeholder="Jumlah" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:6px; border-radius:4px; font-size:11px;"></td>
+        <td style="padding:4px;"><input value="${escText(item.uraian || '')}" oninput="updateKEPBarang(${idx}, 'uraian', this.value)" placeholder="Uraian Barang" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:6px; border-radius:4px; font-size:11px;"></td>
+        <td style="padding:4px;"><input value="${escText(item.kondisi || '')}" oninput="updateKEPBarang(${idx}, 'kondisi', this.value)" placeholder="Kondisi" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:6px; border-radius:4px; font-size:11px;"></td>
+        <td style="padding:4px;"><input value="${escText(item.asal || '')}" oninput="updateKEPBarang(${idx}, 'asal', this.value)" placeholder="Negara Asal" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:6px; border-radius:4px; font-size:11px;"></td>
+        <td style="padding:4px;"><input value="${escText(item.ket || '')}" oninput="updateKEPBarang(${idx}, 'ket', this.value)" placeholder="Ket" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:6px; border-radius:4px; font-size:11px;"></td>
+        <td style="padding:4px; text-align:center;"><button type="button" onclick="removeKEPBarang(${idx})" style="background:#dc2626; color:#fff; border:none; padding:6px 10px; border-radius:4px; cursor:pointer; font-size:11px;">Hapus</button></td>
+      </tr>
+    `).join('');
+
+    container.innerHTML = `
+      <div style="background:#0f172a; border:1px solid var(--border-color, #334155); padding:12px; border-radius:8px; margin-bottom:14px;">
+        <span style="font-size:11px; font-weight:700; color:#fbbf24; letter-spacing:0.5px; display:flex; align-items:center; gap:6px; margin-bottom:10px;">
+          <i class="fi fi-rr-document"></i> NOMOR & TANGGAL KEPUTUSAN KEP
+        </span>
+        <div class="grid" style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:10px; margin-bottom:8px;">
+          <div>
+            <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Nomor Keputusan KEP</label>
+            <input value="${escText(rec.KEP_Nomor_ND || '')}" oninput="saveDynamicValTL('KEP_Nomor_ND', this.value)" placeholder="Contoh: KEP-..." style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
+          </div>
+          <div>
+            <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Tanggal Keputusan KEP</label>
+            <input type="date" value="${escText(rec.KEP_Tanggal_ND || '')}" oninput="saveDynamicValTL('KEP_Tanggal_ND', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
+          </div>
+        </div>
+      </div>
+
+      <div style="background:#0f172a; border:1px solid var(--border-color, #334155); padding:12px; border-radius:8px; margin-bottom:14px;">
+        <div style="font-size:11px; font-weight:700; color:#fbbf24; margin-bottom:8px; text-transform:uppercase;">Pejabat Penandatangan</div>
+        <div class="grid" style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:10px; margin-bottom:8px;">
+          <div>
+            <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Nama Kepala Kantor</label>
+            <input value="${escText(rec.Kepala_Kantor || '')}" oninput="saveDynamicValTL('Kepala_Kantor', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
+          </div>
+          <div>
+            <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">NIP Kepala Kantor</label>
+            <input value="${escText(rec.NIP_Kepala_Kantor || '')}" oninput="saveDynamicValTL('NIP_Kepala_Kantor', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
+          </div>
+        </div>
+      </div>
+
+      <div style="background:#0f172a; border:1px solid var(--border-color, #334155); padding:12px; border-radius:8px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <span style="font-size:11px; font-weight:700; color:#fbbf24; text-transform:uppercase;">Daftar Barang yang Dikuasai Negara</span>
+          <button type="button" onclick="addKEPBarang()" style="background:#2563eb; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:11px; font-weight:600;">+ Tambah Barang</button>
+        </div>
+        <div style="overflow-x:auto;">
+          <table style="width:100%; border-collapse:collapse; font-size:11px;">
+            <thead>
+              <tr style="color:#94a3b8; text-align:left; border-bottom:1px solid #334155;">
+                <th style="padding:6px; width:20%;">Jumlah</th>
+                <th style="padding:6px; width:30%;">Uraian</th>
+                <th style="padding:6px; width:15%;">Kondisi</th>
+                <th style="padding:6px; width:15%;">Asal</th>
+                <th style="padding:6px; width:10%;">Ket</th>
+                <th style="padding:6px; width:10%; text-align:center;">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="kep-barang-tbody">
+              ${rowsInputHtml || '<tr><td colspan="6" style="text-align:center; padding:10px; color:#64748b;">Belum ada data barang. Klik Tambah Barang.</td></tr>'}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  } else if (type === 'SPSA') {
+    container.innerHTML = `
+      <div style="background:#0f172a; border:1px solid var(--border-color, #334155); padding:12px; border-radius:8px; margin-bottom:14px;">
+        <span style="font-size:11px; font-weight:700; color:#fbbf24; letter-spacing:0.5px; display:flex; align-items:center; gap:6px; margin-bottom:10px;">
+          <i class="fi fi-rr-document"></i> INFORMASI NOMOR & TANGGAL SPSA
+        </span>
+        <div class="grid" style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:10px; margin-bottom:8px;">
+          <div>
+            <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Nomor SPSA</label>
+            <input value="${escText(rec.SPSA_Nomor || '')}" oninput="saveDynamicValTL('SPSA_Nomor', this.value)" placeholder="Contoh: 01" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
+          </div>
+          <div>
+            <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Tanggal SPSA</label>
+            <input type="date" value="${escText(rec.SPSA_Tanggal || '')}" oninput="saveDynamicValTL('SPSA_Tanggal', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
+          </div>
+        </div>
+      </div>
+
+      <div style="background:#0f172a; border:1px solid var(--border-color, #334155); padding:12px; border-radius:8px; margin-bottom:14px;">
+        <span style="font-size:11px; font-weight:700; color:#fbbf24; letter-spacing:0.5px; display:flex; align-items:center; gap:6px; margin-bottom:10px;">
+          <i class="fi fi-rr-money"></i> DETAIL DENDA & JATUH TEMPO
+        </span>
+        <div class="grid" style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:10px; margin-bottom:8px;">
+          <div>
+            <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Besaran Denda</label>
+            <input value="${escText(rec.SPSA_Denda || '')}" oninput="saveDynamicValTL('SPSA_Denda', this.value)" placeholder="Contoh: Rp 10.000.000,-" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
+          </div>
+          <div>
+            <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Jatuh Tempo Pembayaran</label>
+            <input type="date" value="${escText(rec.SPSA_Jatuh_Tempo || '')}" oninput="saveDynamicValTL('SPSA_Jatuh_Tempo', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
+          </div>
+        </div>
+      </div>
+
+      <div style="background:#0f172a; border:1px solid var(--border-color, #334155); padding:12px; border-radius:8px;">
+        <span style="font-size:11px; font-weight:700; color:#fbbf24; letter-spacing:0.5px; display:flex; align-items:center; gap:6px; margin-bottom:10px;">
+          <i class="fi fi-rr-books"></i> PASAL & ALASAN PENETAPAN
+        </span>
+        <div style="margin-bottom:10px;">
+          <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Pasal Pelanggaran SPSA</label>
+          <textarea oninput="saveDynamicValTL('SPSA_Pasal_Pelanggaran', this.value)" rows="3" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px; font-family:inherit; font-size:11px;">${escText(rec.SPSA_Pasal_Pelanggaran || '')}</textarea>
+        </div>
+        <div>
+          <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Alasan Penetapan Denda</label>
+          <textarea oninput="saveDynamicValTL('SPSA_Alasan', this.value)" rows="3" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px; font-family:inherit; font-size:11px;">${escText(rec.SPSA_Alasan || '')}</textarea>
+        </div>
+      </div>
+    `;
+  } else if (type === 'BAST_LIMPAH') {
+    container.innerHTML = `
+      <div style="background:#0f172a; border:1px solid var(--border-color, #334155); padding:12px; border-radius:8px; margin-bottom:14px;">
+        <span style="font-size:11px; font-weight:700; color:#fbbf24; letter-spacing:0.5px; display:flex; align-items:center; gap:6px; margin-bottom:10px;">
+          <i class="fi fi-rr-calendar"></i> WAKTU & TANGGAL PELIMPAHAN
+        </span>
+        <div class="grid" style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:10px; margin-bottom:8px;">
+          <div>
+            <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Hari Pelimpahan</label>
+            <input value="${escText(rec.Limpah_Hari || '')}" oninput="saveDynamicValTL('Limpah_Hari', this.value)" placeholder="Contoh: Kamis" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
+          </div>
+          <div>
+            <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Tanggal Surat</label>
+            <input type="date" value="${escText(rec.Limpah_Tanggal || '')}" oninput="saveDynamicValTL('Limpah_Tanggal', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
+          </div>
+          <div style="grid-column: span 2;">
+            <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Tanggal Dalam Huruf</label>
+            <input value="${escText(rec.Limpah_Tgl_Huruf || '')}" oninput="saveDynamicValTL('Limpah_Tgl_Huruf', this.value)" placeholder="Contoh: dua belas Desember tahun dua ribu dua puluh enam" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
+          </div>
+        </div>
+      </div>
+
+      <div style="background:#0f172a; border:1px solid var(--border-color, #334155); padding:12px; border-radius:8px; margin-bottom:14px;">
+        <span style="font-size:11px; font-weight:700; color:#fbbf24; letter-spacing:0.5px; display:flex; align-items:center; gap:6px; margin-bottom:10px;">
+          <i class="fi fi-rr-building"></i> INSTANSI & PEJABAT PENERIMA (PIHAK KEDUA)
+        </span>
+        <div class="grid" style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:10px; margin-bottom:8px;">
+          <div style="grid-column: span 2;">
+            <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Nama Instansi / Lembaga</label>
+            <input value="${escText(rec.Instansi_Penerima || '')}" oninput="saveDynamicValTL('Instansi_Penerima', this.value)" placeholder="Contoh: Dinas LHK Provinsi Kepri" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
+          </div>
+          <div>
+            <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Nama Pejabat Penerima</label>
+            <input value="${escText(rec.Limpah_Pejabat_Penerima || '')}" oninput="saveDynamicValTL('Limpah_Pejabat_Penerima', this.value)" placeholder="Nama lengkap & gelar" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
+          </div>
+          <div>
+            <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">NIP Pejabat Penerima</label>
+            <input value="${escText(rec.Limpah_NIP_Penerima || '')}" oninput="saveDynamicValTL('Limpah_NIP_Penerima', this.value)" placeholder="NIP Pejabat" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
+          </div>
+          <div style="grid-column: span 2;">
+            <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Jabatan Pejabat Penerima</label>
+            <input value="${escText(rec.Limpah_Jabatan_Penerima || '')}" oninput="saveDynamicValTL('Limpah_Jabatan_Penerima', this.value)" placeholder="Contoh: Kepala Dinas / Penyidik Pegawai Negeri Sipil" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
+          </div>
+        </div>
+      </div>
+
+      <div style="background:#0f172a; border:1px solid var(--border-color, #334155); padding:12px; border-radius:8px;">
+        <span style="font-size:11px; font-weight:700; color:#fbbf24; letter-spacing:0.5px; display:flex; align-items:center; gap:6px; margin-bottom:10px;">
+          <i class="fi fi-rr-user"></i> PETUGAS PELIMPAH (PIHAK PERTAMA)
+        </span>
+        <div class="grid" style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:10px; margin-bottom:8px;">
+          <div>
+            <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Nama Petugas Pelimpah</label>
+            <input value="${escText(rec.Limpah_Petugas_1 || rec.ketua_tim || '')}" oninput="saveDynamicValTL('Limpah_Petugas_1', this.value)" placeholder="Nama Petugas" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
+          </div>
+          <div>
+            <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">NIP Petugas Pelimpah</label>
+            <input value="${escText(rec.Limpah_NIP_1 || '')}" oninput="saveDynamicValTL('Limpah_NIP_1', this.value)" placeholder="NIP Petugas" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
+          </div>
+          <div>
+            <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Pangkat / Golongan</label>
+            <select onchange="saveDynamicValTL('Limpah_Pangkat_1', this.value)" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px; font-size:11px;">
+              ${renderMasterOptions(MASTER_GOLONGAN_PANGKAT, rec.Limpah_Pangkat_1 || '', '- Pilih Golongan -')}
+            </select>
+          </div>
+          <div>
+            <label style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Jabatan Petugas</label>
+            <input value="${escText(rec.Limpah_Jabatan_1 || '')}" oninput="saveDynamicValTL('Limpah_Jabatan_1', this.value)" placeholder="Contoh: Pemeriksa Bea dan Cukai" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 10px; border-radius:6px; margin-top:4px;">
+          </div>
+        </div>
+      </div>
+    `;
   }
 }
 

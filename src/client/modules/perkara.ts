@@ -1,17 +1,41 @@
 import { store, savePerkaraToStorage, loadPerkaraFromStorage } from '../state/store.js';
-import { defaultPasalClusters, defaultKantorList } from '../config/constants.js';
+import { 
+  defaultPasalClusters, 
+  defaultKantorList,
+  MASTER_ASAL_PERKARA,
+  MASTER_JENIS_PENINDAKAN,
+  MASTER_JENIS_PELANGGARAN,
+  MASTER_JENIS_PERKARA,
+  MASTER_STATUS_PENANGKAPAN,
+  MASTER_MODUS_OPERANDI,
+  MASTER_UMUR_PELAKU,
+  MASTER_JENIS_KELAMIN,
+  MASTER_PEKERJAAN,
+  MASTER_KONDISI_BARANG,
+  MASTER_SATUAN_KOLI,
+  MASTER_JENIS_DOKUMEN_PABEAN,
+  MASTER_DOKUMEN_PELENGKAP,
+  MASTER_JENIS_IDENTITAS,
+  MASTER_UKURAN_KONTAINER,
+  MASTER_KOMODITI,
+  MASTER_AKHIRAN_BARANG,
+  MASTER_GOLONGAN_PANGKAT,
+  MASTER_JABATAN_DINAS,
+  MASTER_JABATAN_TIM_PENELITI,
+  populateSelectElement
+} from '../config/constants.js';
 import { 
   escText, 
   getVal, 
   formatDate, 
   formatDateIndo, 
   formatModusVerb, 
-  terbilangHuruf, 
-  generateNextBookingNumber,
-  validateMasterOperationalData
+  terbilangHuruf
 } from '../utils/formatters.js';
 import { showToast, showToastConfirm } from './ui.js';
 import { refreshReportTableUI, updateReportLive } from './editor.js';
+import { validateMasterOperationalData } from '../utils/validators.js';
+import { generateNextBookingNumber } from '../utils/generators.js';
 
 let currentPerkaraPage = 1;
 const rowsPerPagePerkara = 5;
@@ -43,15 +67,50 @@ async function saveServerConfig(key: string, val: any): Promise<void> {
   }
 }
 
+// Inisialisasi dropdown form perkara dari data master terpusat
+export function initPerkaraDropdownsFromMaster(): void {
+  populateSelectElement('Asal_Perkara_Select', MASTER_ASAL_PERKARA, '', '-');
+  populateSelectElement('Jenis_Penindakan_Select', MASTER_JENIS_PENINDAKAN, '', '-');
+  populateSelectElement('Jenis_Pelanggaran_Select', MASTER_JENIS_PELANGGARAN, '', '-');
+  populateSelectElement('Jenis_Perkara_Select', MASTER_JENIS_PERKARA, '', '-');
+  populateSelectElement('Status_Penangkapan_Select', MASTER_STATUS_PENANGKAPAN, '', '-');
+  populateSelectElement('Modus_Operandi_Select', MASTER_MODUS_OPERANDI, '', '-');
+  populateSelectElement('Umur_Pelaku', MASTER_UMUR_PELAKU, '', '- Pilih Usia -');
+  populateSelectElement('Jenis_Kelamin_Pelaku', MASTER_JENIS_KELAMIN, '', '-');
+  populateSelectElement('Jenis_Identitas_Select', MASTER_JENIS_IDENTITAS, 'NIK', '');
+  populateSelectElement('Pekerjaan_Select', MASTER_PEKERJAAN, '', '-');
+  populateSelectElement('Komoditi_Select', MASTER_KOMODITI, '', '- Pilih Komoditi -');
+  populateSelectElement('Ukuran_Kontainer_Select', MASTER_UKURAN_KONTAINER, '', '-');
+  populateSelectElement('Jenis_Koli_Select', MASTER_SATUAN_KOLI, '', '- Pilih Jenis Koli -');
+  populateSelectElement('Jenis_Dok_Pemberitahuan_Select', MASTER_JENIS_DOKUMEN_PABEAN, 'Tanpa Dokumen', '');
+  populateSelectElement('Jenis_Dok_Pelengkap_Select', MASTER_DOKUMEN_PELENGKAP, '-', '- (Tanpa Dokumen Pelengkap)');
+
+  // 1. Kumpulkan seluruh master opsi jabatan
+  const allJabatan = Array.from(new Set([...MASTER_JABATAN_DINAS, ...MASTER_JABATAN_TIM_PENELITI]));
+
+  // 2. Populasi Dropdown Jabatan
+  populateSelectElement('form_jabatan_kabid', allJabatan, 'Kepala Bidang Penindakan dan Penyidikan', '- Pilih Jabatan -');
+  populateSelectElement('form_jabatan_seksi', allJabatan, 'Kepala Seksi Penyidikan', '- Pilih Jabatan -');
+  populateSelectElement('form_jabatan_ketua_tim', allJabatan, 'Ketua Tim Peneliti', '- Pilih Jabatan -');
+  populateSelectElement('form_jabatan_pembuat_lpp', allJabatan, 'Petugas LPP', '- Pilih Jabatan -');
+  populateSelectElement('form_jabatan_lpf', allJabatan, 'Petugas LPF', '- Pilih Jabatan -');
+  populateSelectElement('form_jabatan_indak_1', allJabatan, 'Petugas Penindakan 1', '- Pilih Jabatan -');
+  populateSelectElement('form_jabatan_indak_2', allJabatan, 'Petugas Penindakan 2', '- Pilih Jabatan -');
+  populateSelectElement('form_jabatan_indak_lainnya', allJabatan, 'Petugas Penindakan 3', '- Pilih Jabatan -');
+
+  // 3. Populasi Dropdown Pangkat / Golongan (II/a s.d IV/c)
+  populateSelectElement('form_gol_kabid', MASTER_GOLONGAN_PANGKAT, 'Pembina (IV/a)', '- Pilih Golongan -');
+  populateSelectElement('form_gol_seksi', MASTER_GOLONGAN_PANGKAT, 'Penata (III/c)', '- Pilih Golongan -');
+  populateSelectElement('form_gol_ketua_tim', MASTER_GOLONGAN_PANGKAT, '', '- Pilih Golongan -');
+  populateSelectElement('form_gol_pembuat_lpp', MASTER_GOLONGAN_PANGKAT, '', '- Pilih Golongan -');
+  populateSelectElement('form_gol_petugas_lpf', MASTER_GOLONGAN_PANGKAT, '', '- Pilih Golongan -');
+  populateSelectElement('form_gol_indak_1', MASTER_GOLONGAN_PANGKAT, '', '- Pilih Golongan -');
+  populateSelectElement('form_gol_indak_2', MASTER_GOLONGAN_PANGKAT, '', '- Pilih Golongan -');
+  populateSelectElement('form_gol_indak_lainnya', MASTER_GOLONGAN_PANGKAT, '', '- Pilih Golongan -');
+}
+
 export function populateAgeDropdown(): void {
-  let select = document.getElementById('Umur_Pelaku') as HTMLSelectElement;
-  if(!select) return;
-  
-  let optionsHtml = `<option value="-">- Pilih Usia -</option>`;
-  for (let i = 17; i <= 90; i++) {
-    optionsHtml += `<option value="${i}">${i} Tahun</option>`;
-  }
-  select.innerHTML = optionsHtml;
+  populateSelectElement('Umur_Pelaku', MASTER_UMUR_PELAKU, '', '- Pilih Usia -');
 }
 
 export function updateHariSBP(): void {
@@ -76,13 +135,13 @@ export function updateLiveCodePreviews(): void {
   let previewSBP = document.getElementById('preview_SBP');
   let previewSPRIN = document.getElementById('preview_SPRIN');
 
-  if(previewLP) {
+  if (previewLP) {
     previewLP.textContent = valLP !== '' ? `LP-${valLP}/KPU.206/2026` : 'LP-/KPU.206/2026';
   }
-  if(previewSBP) {
+  if (previewSBP) {
     previewSBP.textContent = valSBP !== '' ? `SBP-${valSBP}/${tipeSBP}/KPU.2/2026` : `SBP-/${tipeSBP}/KPU.2/2026`;
   }
-  if(previewSPRIN) {
+  if (previewSPRIN) {
     let sprinPad = valSPRIN !== '' ? (valSPRIN.length < 2 ? String(valSPRIN).padStart(2, '0') : valSPRIN) : '01';
     previewSPRIN.textContent = valSPRIN !== '' ? `SPRIN-${sprinPad}/KPU.206/2026` : 'SPRIN-/KPU.206/2026';
   }
@@ -116,7 +175,7 @@ export function generateKesimpulanOtomatis(): void {
 
   let text = (pasal !== '-' || rawModus !== '-') ? `Diduga melanggar ${pasal} karena ${modusVerb}.` : '-';
   let el = document.getElementById('Jenis_Pelanggaran_Pasal') as HTMLInputElement;
-  if(el) el.value = text;
+  if (el) el.value = text;
 }
 
 export function handleJenisKoliSelectChange(val: string): void {
@@ -275,9 +334,10 @@ export async function autoGenerateAndAddMasterPasal(modusText: string): Promise<
 export function toggleAsalPerkaraManual(val: string): void {
   let manualInput = document.getElementById('Asal_Perkara') as HTMLInputElement;
   if (!manualInput) return;
-  if(val === 'LAINNYA') {
+  if (val === 'LAINNYA') {
     manualInput.style.display = 'block';
     manualInput.value = '';
+    manualInput.focus();
   } else {
     manualInput.style.display = 'none';
     manualInput.value = val;
@@ -287,9 +347,10 @@ export function toggleAsalPerkaraManual(val: string): void {
 export function togglePekerjaanManual(val: string): void {
   let manualInput = document.getElementById('Pekerjaan') as HTMLInputElement;
   if (!manualInput) return;
-  if(val === 'LAINNYA') {
+  if (val === 'LAINNYA') {
     manualInput.style.display = 'block';
     manualInput.value = '';
+    manualInput.focus();
   } else {
     manualInput.style.display = 'none';
     manualInput.value = val;
@@ -299,9 +360,10 @@ export function togglePekerjaanManual(val: string): void {
 export function toggleUkuranKontainerManual(val: string): void {
   let manualInput = document.getElementById('Ukuran_Kontainer') as HTMLInputElement;
   if (!manualInput) return;
-  if(val === 'LAINNYA') {
+  if (val === 'LAINNYA') {
     manualInput.style.display = 'block';
     manualInput.value = '';
+    manualInput.focus();
   } else {
     manualInput.style.display = 'none';
     manualInput.value = val;
@@ -313,20 +375,20 @@ export function toggleJenisDokumen(val: string): void {
   let nomorInput = document.getElementById('Nomor_Dok_Pemberitahuan') as HTMLInputElement;
   let dokPab = document.getElementById('Dokumen_Pemberitahuan') as HTMLInputElement;
   
-  if(val === 'Tanpa Dokumen') {
+  if (val === 'Tanpa Dokumen') {
     if (manual) {
       manual.style.display = 'none';
       manual.value = '';
     }
-    if(nomorInput) {
+    if (nomorInput) {
       nomorInput.value = '';
       nomorInput.disabled = true;
     }
     if (dokPab) dokPab.value = 'Tanpa Dokumen';
   } else {
-    if(nomorInput) nomorInput.disabled = false;
-    if(manual) {
-      if(val === 'LAINNYA') {
+    if (nomorInput) nomorInput.disabled = false;
+    if (manual) {
+      if (val === 'LAINNYA') {
         manual.style.display = 'block';
       } else {
         manual.style.display = 'none';
@@ -353,8 +415,8 @@ export function syncDokumenPemberitahuan(): void {
   let nomor = nomorEl ? nomorEl.value : '';
   
   let res: string[] = [];
-  if(jenis.trim()) res.push(jenis.trim());
-  if(nomor.trim()) res.push(nomor.trim());
+  if (jenis.trim()) res.push(jenis.trim());
+  if (nomor.trim()) res.push(nomor.trim());
   dokPab.value = res.length > 0 ? res.join(' ') : 'Tanpa Dokumen';
 }
 
@@ -430,7 +492,7 @@ export function syncKondisiBarang(): void {
   let checkboxes = document.querySelectorAll('#kondisi_checkboxes input[type="checkbox"]:checked');
   let selected = Array.from(checkboxes).map((cb: any) => cb.value);
   let el = document.getElementById('Kondisi') as HTMLInputElement;
-  if(el) el.value = selected.length > 0 ? selected.join(', ') : '-';
+  if (el) el.value = selected.length > 0 ? selected.join(', ') : '-';
 }
 
 export function syncPasalPelanggaran(): void {
@@ -450,13 +512,13 @@ export function syncPasalPelanggaran(): void {
   }
   
   let el = document.getElementById('Pasal_Pelanggaran') as HTMLInputElement;
-  if(el) el.value = result;
+  if (el) el.value = result;
   generateKesimpulanOtomatis();
 }
 
 export function syncStatusPenangkapan(val: string): void {
   let el = document.getElementById('Status_Penangkapan') as HTMLInputElement;
-  if(el) el.value = val;
+  if (el) el.value = val;
   updateLiveCodePreviews();
   refreshReportTableUI();
   updateReportLive();
@@ -464,42 +526,42 @@ export function syncStatusPenangkapan(val: string): void {
 
 export function syncJenisPelanggaran(val: string): void {
   let el = document.getElementById('Jenis_Pelanggaran') as HTMLInputElement;
-  if(el) el.value = val;
+  if (el) el.value = val;
 }
 
 export function syncJenisPenindakan(val: string): void {
   let el = document.getElementById('Jenis_Penindakan') as HTMLInputElement;
-  if(el) el.value = val;
+  if (el) el.value = val;
 }
 
 export function syncJenisPerkara(val: string): void {
   let el = document.getElementById('Jenis_Perkara') as HTMLInputElement;
-  if(el) el.value = val;
+  if (el) el.value = val;
 }
 
 export function syncModusOperandi(val: string): void {
   let el = document.getElementById('Modus_Operandi') as HTMLInputElement;
-  if(el) el.value = val;
+  if (el) el.value = val;
 }
 
 export function syncKomoditi(val: string): void {
   let el = document.getElementById('Komoditi') as HTMLInputElement;
-  if(el) el.value = val;
+  if (el) el.value = val;
 }
 
 export function syncKantor(val: string): void {
   let el = document.getElementById('Kantor') as HTMLInputElement;
-  if(el) el.value = val;
+  if (el) el.value = val;
 }
 
 export async function addCustomKantor(): Promise<void> {
   let input = document.getElementById('setting_newKantor') as HTMLInputElement;
   if (!input) return;
   let val = input.value.trim();
-  if(!val) return;
+  if (!val) return;
 
   let customKantor = await fetchServerConfig('customKantorList', []);
-  if(!customKantor.includes(val)) {
+  if (!customKantor.includes(val)) {
     customKantor.push(val);
     await saveServerConfig('customKantorList', customKantor);
     await renderKantorDropdown();
@@ -512,7 +574,7 @@ export async function addCustomKantor(): Promise<void> {
 
 export async function renderPasalCheckboxes(): Promise<void> {
   let container = document.getElementById('pasal_pelanggaran_checkboxes');
-  if(!container) return;
+  if (!container) return;
 
   let customMap = await fetchServerConfig('customPasalMap', {});
   let html = '';
@@ -531,7 +593,7 @@ export async function renderPasalCheckboxes(): Promise<void> {
 export async function renderCustomKomoditiOptions(): Promise<void> {
   let customKomoditi = await fetchServerConfig('customKomoditiList', []);
   let komoditiGroup = document.getElementById('optgroup_custom_komoditi');
-  if(komoditiGroup) {
+  if (komoditiGroup) {
     komoditiGroup.innerHTML = customKomoditi.map((k: any) => `<option value="${escText(k)}">${escText(k)}</option>`).join('');
   }
 }
@@ -542,16 +604,16 @@ export async function renderKantorDropdown(): Promise<void> {
 
   let select = document.getElementById('Kantor_Select') as HTMLSelectElement;
   let kantorInput = document.getElementById('Kantor') as HTMLInputElement;
-  if(select) {
+  if (select) {
     select.innerHTML = `<option value="-">-</option>` + allKantor.map((k: any) => `<option value="${escText(k)}">${escText(k)}</option>`).join('');
-    if(kantorInput && !kantorInput.value) {
+    if (kantorInput && !kantorInput.value) {
       select.value = defaultKantorList[0];
       kantorInput.value = defaultKantorList[0];
     }
   }
 
   let listDisplay = document.getElementById('setting_kantorListDisplay');
-  if(listDisplay) {
+  if (listDisplay) {
     listDisplay.innerHTML = allKantor.map((k: any) => `<li>${escText(k)}</li>`).join('');
   }
 }
@@ -641,8 +703,6 @@ export function updateDashboardStats(): void {
       let recentItems = filteredData.slice(-3).reverse();
 
       recentTbody.innerHTML = recentItems.map((rec: any) => {
-        let realIndex = store.databasePerkara.indexOf(rec);
-
         let statusBadgeHtml = '';
         let hasReport = (rec.No_LPP && rec.No_LPP !== '-') || (rec.Nomor_LHP && rec.Nomor_LHP !== '-');
 
@@ -678,7 +738,7 @@ export function updateDashboardStats(): void {
               ${statusBadgeHtml}
             </td>
             <td style="padding:8px 6px; text-align:right;">
-              <button type="button" class="btn secondary" style="font-size:10px; padding:3px 8px;" onclick="bukaPerkaraDariDashboard(${realIndex})">
+              <button type="button" class="btn secondary" style="font-size:10px; padding:3px 8px;" onclick="bukaPerkaraDariDashboard(${store.databasePerkara.indexOf(rec)})">
                 <i class="fi fi-rr-arrow-right"></i> Buka
               </button>
             </td>
@@ -738,52 +798,83 @@ export function loadRecordToCurrentView(rec: any): void {
 
   let jpVal = rec.Jenis_Perkara || rec.jenis_perkara || '';
   setSafe('Jenis_Perkara', jpVal);
-  let elJP = document.getElementById('Jenis_Perkara') as HTMLSelectElement || document.getElementById('Jenis_Perkara_Select') as HTMLSelectElement || document.getElementById('dsp_jenis_perkara_select') as HTMLSelectElement;
-  if (elJP) {
-    if (elJP.tagName === 'SELECT') {
-      let optMatch = Array.from(elJP.options).find((opt: HTMLOptionElement) => 
-        opt.value.trim().toLowerCase() === jpVal.trim().toLowerCase() ||
-        opt.textContent!.trim().toLowerCase() === jpVal.trim().toLowerCase()
-      );
-      if (optMatch) elJP.value = optMatch.value;
-    } else {
-      elJP.value = jpVal;
-    }
-    elJP.dispatchEvent(new Event('change'));
+  let elJP = document.getElementById('Jenis_Perkara_Select') as HTMLSelectElement;
+  if (elJP && jpVal) {
+    populateSelectElement('Jenis_Perkara_Select', MASTER_JENIS_PERKARA, jpVal, '-');
   }
 
   setSafe('Status_Penangkapan', rec.Status_Penangkapan);
+  let elStatusP = document.getElementById('Status_Penangkapan_Select') as HTMLSelectElement;
+  if (elStatusP && rec.Status_Penangkapan) {
+    populateSelectElement('Status_Penangkapan_Select', MASTER_STATUS_PENANGKAPAN, rec.Status_Penangkapan, '-');
+  }
+
   setSafe('Jenis_Pelanggaran', rec.Jenis_Pelanggaran);
+  let elJenisPel = document.getElementById('Jenis_Pelanggaran_Select') as HTMLSelectElement;
+  if (elJenisPel && rec.Jenis_Pelanggaran) {
+    populateSelectElement('Jenis_Pelanggaran_Select', MASTER_JENIS_PELANGGARAN, rec.Jenis_Pelanggaran, '-');
+  }
+
   setSafe('Pasal_Pelanggaran', rec.Pasal_Pelanggaran);
   
   setSafe('Modus_Operandi', rec.Modus_Operandi);
   let selModus = document.getElementById('Modus_Operandi_Select') as HTMLSelectElement;
   if (selModus && rec.Modus_Operandi) {
-    selModus.value = rec.Modus_Operandi;
+    populateSelectElement('Modus_Operandi_Select', MASTER_MODUS_OPERANDI, rec.Modus_Operandi, '-');
   }
 
   setSafe('Kronologis', rec.Kronologis);
   setSafe('Jenis_Pelanggaran_Pasal', rec.Jenis_Pelanggaran_Pasal);
   setSafe('Lokasi_Penindakan', rec.Lokasi_Penindakan);
   setSafe('Nama_Pelaku', rec.Nama_Pelaku);
+  
   setSafe('Umur_Pelaku', rec.Umur_Pelaku || '-');
+  let selUmur = document.getElementById('Umur_Pelaku') as HTMLSelectElement;
+  if (selUmur) {
+    populateSelectElement('Umur_Pelaku', MASTER_UMUR_PELAKU, rec.Umur_Pelaku || '', '- Pilih Usia -');
+  }
+
   setSafe('Jenis_Kelamin_Pelaku', rec.Jenis_Kelamin_Pelaku || '-');
+  let selJK = document.getElementById('Jenis_Kelamin_Pelaku') as HTMLSelectElement;
+  if (selJK) {
+    populateSelectElement('Jenis_Kelamin_Pelaku', MASTER_JENIS_KELAMIN, rec.Jenis_Kelamin_Pelaku || '', '-');
+  }
+
   setSafe('TTL', rec.TTL);
 
   let rawIdentitas = String(rec.Nomor_Identitas || '');
   if (rawIdentitas.includes(' : ')) {
     let parts = rawIdentitas.split(' : ');
     let jenisIdentitasSelect = document.getElementById('Jenis_Identitas_Select') as HTMLSelectElement;
-    if (jenisIdentitasSelect) jenisIdentitasSelect.value = parts[0];
+    if (jenisIdentitasSelect) {
+      populateSelectElement('Jenis_Identitas_Select', MASTER_JENIS_IDENTITAS, parts[0], '');
+    }
     setSafe('Nomor_Identitas_Input', parts[1]);
   } else {
     let jenisIdentitasSelect = document.getElementById('Jenis_Identitas_Select') as HTMLSelectElement;
-    if (jenisIdentitasSelect) jenisIdentitasSelect.value = 'NIK';
+    if (jenisIdentitasSelect) {
+      populateSelectElement('Jenis_Identitas_Select', MASTER_JENIS_IDENTITAS, 'NIK', '');
+    }
     setSafe('Nomor_Identitas_Input', rawIdentitas);
   }
   setSafe('Nomor_Identitas', rawIdentitas);
 
   setSafe('Pekerjaan', rec.Pekerjaan);
+  let selPekerjaan = document.getElementById('Pekerjaan_Select') as HTMLSelectElement;
+  let inputPekerjaan = document.getElementById('Pekerjaan') as HTMLInputElement;
+  if (selPekerjaan) {
+    populateSelectElement('Pekerjaan_Select', MASTER_PEKERJAAN, rec.Pekerjaan || '', '-');
+    if (rec.Pekerjaan && !MASTER_PEKERJAAN.includes(rec.Pekerjaan as any)) {
+      selPekerjaan.value = 'LAINNYA';
+      if (inputPekerjaan) {
+        inputPekerjaan.style.display = 'block';
+        inputPekerjaan.value = rec.Pekerjaan;
+      }
+    } else if (inputPekerjaan) {
+      inputPekerjaan.style.display = 'none';
+    }
+  }
+
   setSafe('Alamat_Pelaku', rec.Alamat_Pelaku);
   setSafe('Nomor_Telepon', rec.Nomor_Telepon);
   setSafe('Nomor_Rekening', rec.Nomor_Rekening);
@@ -791,27 +882,23 @@ export function loadRecordToCurrentView(rec: any): void {
   
   setSafe('Komoditi', rec.Komoditi);
   let selKomoditi = document.getElementById('Komoditi_Select') as HTMLSelectElement;
-  if (selKomoditi && rec.Komoditi) {
-    selKomoditi.value = rec.Komoditi;
+  if (selKomoditi) {
+    populateSelectElement('Komoditi_Select', MASTER_KOMODITI, rec.Komoditi || '', '- Pilih Komoditi -');
   }
 
   setSafe('Kerugian_Negara', rec.Kerugian_Negara);
-
   setSafe('Jumlah_Koli', rec.Jumlah_Koli);
+
   let jenisVal = String(rec.Jenis_Koli || '');
   let selectKoli = document.getElementById('Jenis_Koli_Select') as HTMLSelectElement;
   let inputKoli = document.getElementById('Jenis_Koli') as HTMLInputElement;
   if (selectKoli && inputKoli) {
+    populateSelectElement('Jenis_Koli_Select', MASTER_SATUAN_KOLI, jenisVal, '- Pilih Jenis Koli -');
     inputKoli.value = jenisVal;
-    let matchOpt = Array.from(selectKoli.options).some(opt => opt.value.toLowerCase() === jenisVal.toLowerCase());
-    if (matchOpt && jenisVal) {
-      selectKoli.value = jenisVal.toLowerCase();
-      inputKoli.style.display = 'none';
-    } else if (jenisVal && jenisVal !== '-') {
+    if (jenisVal && !MASTER_SATUAN_KOLI.includes(jenisVal.toLowerCase() as any) && jenisVal !== '-') {
       selectKoli.value = 'LAINNYA';
       inputKoli.style.display = 'block';
     } else {
-      selectKoli.value = '-';
       inputKoli.style.display = 'none';
     }
   }
@@ -828,7 +915,23 @@ export function loadRecordToCurrentView(rec: any): void {
   setSafe('Spesifikasi_Lain', rec.Spesifikasi_Lain);
   setSafe('Pengangkut', rec.Pengangkut);
   setSafe('No_Kontainer', rec.No_Kontainer);
+
   setSafe('Ukuran_Kontainer', rec.Ukuran_Kontainer);
+  let selUkuranK = document.getElementById('Ukuran_Kontainer_Select') as HTMLSelectElement;
+  let inputUkuranK = document.getElementById('Ukuran_Kontainer') as HTMLInputElement;
+  if (selUkuranK) {
+    populateSelectElement('Ukuran_Kontainer_Select', MASTER_UKURAN_KONTAINER, rec.Ukuran_Kontainer || '', '-');
+    if (rec.Ukuran_Kontainer && !MASTER_UKURAN_KONTAINER.includes(rec.Ukuran_Kontainer as any)) {
+      selUkuranK.value = 'LAINNYA';
+      if (inputUkuranK) {
+        inputUkuranK.style.display = 'block';
+        inputUkuranK.value = rec.Ukuran_Kontainer;
+      }
+    } else if (inputUkuranK) {
+      inputUkuranK.style.display = 'none';
+    }
+  }
+
   setSafe('Kantor', rec.Kantor);
 
   let dokPabVal = String(rec.Dokumen_Pemberitahuan || rec.Dokumen_Yang_Ada || '');
@@ -836,14 +939,16 @@ export function loadRecordToCurrentView(rec: any): void {
   let nomorDokInput = document.getElementById('Nomor_Dok_Pemberitahuan') as HTMLInputElement;
 
   if (dokPabVal.toLowerCase().includes('tanpa dokumen') || !dokPabVal || dokPabVal === '-') {
-    if (jenisDokSelect) jenisDokSelect.value = 'Tanpa Dokumen';
+    if (jenisDokSelect) {
+      populateSelectElement('Jenis_Dok_Pemberitahuan_Select', MASTER_JENIS_DOKUMEN_PABEAN, 'Tanpa Dokumen', '');
+    }
     if (nomorDokInput) { 
       nomorDokInput.value = ''; 
       nomorDokInput.disabled = true; 
     }
     setSafe('Dokumen_Pemberitahuan', 'Tanpa Dokumen');
   } else {
-    let match = dokPabVal.match(/^(BC\s*[\d\.]+|SPPBMCP|PIB|PEB)/i);
+    let match = dokPabVal.match(/^(BC\s*[\d\.]+|SPPBMCP|PIBK|CN|PPFTZ-\d{2})/i);
     let extractedJenis = match ? match[0].trim() : '';
     let extractedNomor = dokPabVal;
 
@@ -853,10 +958,7 @@ export function loadRecordToCurrentView(rec: any): void {
     }
 
     if (jenisDokSelect) {
-      let matchedOpt = Array.from(jenisDokSelect.options).find(opt => 
-        opt.value.toLowerCase() === (extractedJenis || dokPabVal).toLowerCase()
-      );
-      jenisDokSelect.value = matchedOpt ? matchedOpt.value : (extractedJenis || 'LAINNYA');
+      populateSelectElement('Jenis_Dok_Pemberitahuan_Select', MASTER_JENIS_DOKUMEN_PABEAN, extractedJenis || dokPabVal, '');
     }
 
     if (nomorDokInput) {
@@ -880,7 +982,7 @@ export function loadRecordToCurrentView(rec: any): void {
   let tglPelengkap = document.getElementById('Tanggal_Dok_Pelengkap') as HTMLInputElement;
 
   if (selPelengkap) {
-    selPelengkap.value = rec.Jenis_Dok_Pelengkap_Select || '-';
+    populateSelectElement('Jenis_Dok_Pelengkap_Select', MASTER_DOKUMEN_PELENGKAP, rec.Jenis_Dok_Pelengkap_Select || '-', '- (Tanpa Dokumen Pelengkap)');
     
     if (selPelengkap.value === '-') {
       if (manualPelengkap) manualPelengkap.style.display = 'none';
@@ -917,44 +1019,55 @@ export function loadRecordToCurrentView(rec: any): void {
   setSafe('TeksTanggal', String(rec.TeksTanggal || '').toLowerCase());
   setSafe('Tanggal_LHP', rec.Tanggal_LHP);
 
+  const allJabatan = Array.from(new Set([...MASTER_JABATAN_DINAS, ...MASTER_JABATAN_TIM_PENELITI]));
+
+  // 1. Pejabat 1 (Eselon III/IV)
   setSafe('form_kabid', rec.kabid);
   setSafe('form_nip_kabid', rec.nip_kabid);
-  setSafe('form_gol_kabid', rec.gol_kabid);
+  populateSelectElement('form_jabatan_kabid', allJabatan, rec.jabatan_kabid || 'Kepala Bidang Penindakan dan Penyidikan', '- Pilih Jabatan -');
+  populateSelectElement('form_gol_kabid', MASTER_GOLONGAN_PANGKAT, rec.gol_kabid || '', '- Pilih Golongan -');
 
+  // 2. Pejabat 2 (Eselon IV / Fungsional Ahli Pertama)
   setSafe('form_nama_seksi', rec.nama_seksi);
   setSafe('form_nip_seksi', rec.nip_seksi);
-  setSafe('form_jabatan_seksi', rec.jabatan_seksi || 'Kepala Seksi Penyidikan');
-  setSafe('form_gol_seksi', rec.gol_seksi);
+  populateSelectElement('form_jabatan_seksi', allJabatan, rec.jabatan_seksi || 'Kepala Seksi Penyidikan', '- Pilih Jabatan -');
+  populateSelectElement('form_gol_seksi', MASTER_GOLONGAN_PANGKAT, rec.gol_seksi || '', '- Pilih Golongan -');
 
+  // 3. Ketua Tim
   setSafe('form_ketua_tim', rec.ketua_tim);
   setSafe('form_nip_ketua_tim', rec.nip_ketua_tim);
-  setSafe('form_jabatan_ketua_tim', rec.jabatan_ketua_tim || 'Ketua Tim Peneliti');
-  setSafe('form_gol_ketua_tim', rec.gol_gol_ketua_tim);
+  populateSelectElement('form_jabatan_ketua_tim', allJabatan, rec.jabatan_ketua_tim || 'Ketua Tim Peneliti', '- Pilih Jabatan -');
+  populateSelectElement('form_gol_ketua_tim', MASTER_GOLONGAN_PANGKAT, rec.gol_ketua_tim || '', '- Pilih Golongan -');
 
+  // 4. Pembuat LPP
   setSafe('form_pembuat_lpp', rec.pembuat_lpp);
   setSafe('form_nip_pembuat_lpp', rec.nip_pembuat_lpp);
-  setSafe('form_jabatan_pembuat_lpp', rec.jabatan_pembuat_lpp || 'Petugas LPP');
-  setSafe('form_gol_pembuat_lpp', rec.gol_pembuat_lpp);
+  populateSelectElement('form_jabatan_pembuat_lpp', allJabatan, rec.jabatan_pembuat_lpp || 'Petugas LPP', '- Pilih Jabatan -');
+  populateSelectElement('form_gol_pembuat_lpp', MASTER_GOLONGAN_PANGKAT, rec.gol_pembuat_lpp || '', '- Pilih Golongan -');
 
+  // 5. Petugas LPF
   setSafe('form_petugas_lpf', rec.petugas_lpf);
   setSafe('form_nip_petugas_lpf', rec.nip_petugas_lpf);
-  setSafe('form_jabatan_petugas_lpf', rec.jabatan_petugas_lpf || 'Petugas LPF');
-  setSafe('form_gol_petugas_lpf', rec.gol_petugas_lpf);
+  populateSelectElement('form_jabatan_lpf', allJabatan, rec.jabatan_petugas_lpf || 'Petugas LPF', '- Pilih Jabatan -');
+  populateSelectElement('form_gol_petugas_lpf', MASTER_GOLONGAN_PANGKAT, rec.gol_petugas_lpf || '', '- Pilih Golongan -');
 
+  // 6. Indak 1
   setSafe('form_indak_1', rec.indak_1);
   setSafe('form_nip_indak_1', rec.nip_indak_1);
-  setSafe('form_jabatan_indak_1', rec.jabatan_indak_1 || 'Petugas Penindakan 1');
-  setSafe('form_gol_indak_1', rec.gol_indak_1);
+  populateSelectElement('form_jabatan_indak_1', allJabatan, rec.jabatan_indak_1 || 'Petugas Penindakan 1', '- Pilih Jabatan -');
+  populateSelectElement('form_gol_indak_1', MASTER_GOLONGAN_PANGKAT, rec.gol_indak_1 || '', '- Pilih Golongan -');
 
+  // 7. Indak 2
   setSafe('form_indak_2', rec.indak_2);
   setSafe('form_nip_indak_2', rec.nip_indak_2);
-  setSafe('form_jabatan_indak_2', rec.jabatan_indak_2 || 'Petugas Penindakan 2');
-  setSafe('form_gol_indak_2', rec.gol_gol_indak_2);
+  populateSelectElement('form_jabatan_indak_2', allJabatan, rec.jabatan_indak_2 || 'Petugas Penindakan 2', '- Pilih Jabatan -');
+  populateSelectElement('form_gol_indak_2', MASTER_GOLONGAN_PANGKAT, rec.gol_indak_2 || '', '- Pilih Golongan -');
 
+  // 8. Pelaksana Lainnya / Pencacah
   setSafe('form_indak_lainnya', rec.indak_lainnya);
   setSafe('form_nip_indak_lainnya', rec.nip_indak_lainnya);
-  setSafe('form_jabatan_indak_lainnya', rec.jabatan_indak_lainnya || 'Petugas Penindakan 3');
-  setSafe('form_gol_indak_lainnya', rec.gol_indak_lainnya);
+  populateSelectElement('form_jabatan_indak_lainnya', allJabatan, rec.jabatan_indak_lainnya || 'Petugas Penindakan 3', '- Pilih Jabatan -');
+  populateSelectElement('form_gol_indak_lainnya', MASTER_GOLONGAN_PANGKAT, rec.gol_indak_lainnya || '', '- Pilih Golongan -');
 
   let defaultCatatanLPP = "Laporan penerimaan perkara diterima, segera lanjutkan dengan penelitian formal dan pengumpulan bahan keterangan lebih lanjut.";
   let defaultCatatanLPF = "Setuju dengan usulan tim peneliti, segera tindak lanjuti proses administrasi penanganan perkara sesuai ketentuan yang berlaku.";
@@ -985,7 +1098,6 @@ export function renderPerkaraTable(): void {
     return;
   }
 
-  // Cek apakah user yang login memiliki hak akses Admin / Kasi
   let isAdmin = store.currentUser && (store.currentUser.role === 'Admin' || store.currentUser.role === 'Kepala Seksi Penyidikan');
 
   tbody.innerHTML = paginatedData.map((rec: any, index: number) => {
@@ -1006,14 +1118,12 @@ export function renderPerkaraTable(): void {
     let cleanLP = String(rec.NoLP_LP_1 || '-').replace(/^LP-?/i, '');
     let cleanSBP = String(rec.Nomor_SBP || '-').replace(/^SBP-?/i, '');
 
-    // Tombol Edit selalu muncul untuk semua user
     let actionButtons = `
       <button type="button" class="btn warning" style="padding:4px 8px; font-size:10px;" onclick="editPerkara(${originalIndex})">
         <i class="fi fi-rr-edit"></i> Edit
       </button>
     `;
 
-    // Tombol Hapus HANYA ditambahkan jika yang login adalah Admin / Kasi
     if (isAdmin) {
       actionButtons += `
         <button type="button" class="btn danger" style="padding:4px 8px; font-size:10px;" onclick="deletePerkara(${originalIndex})">
@@ -1105,15 +1215,12 @@ export function addNewPerkaraModal(): void {
   let editIdx = document.getElementById('editingRecordIndex') as HTMLInputElement;
   if (editIdx) editIdx.value = "-1";
 
+  initPerkaraDropdownsFromMaster();
+
   let inputs = document.querySelectorAll('#perkaraModal input:not([readonly]), #perkaraModal textarea');
   inputs.forEach((el: any) => {
     if (el.type === 'checkbox') el.checked = false;
     else el.value = '';
-  });
-
-  let selects = document.querySelectorAll('#perkaraModal select');
-  selects.forEach((el: any) => {
-    el.selectedIndex = 0;
   });
 
   if (document.getElementById('Jenis_Koli')) (document.getElementById('Jenis_Koli') as HTMLElement).style.display = 'none';
@@ -1152,9 +1259,6 @@ export function addNewPerkaraModal(): void {
     catLpfEl.value = "Setuju dengan usulan tim peneliti, segera tindak lanjuti proses penyusunan administrasi penanganan perkara sesuai ketentuan yang berlaku.";
   }
 
-  // ==========================================
-  // SISIPKAN VALIDASI BLUR REAL-TIME DI SINI
-  // ==========================================
   let inputNoSprin = document.getElementById('No_SPRIN_Indak') as HTMLInputElement;
   let inputTglSprin = document.getElementById('Tanggal_SPRIN_Indak') as HTMLInputElement;
   let inputNoSbp = document.getElementById('Nomor_SBP') as HTMLInputElement;
@@ -1188,7 +1292,6 @@ export function addNewPerkaraModal(): void {
 
   setupPerkaraBlur(inputNoSprin, inputTglSprin, 'SPRIN INDAK', 'noSprin', 'tglSprin');
   setupPerkaraBlur(inputNoSbp, inputTglSbp, 'SBP', 'noSbp', 'tglSbp');
-  // ==========================================
 
   updateLiveCodePreviews();
   let modal = document.getElementById('perkaraModal');
@@ -1207,6 +1310,7 @@ export function editPerkara(idx: number): void {
   let title = document.getElementById('modalTitle');
   if (title) title.textContent = `Edit Data Perkara LP-${rec.NoLP_LP_1 || ''}`;
 
+  initPerkaraDropdownsFromMaster();
   loadRecordToCurrentView(rec);
   updateLiveCodePreviews();
   let modal = document.getElementById('perkaraModal');
@@ -1298,7 +1402,6 @@ export function executePerkaraSubmission(): void {
     let noLpVal = ((document.getElementById('NoLP_LP_1') as HTMLInputElement)?.value || '').trim() || '1';
     let tglLpVal = (document.getElementById('Tanggal_LP_LP_1') as HTMLInputElement)?.value || '';
 
-    // Auto-booking murni mengambil nomor urutnya saja (tanpa embel-embel format tahun/kategori di database)
     let noLppVal = (existingRec && existingRec.No_LPP) ? existingRec.No_LPP : generateNextBookingNumber('', 'No_LPP', '', 3);
     let tglLppVal = (existingRec && existingRec.Tanggal_LPP) ? existingRec.Tanggal_LPP : tglLpVal;
 
@@ -1315,9 +1418,6 @@ export function executePerkaraSubmission(): void {
     let noLhp = ((document.getElementById('Nomor_LHP') as HTMLInputElement)?.value || '').trim();
     let tglLhp = (document.getElementById('Tanggal_LHP') as HTMLInputElement)?.value || '';
 
-    // ==========================================
-    // VALIDASI MENGGUNAKAN MASTER TERPUSAT
-    // ==========================================
     let docsToValidate: any[] = [
       { num: noSprinVal, date: tglSprinVal, numKey: 'No_SPRIN_Indak', dateKey: 'Tanggal_SPRIN_Indak', label: 'Nomor SPRIN INDAK' },
       { num: noSbpVal, date: tglSbpVal, numKey: 'Nomor_SBP', dateKey: 'Tanggal_SBP', label: 'Nomor SBP' },
@@ -1347,7 +1447,6 @@ export function executePerkaraSubmission(): void {
       showToast("VALIDASI DITOLAK", validationResult.message, "danger");
       return;
     }
-    // ==========================================
 
     const valSafe = (id: string) => {
       let el = document.getElementById(id) as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
@@ -1426,31 +1525,39 @@ export function executePerkaraSubmission(): void {
 
       kabid: valSafe('form_kabid'),
       nip_kabid: valSafe('form_nip_kabid'),
+      jabatan_kabid: valSafe('form_jabatan_kabid'),
       gol_kabid: valSafe('form_gol_kabid'),
+
       nama_seksi: valSafe('form_nama_seksi'),
       nip_seksi: valSafe('form_nip_seksi'),
       jabatan_seksi: valSafe('form_jabatan_seksi'),
       gol_seksi: valSafe('form_gol_seksi'),
+
       ketua_tim: valSafe('form_ketua_tim'),
       nip_ketua_tim: valSafe('form_nip_ketua_tim'),
       jabatan_ketua_tim: valSafe('form_jabatan_ketua_tim'),
       gol_ketua_tim: valSafe('form_gol_ketua_tim'),
+
       pembuat_lpp: valSafe('form_pembuat_lpp'),
       nip_pembuat_lpp: valSafe('form_nip_pembuat_lpp'),
       jabatan_pembuat_lpp: valSafe('form_jabatan_pembuat_lpp'),
       gol_pembuat_lpp: valSafe('form_gol_pembuat_lpp'),
+
       petugas_lpf: valSafe('form_petugas_lpf'),
       nip_petugas_lpf: valSafe('form_nip_petugas_lpf'),
-      jabatan_petugas_lpf: valSafe('form_jabatan_petugas_lpf'),
+      jabatan_petugas_lpf: valSafe('form_jabatan_lpf'),
       gol_petugas_lpf: valSafe('form_gol_petugas_lpf'),
+
       indak_1: valSafe('form_indak_1'),
       nip_indak_1: valSafe('form_nip_indak_1'),
       jabatan_indak_1: valSafe('form_jabatan_indak_1'),
       gol_indak_1: valSafe('form_gol_indak_1'),
+
       indak_2: valSafe('form_indak_2'),
       nip_indak_2: valSafe('form_nip_indak_2'),
       jabatan_indak_2: valSafe('form_jabatan_indak_2'),
       gol_indak_2: valSafe('form_gol_indak_2'),
+
       indak_lainnya: valSafe('form_indak_lainnya'),
       nip_indak_lainnya: valSafe('form_nip_indak_lainnya'),
       jabatan_indak_lainnya: valSafe('form_jabatan_indak_lainnya'),
@@ -1519,7 +1626,7 @@ export function exportDataToExcel(): void {
       idx + 1,
       `"LP-${rec.NoLP_LP_1 || '-'}"`,
       `"${rec.Tanggal_LP_LP_1 || '-'}"`,
-      `"SBP-${rec.Nomor_SBP || '-'}"`,
+      `"${rec.Nomor_SBP || '-'}"`,
       `"${rec.Tanggal_SBP || '-'}"`,
       `"${(rec.Nama_Pelaku || '-').replace(/"/g, '""')}"`,
       `"${(rec.Nomor_Identitas || '-').replace(/"/g, '""')}"`,
@@ -1626,7 +1733,6 @@ export function changePerkaraPage(direction: number): void {
 (window as any).confirmAndSubmitPerkara = confirmAndSubmitPerkara;
 (window as any).executePerkaraSubmission = executePerkaraSubmission;
 (window as any).submitPerkaraForm = submitPerkaraForm;
-(window as any).changePerkaraPage = changePerkaraPage;
 (window as any).exportDataToExcel = exportDataToExcel;
 (window as any).exportDataToPDF = exportDataToPDF;
 (window as any).syncStatusPenangkapan = syncStatusPenangkapan;
@@ -1654,3 +1760,4 @@ export function changePerkaraPage(direction: number): void {
 (window as any).syncKondisiBarang = syncKondisiBarang;
 (window as any).syncPasalPelanggaran = syncPasalPelanggaran;
 (window as any).addCustomKantor = addCustomKantor;
+(window as any).initPerkaraDropdownsFromMaster = initPerkaraDropdownsFromMaster;

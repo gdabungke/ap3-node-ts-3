@@ -1,4 +1,6 @@
-import { store } from '../state/store.js';
+// ========================================================
+// FORMATTERS.TS - PURE STRING, NUMBER & DATE UTILITIES
+// ========================================================
 export function formatProperCase(str) {
     if (!str || str === '-')
         return '-';
@@ -84,13 +86,6 @@ export function terbilangHuruf(angka) {
 }
 export function terbilang(angka) {
     return terbilangHuruf(angka);
-}
-export function tanggalKeTeks(dateString) {
-    if (!dateString)
-        return '';
-    let d = new Date(dateString + 'T12:00:00');
-    let bulan = ['januari', 'februari', 'maret', 'april', 'mei', 'juni', 'juli', 'agustus', 'september', 'oktober', 'november', 'desember'];
-    return `${terbilang(d.getDate())} bulan ${bulan[d.getMonth()]} tahun ${terbilang(d.getFullYear())}`.replace(/\s+/g, ' ').trim();
 }
 export function formatJam24(el) {
     let val = el.value.replace(/[^0-9]/g, '');
@@ -181,27 +176,6 @@ export function autoGenerateTeksTanggalBA(dateStr) {
         'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
         'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
     ];
-    const angkaTeks = [
-        '', 'satu', 'dua', 'tiga', 'empat', 'lima', 'enam', 'tujuh', 'delapan', 'sembilan',
-        'sepuluh', 'sebelas'
-    ];
-    function terbilangCustom(n) {
-        if (n < 12)
-            return angkaTeks[n];
-        if (n < 20)
-            return terbilangCustom(n - 10) + ' belas';
-        if (n < 100)
-            return terbilangCustom(Math.floor(n / 10)) + ' puluh' + (n % 10 !== 0 ? ' ' + terbilangCustom(n % 10) : '');
-        if (n < 200)
-            return 'seratus' + (n % 100 !== 0 ? ' ' + terbilangCustom(n % 100) : '');
-        if (n < 1000)
-            return terbilangCustom(Math.floor(n / 100)) + ' ratus' + (n % 100 !== 0 ? ' ' + terbilangCustom(n % 100) : '');
-        if (n < 2000)
-            return 'seribu' + (n % 1000 !== 0 ? ' ' + terbilangCustom(n % 1000) : '');
-        if (n < 1000000)
-            return terbilangCustom(Math.floor(n / 1000)) + ' ribu' + (n % 1000 !== 0 ? ' ' + terbilangCustom(n % 1000) : '');
-        return n.toString();
-    }
     const parts = dateStr.split('-');
     if (parts.length !== 3)
         return { hari: '', teksLengkap: '' };
@@ -211,11 +185,15 @@ export function autoGenerateTeksTanggalBA(dateStr) {
     const dt = new Date(y, m, d);
     const hari = hariArr[dt.getDay()];
     const namaBulan = bulanArr[m];
-    const teksLengkap = `${terbilangCustom(d)} bulan ${namaBulan.toLowerCase()} tahun ${terbilangCustom(y)}`;
+    const teksLengkap = `${terbilangHuruf(d)} bulan ${namaBulan.toLowerCase()} tahun ${terbilangHuruf(y)}`;
     return {
         hari: hari,
         teksLengkap: teksLengkap
     };
+}
+export function tanggalKeTeks(dateString) {
+    const res = autoGenerateTeksTanggalBA(dateString);
+    return res.teksLengkap;
 }
 export function formatTrailingDashes(text, prefix = '') {
     const clean = (text || '').trim();
@@ -262,196 +240,5 @@ export function formatRowTrailingDots(label, value, labelWidth = '271px') {
       </td>
     </tr>
   `.trim();
-}
-/**
- * Fungsi Master Validator Terpusat untuk seluruh dokumen operasional.
- * Menggabungkan validasi nomor ganda, urutan sekuensial, dan kronologi tanggal.
- *
- * @param {Array} docItems - Daftar dokumen yang ingin dicek [{num, date, numKey, dateKey, label}, ...]
- * @param {Object} datesObj - Objek tanggal untuk cek kronologi {tglSprin, tglSbp, tglLp, ...}
- * @param {any} currentRecordId - ID record yang sedang diedit (biar tidak bentrok dengan datanya sendiri)
- * @param {any} linkedParentId - ID parent jika ada relasi
- */
-export function validateMasterOperationalData(docItems = [], datesObj = {}, currentRecordId = null, linkedParentId = null) {
-    // 1. Jalankan Validasi Nomor Dokumen & Urutan Sekuensial Global
-    if (docItems && docItems.length > 0) {
-        let docValidation = validateFormDocumentNumbers(docItems, currentRecordId, linkedParentId);
-        if (!docValidation.isValid) {
-            return {
-                isValid: false,
-                message: docValidation.message
-            };
-        }
-    }
-    // 2. Jalankan Validasi Kronologi Tanggal Operasional
-    if (datesObj && Object.keys(datesObj).length > 0) {
-        let chronoValidation = validateOperationalChronology(datesObj);
-        if (!chronoValidation.isValid) {
-            return {
-                isValid: false,
-                message: chronoValidation.message || 'Terjadi anomali pada kronologi tanggal operasional.'
-            };
-        }
-    }
-    return { isValid: true, message: '' };
-}
-export function validateFormDocumentNumbers(docItems = [], currentRecordId = null, linkedParentId = null) {
-    for (let item of docItems) {
-        if (item.num && item.date) {
-            let result = validateGlobalDocSequence(item.num, item.date, item.numKey, item.dateKey, currentRecordId, linkedParentId);
-            if (!result.isValid) {
-                return {
-                    isValid: false,
-                    message: `[${item.label || item.numKey}] ${result.message}`
-                };
-            }
-        }
-    }
-    return { isValid: true, message: '' };
-}
-export function validateOperationalChronology(dates = {}) {
-    let { tglSprin, tglSbp, tglLp, tglLpp, tglLpf, tglSplit, tglSprinCacah, tglBa, tglLhp } = dates;
-    let parse = (d) => (d ? new Date(d).getTime() : null);
-    let dSprin = parse(tglSprin);
-    let dSbp = parse(tglSbp);
-    let dLp = parse(tglLp);
-    let dLpp = parse(tglLpp);
-    let dLpf = parse(tglLpf);
-    let dSplit = parse(tglSplit);
-    let dSprinCacah = parse(tglSprinCacah);
-    let dBa = parse(tglBa);
-    let dLhp = parse(tglLhp);
-    if (dSprin && dSbp && dSprin > dSbp) {
-        return { isValid: false, message: "Tanggal SPRIN INDAK tidak boleh melebihi Tanggal SBP!" };
-    }
-    if (dSbp && dLp && dSbp > dLp) {
-        return { isValid: false, message: "Tanggal SBP tidak boleh mendahului/melewati Tanggal LP!" };
-    }
-    if (dLp && dLpp && dLp > dLpp) {
-        return { isValid: false, message: "Tanggal Laporan Pelanggaran (LP) tidak boleh lebih baru dari LPP!" };
-    }
-    if (dLpp && dLpf && dLpp > dLpf) {
-        return { isValid: false, message: "Tanggal LPP tidak boleh melebihi Tanggal LPF!" };
-    }
-    if (dLpf && dSplit && dLpf > dSplit) {
-        return { isValid: false, message: "Tanggal LPF tidak boleh melebihi Tanggal SPLIT!" };
-    }
-    if (dSbp && dSprinCacah && dSprinCacah < dSbp) {
-        return { isValid: false, message: "Tanggal SPRIN CACAH tidak boleh mendahului Tanggal SBP!" };
-    }
-    if (dSprinCacah && dBa && dBa < dSprinCacah) {
-        return { isValid: false, message: "Tanggal BA CACAH tidak boleh mendahului Tanggal SPRIN CACAH!" };
-    }
-    if (dBa && dLhp && dLhp < dBa) {
-        return { isValid: false, message: "Tanggal LHP tidak boleh mendahului Tanggal BA CACAH!" };
-    }
-    return { isValid: true };
-}
-export function extractDocSequenceNumber(docString) {
-    if (!docString)
-        return null;
-    let match = String(docString).match(/\b(\d+)\b/);
-    return match ? parseInt(match[1], 10) : null;
-}
-export function getAllGlobalRecords() {
-    let perkaraList = [];
-    if (typeof store !== 'undefined' && Array.isArray(store.databasePerkara)) {
-        perkaraList = store.databasePerkara;
-    }
-    else {
-        try {
-            perkaraList = JSON.parse(localStorage.getItem('databasePerkara') || '[]');
-        }
-        catch (e) {
-            perkaraList = [];
-        }
-    }
-    let disposisiList = [];
-    try {
-        disposisiList = JSON.parse(localStorage.getItem('databaseDisposisi') || '[]');
-    }
-    catch (e) {
-        disposisiList = [];
-    }
-    return [...perkaraList, ...disposisiList];
-}
-export function generateNextBookingNumber(prefix, fieldKey, suffixPattern = '', padLength = 3) {
-    let allRecords = getAllGlobalRecords();
-    let maxSeq = 0;
-    allRecords.forEach(item => {
-        let val = item[fieldKey];
-        if (val && String(val).toUpperCase().includes(prefix.toUpperCase())) {
-            let seq = extractDocSequenceNumber(val);
-            if (seq !== null && seq > maxSeq) {
-                maxSeq = seq;
-            }
-        }
-    });
-    let storageKey = `last_seq_${fieldKey}`;
-    let storedSeq = parseInt(localStorage.getItem(storageKey) || '0', 10);
-    if (storedSeq > maxSeq)
-        maxSeq = storedSeq;
-    let nextSeq = maxSeq + 1;
-    localStorage.setItem(storageKey, String(nextSeq));
-    let formattedSeq = String(nextSeq).padStart(padLength, '0');
-    return `${prefix}${formattedSeq}${suffixPattern}`;
-}
-export function validateGlobalDocSequence(newDocNum, newDocDate, fieldNumKey, fieldDateKey, currentRecordId = null, linkedParentId = null) {
-    if (!newDocNum || !newDocDate) {
-        return { isValid: true };
-    }
-    let cleanNum = String(newDocNum).trim().toLowerCase();
-    let targetSeq = extractDocSequenceNumber(cleanNum);
-    let targetTime = new Date(newDocDate).getTime();
-    let allRecords = getAllGlobalRecords();
-    for (let item of allRecords) {
-        let itemId = item.id || item.recordId;
-        if (currentRecordId && String(itemId) === String(currentRecordId)) {
-            continue;
-        }
-        if (linkedParentId && String(itemId) === String(linkedParentId)) {
-            continue;
-        }
-        if (linkedParentId && item.disposisiId && String(item.disposisiId) === String(linkedParentId)) {
-            continue;
-        }
-        let existNum = item[fieldNumKey] ? String(item[fieldNumKey]).trim() : '';
-        let existDate = item[fieldDateKey] ? String(item[fieldDateKey]).trim() : '';
-        if (!existNum || !existDate)
-            continue;
-        if (existNum.toLowerCase() === cleanNum) {
-            return {
-                isValid: false,
-                message: `Nomor "${newDocNum}" sudah digunakan pada berkas lain! Tidak boleh ada nomor ganda.`
-            };
-        }
-        if (targetSeq !== null) {
-            let existSeq = extractDocSequenceNumber(existNum);
-            if (existSeq !== null) {
-                let existTime = new Date(existDate).getTime();
-                if (targetSeq > existSeq && targetTime < existTime) {
-                    return {
-                        isValid: false,
-                        message: `Anomali Tanggal: Nomor (${newDocNum}) lebih tinggi dari (${existNum}), tetapi tanggalnya (${newDocDate}) mendahului dokumen sebelumnya (${existDate}).`
-                    };
-                }
-                if (targetSeq < existSeq && targetTime > existTime) {
-                    return {
-                        isValid: false,
-                        message: `Anomali Tanggal: Nomor (${newDocNum}) lebih kecil dari (${existNum}), tetapi tanggalnya (${newDocDate}) melewati berkas yang bernomor lebih besar (${existDate}).`
-                    };
-                }
-            }
-        }
-    }
-    return { isValid: true };
-}
-if (typeof window !== 'undefined') {
-    window.extractDocSequenceNumber = extractDocSequenceNumber;
-    window.getAllGlobalRecords = getAllGlobalRecords;
-    window.generateNextBookingNumber = generateNextBookingNumber;
-    window.validateGlobalDocSequence = validateGlobalDocSequence;
-    window.validateFormDocumentNumbers = validateFormDocumentNumbers;
-    window.validateOperationalChronology = validateOperationalChronology;
 }
 //# sourceMappingURL=formatters.js.map

@@ -1,3 +1,4 @@
+export declare function initPerkaraDropdownsFromMaster(): void;
 export declare function populateAgeDropdown(): void;
 export declare function updateHariSBP(): void;
 export declare function updateLiveCodePreviews(): void;
