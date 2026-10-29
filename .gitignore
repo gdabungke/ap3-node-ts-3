@@ -1,0 +1,27 @@
+# Dependensi
+node_modules/
+
+# Hasil kompilasi / build
+dist/
+js/
+
+# Data lokal & file sensitif
+data/
+*.db
+*.sqlite
+
+# Konfigurasi privat & Environment
+.env
+.env.*
+!.env.example
+
+# File log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# Pengaturan Editor & OS
+.vscode/
+.DS_Store
+Thumbs.db
