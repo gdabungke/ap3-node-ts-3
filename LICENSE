@@ -1,0 +1,59 @@
+LISENSI PENGGUNAAN INTERNAL KEDINASAN
+KEMENTERIAN KEUANGAN REPUBLIK INDONESIA
+DIREKTORAT JENDERAL BEA DAN CUKAI
+
+Hak Cipta (C) 2026 Kementerian Keuangan Republik Indonesia.
+Hak cipta dilindungi oleh peraturan perundang-undangan Republik Indonesia.
+
+Aplikasi Pelaporan & Penanganan Perkara (AP3), termasuk seluruh kode sumber (source code), 
+skema basis data, antarmuka pengguna (UI/UX), berkas konfigurasi, dokumentasi teknis, 
+dan aset grafis/vektor pendukung merupakan Barang Milik Negara (BMN) Tak Berwujud berupa 
+Aset Tak Berwujud (ATB) Perangkat Lunak Kedinasan yang dikembangkan khusus untuk 
+mendukung pelaksanaan tugas pokok dan fungsi di lingkungan Direktorat Jenderal Bea dan Cukai.
+
+SYARAT DAN KETENTUAN PENGGUNAAN:
+
+1. KEPEMILIKAN DAN LISENSI TERBATAS
+   Perangkat lunak ini BUKAN merupakan perangkat lunak sumber terbuka (Non-Open Source) 
+   dan TIDAK untuk domain publik. Lisensi penggunaan ini diberikan secara non-eksklusif, 
+   terbatas, dan tidak dapat dialihkan (non-transferable) hanya kepada pegawai yang 
+   diberikan wewenang kedinasan di lingkungan Kementerian Keuangan Republik Indonesia.
+
+2. BATASAN LINGKUNGAN PENGGUNAAN
+   a. Pengoperasian aplikasi hanya diperkenankan pada infrastruktur server internal, 
+      Pusat Data / Komputasi Awan Resmi Kementerian Keuangan, intranet kedinasan, atau 
+      perangkat dinas yang telah terdaftar dan diautentikasi.
+   b. Dilarang keras menempatkan, meng-host, atau mencadangkan (backup) kode sumber, 
+      berkas repositori, dan basis data operasional perkara pada platform publik, 
+      repositori terbuka (seperti public repository di GitHub, GitLab, dsb.), atau 
+      layanan penyimpanan pihak ketiga yang tidak bersertifikasi keamanan kedinasan.
+
+3. KEAMANAN INFORMASI DAN KERAHASIAAN PERKARA
+   a. Data perkara penindakan, identitas pelaku, kronologis intelijen, nomor register 
+      surat (LP, SBP, SPRIN, LPP, LPF, SPLIT, LHP, dsb.), dan informasi operasional yang 
+      dikelola di dalam sistem ini dikategorikan sebagai Informasi Kedinasan yang Dikecualikan / 
+      Rahasia Jabatan sesuai Undang-Undang Informasi dan Transaksi Elektronik serta 
+      Undang-Undang Keterbukaan Informasi Publik.
+   b. Seluruh personil dan operator sistem wajib menjaga kerahasiaan kredensial akun 
+      serta dilarang membocorkan data perkara kepada pihak yang tidak berhak.
+
+4. LARANGAN MODIFIKASI DAN DISTRIBUSI KOMERSIAL
+   Dilarang keras bagi pihak manapun (baik perseorangan pegawai, mantan pegawai, mitra, 
+   maupun pihak ketiga):
+   a. Menggandakan, menyalin, merekayasa balik (reverse engineer), membongkar kode (decompile), 
+      atau memodifikasi arsitektur sistem tanpa izin tertulis dari unit penanggung jawab TIK / 
+      Pimpinan Unit Kerja terkait.
+   b. Menjual, menyewakan, melisensikan ulang, meminjamkan, atau mengeksploitasi sistem 
+      ini secara komersial untuk keuntungan pribadi maupun kelompok.
+
+5. PENEGAKAN HUKUM DAN SANKSI
+   Segala bentuk pelanggaran terhadap ketentuan lisensi ini, termasuk penyalahgunaan 
+   data, pembocoran kode sumber, atau akses ilegal terhadap basis data penindakan, 
+   akan ditindaklanjuti melalui:
+   a. Penegakan disiplin Pegawai Negeri Sipil sesuai Peraturan Pemerintah tentang 
+      Disiplin Pegawai Negeri Sipil.
+   b. Proses hukum pidana dan perdata sesuai ketentuan perundang-undangan yang berlaku 
+      di Negara Kesatuan Republik Indonesia (termasuk UU Hak Cipta, UU ITE, dan UU Tipikor).
+
+Diterbitkan untuk implementasi unit operasional penindakan dan penyidikan 
+Kementerian Keuangan Republik Indonesia.
