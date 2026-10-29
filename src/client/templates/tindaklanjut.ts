@@ -1,178 +1,60 @@
-import { store, savePerkaraToStorage } from '../state/store.js';
-import { escText, getVal, tanggalKeTeks, formatDateIndo, autoGenerateTeksTanggalBA, formatTrailingDashes, formatRowTrailingDashes } from '../utils/formatters.js';
-import { showToast } from '../modules/ui.js';
-import { tteBadge, buildTableKv, generateKopSurat } from './laporan.js';
+/**
+ * ============================================================================
+ * MODUL TEMPLATE : TINDAKLANJUT.TS
+ * KELOMPOK       : TINDAK LANJUT / EKSEKUSI HASIL PENELITIAN PERKARA (LHP)
+ * DESKRIPSI      : Berisi fungsi cetak dokumen tindak lanjut operasional
+ *                  berdasarkan rekomendasi LHP (pengembalian ke pemilik,
+ *                  buka segel, penetapan status BDN, denda SPSA, atau pelimpahan).
+ * ============================================================================
+ */
 
-export function handleSingleValidationTL(): void {
-  if ((typeof store.activeRecordIndex === 'undefined' || store.activeRecordIndex < 0) && store.databasePerkara.length > 0) {
-    store.activeRecordIndex = 0;
-  }
+import { store } from '../state/store.js';
+import { 
+  escText, 
+  getVal, 
+  formatDateIndo, 
+  autoGenerateTeksTanggalBA, 
+  formatTrailingDashes, 
+  formatRowTrailingDashes,
+  terbilangHuruf 
+} from '../utils/formatters.js';
+import { 
+  tteBadge, 
+  buildTableKv, 
+  generateKopSurat, 
+  getTLNumFormat, 
+  closeTLReportTag,
+  renderBastItemBlock,
+  renderPlaceholderRow,
+  toLetter 
+} from './components.js';
 
-  if (typeof store.activeRecordIndex === 'undefined' || store.activeRecordIndex < 0 || !store.databasePerkara[store.activeRecordIndex]) {
-    showToast("INFORMASI", "Belum ada data perkara/LHP yang tersedia untuk divalidasi.", "warning");
-    return;
-  }
+// Re-export agar kompatibilitas modul luar terjaga
+export { getTLNumFormat, closeTLReportTag };
 
-  let activeRecord = store.databasePerkara[store.activeRecordIndex];
-  let noLhp = activeRecord.Nomor_LHP || activeRecord.NoLP_LP_1 || '1';
-  let tglLhp = activeRecord.Tanggal_LHP || activeRecord.Tanggal_LP_LP_1 || '';
-
-  activeRecord.TL_Tanggal_Surat = activeRecord.TL_Tanggal_Surat || tglLhp;
-  activeRecord.TL_Hari_BAST = activeRecord.TL_Hari_BAST || activeRecord.Hari_SBP || 'Selasa';
-  activeRecord.TL_Tgl_Huruf_BAST = activeRecord.TL_Tgl_Huruf_BAST || tanggalKeTeks(tglLhp);
-  activeRecord.TL_Nama_Pemilik = activeRecord.TL_Nama_Pemilik || activeRecord.Nama_Pelaku || '-';
-  activeRecord.TL_NIK_Pemilik = activeRecord.TL_NIK_Pemilik || activeRecord.Nomor_Identitas || '-';
-  activeRecord.TL_Alamat_Pemilik = activeRecord.TL_Alamat_Pemilik || activeRecord.Alamat_Pelaku || '-';
-  
-  activeRecord.KEP_Tanggal_ND = activeRecord.KEP_Tanggal_ND || tglLhp;
-  activeRecord.KEP_Nomor_ND = activeRecord.KEP_Nomor_ND || `KEP-${noLhp}/KPU.2064/2026`;
-  activeRecord.SPSA_Nomor = activeRecord.SPSA_Nomor || noLhp;
-  activeRecord.SPSA_Tanggal = activeRecord.SPSA_Tanggal || tglLhp;
-  activeRecord.Limpah_Tanggal = activeRecord.Limpah_Tanggal || tglLhp;
-
-  savePerkaraToStorage();
-
-  let bannerBox = document.getElementById('tlValidatorBanner');
-  if (bannerBox) bannerBox.style.display = 'flex';
-  
-  let statusLabel = document.getElementById('tlActiveStatusLabel');
-  if (statusLabel) {
-    let lhpLabel = activeRecord.Nomor_LHP ? `LHP-${activeRecord.Nomor_LHP}` : `LP-${activeRecord.NoLP_LP_1}`;
-    statusLabel.textContent = `TERVALIDASI: ${lhpLabel} (Pelaku: ${escText(activeRecord.Nama_Pelaku)})`;
-  }
-
-  let existingToast = document.getElementById('customToastNotification');
-  if (!existingToast) {
-    let toastDiv = document.createElement('div');
-    toastDiv.id = 'customToastNotification';
-    toastDiv.innerHTML = `<i class="fi fi-rr-check-circle" style="color: #22c55e; margin-right: 8px;"></i><span id="toastMessage">Data Tindak Lanjut berhasil divalidasi & disinkronkan dari LHP!</span>`;
-    toastDiv.style.cssText = "position: fixed; bottom: 20px; right: 20px; background: #0f172a; color: #ffffff; padding: 12px 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); display: flex; align-items: center; z-index: 9999; font-size: 14px; opacity: 0; transition: opacity 0.3s ease, transform 0.3s ease; transform: translateY(20px); border-left: 4px solid #10b981;";
-    document.body.appendChild(toastDiv);
-    existingToast = toastDiv;
-  } else {
-    let msgEl = document.getElementById('toastMessage');
-    if (msgEl) msgEl.innerText = "Data Tindak Lanjut berhasil divalidasi & disinkronkan dari LHP!";
-  }
-
-  setTimeout(() => {
-    if (existingToast) {
-      existingToast.style.opacity = '1';
-      existingToast.style.transform = 'translateY(0)';
-    }
-  }, 10);
-
-  setTimeout(() => {
-    if (existingToast) {
-      existingToast.style.opacity = '0';
-      existingToast.style.transform = 'translateY(20px)';
-    }
-  }, 3000);
-
-  if (typeof (window as any).refreshTLTableUI === 'function') {
-    (window as any).refreshTLTableUI();
-  }
-}
-
-export function getTLNumFormat(type: string): string {
-  if (store.activeRecordIndex < 0 || !store.databasePerkara[store.activeRecordIndex]) return '-';
-  let rec = store.databasePerkara[store.activeRecordIndex];
-  let fallbackNum = rec.Nomor_LHP || rec.NoLP_LP_1 || '338';
-  
-  let formattedNum = '-';
-
-  if (type === 'BAST_PEMILIK') {
-    let num = rec.TL_BAST_Num || fallbackNum;
-    formattedNum = `BAST-${num}/KPU.2064/2026`;
-  } 
-  else if (type === 'BAST_LIMPAH') {
-    let num = rec.TL_Limpah_Num || fallbackNum;
-    formattedNum = `BAST-${num}/LIMPAH/KPU.2064/2026`;
-  } 
-  else if (type === 'BA_SEGEL') {
-    let numSegel = rec.TL_Segel_Num || fallbackNum;
-    formattedNum = `BA-${numSegel}/BUKASEGEL/KPU.2064/2026`;
-  } 
-  else if (type === 'SPSA') {
-    let numSpsa = rec.TL_SPSA_Num || fallbackNum;
-    formattedNum = `SPSA-${numSpsa}/KPU.2/2026`;
-  } 
-  else if (type === 'KEP_BDN') {
-    let numKep = rec.TL_KEP_Num || fallbackNum;
-    formattedNum = `KEP-${numKep}/KPU.2/2026`;
-  }
-
-  return formattedNum;
-}
-
-export function closeTLReportTag(customSignHTML: string, tglStr: string): string {
-  let t = tglStr || '28 September 2026';
-  return `<div style="page-break-inside: avoid !important; margin-top:16px; font-family:Arial, sans-serif; font-size:10pt;">
-    <div style="text-align:right; margin-bottom:8px;">Batam, ${t}</div>
-    ${customSignHTML}
-  </div></div>`;
-}
-
+// ----------------------------------------------------------------------------
+// [DOKUMEN TINDAK LANJUT 1/5] BAST KEPADA PEMILIK (BAST PEMILIK)
+// Deskripsi : Berita Acara pengembalian sarana pengangkut, barang, dan dokumen
+//             kepada pemilik/kuasa yang sah (rekomendasi LHP penyelesaian umum).
+// Pihak TTD : Yang Menerima (Pemilik), Petugas Penyerah 1, Saksi, Petugas Penyerah 2
+// ----------------------------------------------------------------------------
 export function BAST_PEMILIK(): string {
   if (store.activeRecordIndex < 0 || !store.databasePerkara[store.activeRecordIndex]) {
     return `<div class="report"><p>Data belum dipilih.</p></div>`;
   }
-  let rec = store.databasePerkara[store.activeRecordIndex];
-  let num = getTLNumFormat('BAST_PEMILIK');
+  const rec = store.databasePerkara[store.activeRecordIndex];
+  const num = getTLNumFormat('BAST_PEMILIK');
 
-  const angkaKeTeks = (n: any): string => {
-    let numVal = parseInt(n, 10);
-    if (isNaN(numVal)) return '';
-    const satuan = ['', 'satu', 'dua', 'tiga', 'empat', 'lima', 'enam', 'tujuh', 'delapan', 'sembilan', 'sepuluh', 'sebelas'];
-    if (numVal < 12) return satuan[numVal];
-    if (numVal < 20) return angkaKeTeks(numVal - 10) + ' belas';
-    if (numVal < 100) return angkaKeTeks(Math.floor(numVal / 10)) + ' puluh' + (numVal % 10 !== 0 ? ' ' + satuan[numVal % 10] : '');
-    if (numVal < 200) return 'seratus' + (numVal - 100 !== 0 ? ' ' + angkaKeTeks(numVal - 100) : '');
-    if (numVal < 1000) return angkaKeTeks(Math.floor(numVal / 100)) + ' ratus' + (numVal % 100 !== 0 ? ' ' + angkaKeTeks(numVal % 100) : '');
-    return String(numVal);
-  };
+  const rawDate = rec.TL_Tanggal_Surat || rec.Tanggal_LHP || rec.Tanggal_LP_LP_1 || '';
+  const dateInfo = autoGenerateTeksTanggalBA(rawDate);
+  const hari = escText(rec.TL_Hari_BAST || dateInfo.hari || 'Kamis');
+  const tglHuruf = escText(rec.TL_Tgl_Huruf_BAST || dateInfo.teksLengkap || '-');
+  const tglCetakTTD = rawDate ? formatDateIndo(rawDate) : '17 September 2026';
 
-  let rawDate = rec.TL_Tanggal_Surat || rec.Tanggal_LHP || rec.Tanggal_LP_LP_1 || '';
-  let dateInfo = autoGenerateTeksTanggalBA(rawDate);
-  let hari = escText(rec.TL_Hari_BAST || dateInfo.hari || 'Kamis');
-  let tglHuruf = escText(rec.TL_Tgl_Huruf_BAST || dateInfo.teksLengkap || '-');
-  let tglCetakTTD = rawDate ? formatDateIndo(rawDate) : '17 September 2026';
-
-  let sarkutList = rec.TL_BAST_SarkutList || [
+  // 1. Sarana Pengangkut
+  const sarkutList = rec.TL_BAST_SarkutList || [
     { jenis: rec.TL_Nama_Sarkut || rec.Pengangkut || '-', nopol: rec.TL_No_Reg_Sarkut || '-' }
   ];
-
-  let rawJml = rec.Jumlah_Koli || '12';
-  let txtTerbilang = angkaKeTeks(rawJml) || 'dua belas';
-  let jnsKoli = rec.Jenis_Koli || 'koli';
-  let komoditas = rec.Komoditi || rec.Uraian_Barang || 'Sepatu';
-  komoditas = komoditas.replace(/^(\d+\s*\([^)]*\)\s*[a-zA-Z]+\s*)+/i, '').trim() || 'Sepatu';
-
-  let defaultKemasanOtomatis = (rec.No_Kontainer && rec.No_Kontainer !== '-') 
-    ? `${rec.No_Kontainer} / ${rec.Ukuran_Kontainer || ''}` 
-    : `${rawJml} ${jnsKoli}`;
-  let defaultBarangOtomatis = `${rawJml} (${txtTerbilang}) ${jnsKoli} ${komoditas}`;
-
-  let barangList = rec.TL_BAST_BarangList;
-  if (!barangList || barangList.length === 0 || (barangList[0].uraian && barangList[0].uraian.split(jnsKoli).length > 2)) {
-    barangList = [{ kemasan: defaultKemasanOtomatis, uraian: defaultBarangOtomatis }];
-    rec.TL_BAST_BarangList = barangList;
-  }
-
-  let dokDefault = '-';
-  if (rec.TL_Dokumen_Bast) {
-    dokDefault = rec.TL_Dokumen_Bast;
-  } else {
-    let jns = rec.Dokumen_Pemberitahuan || 'BC 2.0';
-    let no = rec.Nomor_Dok_Pemberitahuan || '12345';
-    let tgl = rec.Tanggal_Dokumen_Pemberitahuan ? formatDateIndo(rec.Tanggal_Dokumen_Pemberitahuan) : '01 September 2026';
-    dokDefault = `Eks. ${jns} nomor ${no} tanggal ${tgl}`;
-  }
-  let dokumenList = rec.TL_BAST_DokumenList || [{ uraian: dokDefault }];
-
-  let orangList = rec.TL_BAST_OrangList || [{ nama: '-', identitas: '-' }];
-
-  const toLetter = (i: number) => String.fromCharCode(97 + i) + '.';
-
   let sarkutRows = sarkutList.map((s: any, idx: number) => `
     <tr>
       <td style="border:none !important; padding:1px 0 1px 18px; vertical-align:top; font-size:11pt;">${toLetter(idx)}</td>
@@ -187,16 +69,23 @@ export function BAST_PEMILIK(): string {
       <td style="border:none !important; padding:1px 4px; vertical-align:top; font-size:11pt;">${escText(s.nopol || '-')}</td>
     </tr>
   `).join('');
+  if (sarkutList.length === 1) sarkutRows += renderPlaceholderRow();
 
-  if (sarkutList.length === 1) {
-    sarkutRows += `
-      <tr>
-        <td style="border:none !important; padding:1px 0 1px 18px; vertical-align:top; font-size:11pt;">b.</td>
-        <td style="border:none !important; padding:1px 24px 1px 4px; vertical-align:top; font-size:11pt; color:#555;">…………………………………………</td>
-        <td style="border:none !important; padding:1px 0; text-align:center; vertical-align:top; font-size:11pt;">:</td>
-        <td style="border:none !important; padding:1px 4px; vertical-align:top; font-size:11pt;">-</td>
-      </tr>
-    `;
+  // 2. Barang
+  const rawJml = rec.Jumlah_Koli || '12';
+  const txtTerbilang = terbilangHuruf(rawJml) || 'dua belas';
+  const jnsKoli = rec.Jenis_Koli || 'koli';
+  const komoditas = (rec.Komoditi || rec.Uraian_Barang || 'Sepatu').replace(/^(\d+\s*\([^)]*\)\s*[a-zA-Z]+\s*)+/i, '').trim() || 'Sepatu';
+
+  const defaultKemasanOtomatis = (rec.No_Kontainer && rec.No_Kontainer !== '-') 
+    ? `${rec.No_Kontainer} / ${rec.Ukuran_Kontainer || ''}` 
+    : `${rawJml} ${jnsKoli}`;
+  const defaultBarangOtomatis = `${rawJml} (${txtTerbilang}) ${jnsKoli} ${komoditas}`;
+
+  let barangList = rec.TL_BAST_BarangList;
+  if (!barangList || barangList.length === 0) {
+    barangList = [{ kemasan: defaultKemasanOtomatis, uraian: defaultBarangOtomatis }];
+    rec.TL_BAST_BarangList = barangList;
   }
 
   let barangRows = barangList.map((b: any, idx: number) => `
@@ -213,17 +102,19 @@ export function BAST_PEMILIK(): string {
       <td style="border:none !important; padding:1px 4px; vertical-align:top; font-size:11pt;">${escText(b.uraian || '-')}</td>
     </tr>
   `).join('');
+  if (barangList.length === 1) barangRows += renderPlaceholderRow();
 
-  if (barangList.length === 1) {
-    barangRows += `
-      <tr>
-        <td style="border:none !important; padding:1px 0 1px 18px; vertical-align:top; font-size:11pt;">b.</td>
-        <td style="border:none !important; padding:1px 24px 1px 4px; vertical-align:top; font-size:11pt; color:#555;">…………………………………………</td>
-        <td style="border:none !important; padding:1px 0; text-align:center; vertical-align:top; font-size:11pt;">:</td>
-        <td style="border:none !important; padding:1px 4px; vertical-align:top; font-size:11pt;">-</td>
-      </tr>
-    `;
+  // 3. Dokumen
+  let dokDefault = '-';
+  if (rec.TL_Dokumen_Bast) {
+    dokDefault = rec.TL_Dokumen_Bast;
+  } else {
+    const jns = rec.Dokumen_Pemberitahuan || 'BC 2.0';
+    const no = rec.Nomor_Dok_Pemberitahuan || '12345';
+    const tgl = rec.Tanggal_Dokumen_Pemberitahuan ? formatDateIndo(rec.Tanggal_Dokumen_Pemberitahuan) : '01 September 2026';
+    dokDefault = `Eks. ${jns} nomor ${no} tanggal ${tgl}`;
   }
+  const dokumenList = rec.TL_BAST_DokumenList || [{ uraian: dokDefault }];
 
   let dokumenRows = dokumenList.map((d: any, idx: number) => `
     <tr>
@@ -233,18 +124,10 @@ export function BAST_PEMILIK(): string {
       <td style="border:none !important; padding:1px 4px; vertical-align:top; font-size:11pt;">${escText(d.uraian || '-')}</td>
     </tr>
   `).join('');
+  if (dokumenList.length === 1) dokumenRows += renderPlaceholderRow();
 
-  if (dokumenList.length === 1) {
-    dokumenRows += `
-      <tr>
-        <td style="border:none !important; padding:1px 0 1px 18px; vertical-align:top; font-size:11pt;">b.</td>
-        <td style="border:none !important; padding:1px 24px 1px 4px; vertical-align:top; font-size:11pt; color:#555;">…………………………………………</td>
-        <td style="border:none !important; padding:1px 0; text-align:center; vertical-align:top; font-size:11pt;">:</td>
-        <td style="border:none !important; padding:1px 4px; vertical-align:top; font-size:11pt;">-</td>
-      </tr>
-    `;
-  }
-
+  // 4. Orang
+  const orangList = rec.TL_BAST_OrangList || [{ nama: '-', identitas: '-' }];
   let orangRows = orangList.map((o: any, idx: number) => `
     <tr>
       <td style="border:none !important; padding:1px 0 1px 18px; vertical-align:top; font-size:11pt;">${toLetter(idx)}</td>
@@ -259,37 +142,24 @@ export function BAST_PEMILIK(): string {
       <td style="border:none !important; padding:1px 4px; vertical-align:top; font-size:11pt;">${escText(o.identitas || '-')}</td>
     </tr>
   `).join('');
+  if (orangList.length === 1) orangRows += renderPlaceholderRow();
 
-  if (orangList.length === 1) {
-    orangRows += `
-      <tr>
-        <td style="border:none !important; padding:1px 0 1px 18px; vertical-align:top; font-size:11pt;">b.</td>
-        <td style="border:none !important; padding:1px 24px 1px 4px; vertical-align:top; font-size:11pt; color:#555;">…………………………………………</td>
-        <td style="border:none !important; padding:1px 0; text-align:center; vertical-align:top; font-size:11pt;">:</td>
-        <td style="border:none !important; padding:1px 4px; vertical-align:top; font-size:11pt;">-</td>
-      </tr>
-    `;
-  }
+  const rawNamaPenerima = (rec.TL_Nama_Pemilik || rec.Nama_Pemilik || rec.Nama_Perusahaan || rec.Nama_Pelaku || '-').trim();
+  const namaPenerimaTTD = rawNamaPenerima.replace(/\.+$/, '');
+  const nikPenerima = (rec.TL_NIK_Pemilik || rec.Nomor_Identitas || '-').trim();
+  const alamatPenerima = (rec.TL_Alamat_Pemilik || rec.Alamat_Pemilik || rec.Alamat_Pelaku || '-').trim();
 
-  let rawNamaPenerima = (rec.TL_Nama_Pemilik || rec.Nama_Pemilik || rec.Nama_Perusahaan || rec.Nama_Pelaku || '-').trim();
-  let namaPenerimaTTD = rawNamaPenerima.replace(/\.+$/, '');
+  const rawAtasNama = (rec.TL_Atas_Nama_Pt || rawNamaPenerima).trim();
+  const atasNamaTeks = (rawAtasNama !== '-' && !rawAtasNama.endsWith('.')) ? rawAtasNama + '.' : rawAtasNama;
 
-  let rawNik = rec.TL_NIK_Pemilik || rec.Nomor_Identitas || '-';
-  let nikPenerima = rawNik.trim();
+  const rawRangka = (rec.TL_Rangka_Penyerahan || 'Pengeluaran barang sebagian atas barang yang tidak terkena larangan dan/atau pembatasan').trim();
+  const rangkaClean = (rawRangka !== '-' && !rawRangka.endsWith('.')) ? rawRangka + '.' : rawRangka;
 
-  let rawAlamat = rec.TL_Alamat_Pemilik || rec.Alamat_Pemilik || rec.Alamat_Pelaku || '-';
-  let alamatPenerima = rawAlamat.trim();
-
-  let rawAtasNama = (rec.TL_Atas_Nama_Pt || rawNamaPenerima).trim();
-  let atasNamaTeks = (rawAtasNama !== '-' && !rawAtasNama.endsWith('.')) ? rawAtasNama + '.' : rawAtasNama;
-
-  let rawRangka = (rec.TL_Rangka_Penyerahan || 'Pengeluaran barang sebagian atas barang yang tidak terkena larangan dan/atau pembatasan').trim();
-  let rangkaClean = (rawRangka !== '-' && !rawRangka.endsWith('.')) ? rawRangka + '.' : rawRangka;
-
-  let pet1Nama = rec.TL_Petugas_Bast_1 && rec.TL_Petugas_Bast_1 !== 'Petugas BAST 1' ? escText(rec.TL_Petugas_Bast_1) : '-';
-  let pet1Nip = rec.TL_NIP_Bast_1 || rec.nip_ketua_tim || '-';
-  let pet2Nama = rec.TL_Petugas_Bast_2 && rec.TL_Petugas_Bast_2 !== 'Petugas BAST 2' ? escText(rec.TL_Petugas_Bast_2) : '-';
-  let pet2Nip = rec.TL_NIP_Bast_2 || '-';
+  const pet1Nama = rec.TL_Petugas_Bast_1 && rec.TL_Petugas_Bast_1 !== 'Petugas BAST 1' ? escText(rec.TL_Petugas_Bast_1) : (rec.ketua_tim || '-');
+  const pet1Nip = rec.TL_NIP_Bast_1 || rec.nip_ketua_tim || '-';
+  const pet2Nama = rec.TL_Petugas_Bast_2 && rec.TL_Petugas_Bast_2 !== 'Petugas BAST 2' ? escText(rec.TL_Petugas_Bast_2) : '-';
+  const pet2Nip = rec.TL_NIP_Bast_2 || '-';
+  const saksiPenerima = (rec.TL_Saksi_Penerima || '').trim() || '---------------------------';
 
   return `
   <div class="report" style="font-family:Arial, Helvetica, sans-serif !important; font-size:11pt !important; line-height:1.35; color:#000 !important; width:100%; box-sizing:border-box;">
@@ -307,26 +177,10 @@ export function BAST_PEMILIK(): string {
         <col style="width:18px;">
         <col style="width:calc(100% - 289px);">
       </colgroup>
-
-      <tr>
-        <td colspan="4" style="border:none !important; font-weight:bold; padding:4px 0 2px 0; font-size:11pt;">1. Sarana Pengangkut</td>
-      </tr>
-      ${sarkutRows}
-
-      <tr>
-        <td colspan="4" style="border:none !important; font-weight:bold; padding:6px 0 2px 0; font-size:11pt;">2. Barang</td>
-      </tr>
-      ${barangRows}
-
-      <tr>
-        <td colspan="4" style="border:none !important; font-weight:bold; padding:6px 0 2px 0; font-size:11pt;">3. Dokumen</td>
-      </tr>
-      ${dokumenRows}
-
-      <tr>
-        <td colspan="4" style="border:none !important; font-weight:bold; padding:6px 0 2px 0; font-size:11pt;">4. Orang</td>
-      </tr>
-      ${orangRows}
+      ${renderBastItemBlock('1. Sarana Pengangkut', sarkutRows)}
+      ${renderBastItemBlock('2. Barang', barangRows)}
+      ${renderBastItemBlock('3. Dokumen', dokumenRows)}
+      ${renderBastItemBlock('4. Orang', orangRows)}
     </table>
 
     <table style="width:100% !important; border-collapse:collapse !important; border:none !important; margin-top:8px; margin-bottom:8px; font-size:11pt !important; table-layout:fixed;">
@@ -379,7 +233,7 @@ export function BAST_PEMILIK(): string {
         <tr>
           <td style="border:none !important; padding:20px 10px 0 0; vertical-align:top;">
             <div style="height:55px;"></div>
-            <b>---------------------------</b>
+            <b>${saksiPenerima}</b>
           </td>
           <td style="border:none !important; padding:20px 0 0 0; vertical-align:top;">
             <div style="width:85%; margin-left:auto;">
@@ -395,55 +249,58 @@ export function BAST_PEMILIK(): string {
   </div>`;
 }
 
+// ----------------------------------------------------------------------------
+// [DOKUMEN TINDAK LANJUT 2/5] BERITA ACARA BUKA SEGEL (BA SEGEL)
+// Deskripsi : Eksekusi pembukaan tanda pengaman/segel dinas atas sarana pengangkut,
+//             peti kemas, atau bangunan penimbunan setelah proses penelitian tuntas.
+// Pihak TTD : Yang Menerima (Saksi/Pemilik), Petugas Pemeriksa P1 dan P2
+// ----------------------------------------------------------------------------
 export function BA_SEGEL(): string {
-  if (store.activeRecordIndex < 0) return `<div class="report"><p>Data belum dipilih.</p></div>`;
-  let rec = store.databasePerkara[store.activeRecordIndex];
-  let num = getTLNumFormat('BA_SEGEL');
+  if (store.activeRecordIndex < 0 || !store.databasePerkara[store.activeRecordIndex]) {
+    return `<div class="report"><p>Data belum dipilih.</p></div>`;
+  }
+  const rec = store.databasePerkara[store.activeRecordIndex];
+  const num = getTLNumFormat('BA_SEGEL');
   
-  let rawDate = rec.TL_Tanggal_Surat || rec.Tanggal_LHP || rec.Tanggal_LP_LP_1 || '';
-  let dateInfo = autoGenerateTeksTanggalBA(rawDate);
-  let hari = escText(rec.TL_Segel_Hari || dateInfo.hari || '');
-  let tglHuruf = escText(rec.TL_Segel_Tgl_Huruf || dateInfo.teksLengkap || '');
-  let tglCetakTTD = rawDate ? formatDateIndo(rawDate) : '';
+  const rawDate = rec.TL_Tanggal_Surat || rec.Tanggal_LHP || rec.Tanggal_LP_LP_1 || '';
+  const dateInfo = autoGenerateTeksTanggalBA(rawDate);
+  const hari = escText(rec.TL_Segel_Hari || dateInfo.hari || '');
+  const tglHuruf = escText(rec.TL_Segel_Tgl_Huruf || dateInfo.teksLengkap || '');
+  const tglCetakTTD = rawDate ? formatDateIndo(rawDate) : '';
 
-  let noSpli = escText(rec.TL_Segel_No_SPLI || rec.Nomor_SPLIT || '-');
-  let tglSpliRaw = rec.TL_Segel_Tgl_SPLI || rec.Tanggal_SPLIT || '';
-  let tglSpli = tglSpliRaw ? formatDateIndo(tglSpliRaw) : '-';
+  const noSpli = escText(rec.TL_Segel_No_SPLI || rec.Nomor_SPLIT || '-');
+  const tglSpliRaw = rec.TL_Segel_Tgl_SPLI || rec.Tanggal_SPLIT || '';
+  const tglSpli = tglSpliRaw ? formatDateIndo(tglSpliRaw) : '-';
   
-  let namaSarkut = escText(rec.TL_Segel_Nama_Sarkut || '-');
-  let regSarkut = escText(rec.TL_Segel_Reg_Sarkut || '-');
-  let bendera = escText(rec.TL_Segel_Bendera || '-');
-  let nahkoda = escText(rec.TL_Segel_Nahkoda || '-');
-  let nikNahkoda = escText(rec.TL_Segel_Nik_Nahkoda || '-');
+  const namaSarkut = escText(rec.TL_Segel_Nama_Sarkut || '-');
+  const regSarkut = escText(rec.TL_Segel_Reg_Sarkut || '-');
+  const bendera = escText(rec.TL_Segel_Bendera || '-');
+  const nahkoda = escText(rec.TL_Segel_Nahkoda || '-');
+  const nikNahkoda = escText(rec.TL_Segel_Nik_Nahkoda || '-');
 
-  let jmlBarang = escText(rec.TL_Segel_Jml_Barang || '-');
-  let jenisBarang = escText(rec.TL_Segel_Jenis_Barang || '-');
-  let dokBarang = escText(rec.TL_Segel_Dok_Barang || '-');
-  let pemilikBarang = escText(rec.TL_Segel_Pemilik_Barang || '-');
-  let npwpBarang = escText(rec.TL_Segel_NPWP_Barang || '-');
+  const jmlBarang = escText(rec.TL_Segel_Jml_Barang || '-');
+  const jenisBarang = escText(rec.TL_Segel_Jenis_Barang || '-');
+  const dokBarang = escText(rec.TL_Segel_Dok_Barang || '-');
+  const pemilikBarang = escText(rec.TL_Segel_Pemilik_Barang || '-');
+  const npwpBarang = escText(rec.TL_Segel_NPWP_Barang || '-');
 
-  let alamatBangunan = escText(rec.TL_Segel_Alamat_Bangunan || '-');
-  let regBangunan = escText(rec.TL_Segel_Reg_Bangunan || '-');
-  let namaPemilikTempat = escText(rec.TL_Segel_Nama_Pemilik_Tempat || '-');
-  let nikPemilikTempat = escText(rec.TL_Segel_Nik_Pemilik_Tempat || '-');
+  const alamatBangunan = escText(rec.TL_Segel_Alamat_Bangunan || '-');
+  const regBangunan = escText(rec.TL_Segel_Reg_Bangunan || '-');
+  const namaPemilikTempat = escText(rec.TL_Segel_Nama_Pemilik_Tempat || '-');
+  const nikPemilikTempat = escText(rec.TL_Segel_Nik_Pemilik_Tempat || '-');
 
-  let rawNamaSaksi = escText(rec.TL_Nama_Pemilik || rec.Nama_Pelaku || '');
-  let rawAlamatSaksi = escText(rec.TL_Alamat_Pemilik || '');
-  let rawPkrSaksi = escText(rec.TL_Segel_Pekerjaan || '');
-  let rawNikSaksi = escText(rec.TL_NIK_Pemilik || '');
+  const rawNamaSaksi = escText(rec.TL_Nama_Pemilik || rec.Nama_Pelaku || '');
+  const namaSaksi = rawNamaSaksi || '-';
+  const alamatSaksi = escText(rec.TL_Alamat_Pemilik || '-') || '-';
+  const pkrSaksi = escText(rec.TL_Segel_Pekerjaan || '-') || '-';
+  const nikSaksi = escText(rec.TL_NIK_Pemilik || '-') || '-';
 
-  let namaSaksi = rawNamaSaksi ? rawNamaSaksi : '-';
-  let alamatSaksi = rawAlamatSaksi ? rawAlamatSaksi : '-';
-  let pkrSaksi = rawPkrSaksi ? rawPkrSaksi : '-';
-  let nikSaksi = rawNikSaksi ? rawNikSaksi : '-';
-  let namaSaksiTTD = rawNamaSaksi || '-';
+  const p1 = escText(rec.TL_Segel_P1 || rec.ketua_tim || '-');
+  const p2 = escText(rec.TL_Segel_P2 || '-');
+  const p1Nip = escText(rec.TL_NIP_Segel_1 || rec.nip_ketua_tim || '-');
+  const p2Nip = escText(rec.TL_NIP_Segel_2 || '-');
 
-  let p1 = escText(rec.TL_Segel_P1 || rec.ketua_tim || '-');
-  let p2 = escText(rec.TL_Segel_P2 || '-');
-  let p1Nip = escText(rec.TL_NIP_Segel_1 || rec.nip_ketua_tim || '-');
-  let p2Nip = escText(rec.TL_NIP_Segel_2 || '-');
-
-  let ttdSegel = `
+  const ttdSegel = `
     <div style="page-break-inside:avoid !important; margin-top:16px; font-family:Arial, Helvetica, sans-serif; font-size:11pt;">
       <table style="width:100% !important; border-collapse:collapse !important; border:none !important; table-layout:fixed; font-size:11pt;">
         <colgroup>
@@ -460,7 +317,7 @@ export function BA_SEGEL(): string {
           <td style="border:none !important; padding:0 10px 0 0; vertical-align:top;">
             Yang menerima,
             <div style="height:35px;"></div>
-            <b>${namaSaksiTTD}</b>
+            <b>${namaSaksi}</b>
           </td>
           <td style="border:none !important; padding:0; vertical-align:top;">
             <div style="width:85%; margin-left:auto;">
@@ -479,6 +336,7 @@ export function BA_SEGEL(): string {
           <td style="border:none !important; padding:20px 0 0 0; vertical-align:top;">
             <div style="width:85%; margin-left:auto;">
               <div style="height:25px;"></div>
+              <div style="height:35px;"></div>
               ${tteBadge()}
               <b>${p2}</b><br>
               NIP. ${p2Nip}
@@ -489,7 +347,8 @@ export function BA_SEGEL(): string {
     </div>
   `;
 
-  return `<div class="report" style="font-family:Arial, sans-serif; font-size:11pt; line-height:1.35;">
+  return `
+  <div class="report" style="font-family:Arial, sans-serif; font-size:11pt; line-height:1.35;">
     ${generateKopSurat('BA_SEGEL')}
     <div style="text-align:center; font-weight:bold; font-size:11pt; margin:16px 0 3px 0;">BERITA ACARA PEMBUKAAN SEGEL</div>
     <div style="text-align:center; margin-bottom:12px; font-size:11pt;">Nomor : ${num}</div>
@@ -508,100 +367,30 @@ export function BA_SEGEL(): string {
         <td style="border:none !important; font-weight:bold; vertical-align:top; padding:6px 0 2px 0;">a.</td>
         <td colspan="3" style="border:none !important; font-weight:bold; padding:6px 0 2px 0;">Sarana Pengangkut</td>
       </tr>
-      <tr>
-        <td style="border:none !important;"></td>
-        <td style="border:none !important; padding:1px 4px;">Nama dan Jenis Sarkut</td>
-        <td style="border:none !important; padding:1px 0; text-align:center;">:</td>
-        <td style="border:none !important; padding:1px 4px;">${namaSarkut}</td>
-      </tr>
-      <tr>
-        <td style="border:none !important;"></td>
-        <td style="border:none !important; padding:1px 4px;">No. Register</td>
-        <td style="border:none !important; padding:1px 0; text-align:center;">:</td>
-        <td style="border:none !important; padding:1px 4px;">${regSarkut}</td>
-      </tr>
-      <tr>
-        <td style="border:none !important;"></td>
-        <td style="border:none !important; padding:1px 4px;">Bendera</td>
-        <td style="border:none !important; padding:1px 0; text-align:center;">:</td>
-        <td style="border:none !important; padding:1px 4px;">${bendera}</td>
-      </tr>
-      <tr>
-        <td style="border:none !important;"></td>
-        <td style="border:none !important; padding:1px 4px;">Nahkoda/Pilot/Pengemudi*</td>
-        <td style="border:none !important; padding:1px 0; text-align:center;">:</td>
-        <td style="border:none !important; padding:1px 4px;">${nahkoda}</td>
-      </tr>
-      <tr>
-        <td style="border:none !important;"></td>
-        <td style="border:none !important; padding:1px 4px;">Nomor Identitas</td>
-        <td style="border:none !important; padding:1px 0; text-align:center;">:</td>
-        <td style="border:none !important; padding:1px 4px;">${nikNahkoda}</td>
-      </tr>
+      <tr><td></td><td style="padding:1px 4px;">Nama dan Jenis Sarkut</td><td style="text-align:center;">:</td><td style="padding:1px 4px;">${namaSarkut}</td></tr>
+      <tr><td></td><td style="padding:1px 4px;">No. Register</td><td style="text-align:center;">:</td><td style="padding:1px 4px;">${regSarkut}</td></tr>
+      <tr><td></td><td style="padding:1px 4px;">Bendera</td><td style="text-align:center;">:</td><td style="padding:1px 4px;">${bendera}</td></tr>
+      <tr><td></td><td style="padding:1px 4px;">Nahkoda/Pilot/Pengemudi*</td><td style="text-align:center;">:</td><td style="padding:1px 4px;">${nahkoda}</td></tr>
+      <tr><td></td><td style="padding:1px 4px;">Nomor Identitas</td><td style="text-align:center;">:</td><td style="padding:1px 4px;">${nikNahkoda}</td></tr>
 
       <tr>
         <td style="border:none !important; font-weight:bold; vertical-align:top; padding:8px 0 2px 0;">b.</td>
         <td colspan="3" style="border:none !important; font-weight:bold; padding:8px 0 2px 0;">Barang</td>
       </tr>
-      <tr>
-        <td style="border:none !important;"></td>
-        <td style="border:none !important; padding:1px 4px;">Jumlah/Jenis/Nomor Peti Kemas/Kemasan</td>
-        <td style="border:none !important; padding:1px 0; text-align:center;">:</td>
-        <td style="border:none !important; padding:1px 4px;">${jmlBarang}</td>
-      </tr>
-      <tr>
-        <td style="border:none !important;"></td>
-        <td style="border:none !important; padding:1px 4px;">Jumlah/Jenis Barang</td>
-        <td style="border:none !important; padding:1px 0; text-align:center;">:</td>
-        <td style="border:none !important; padding:1px 4px;">${jenisBarang}</td>
-      </tr>
-      <tr>
-        <td style="border:none !important;"></td>
-        <td style="border:none !important; padding:1px 4px;">Jenis/Nomor dan Tgl Dokumen</td>
-        <td style="border:none !important; padding:1px 0; text-align:center;">:</td>
-        <td style="border:none !important; padding:1px 4px;">${dokBarang}</td>
-      </tr>
-      <tr>
-        <td style="border:none !important;"></td>
-        <td style="border:none !important; padding:1px 4px;">Pemilik/Importir/Eksportir/Kuasa*</td>
-        <td style="border:none !important; padding:1px 0; text-align:center;">:</td>
-        <td style="border:none !important; padding:1px 4px;">${pemilikBarang}</td>
-      </tr>
-      <tr>
-        <td style="border:none !important;"></td>
-        <td style="border:none !important; padding:1px 4px;">Nomor Identitas (NPWP)</td>
-        <td style="border:none !important; padding:1px 0; text-align:center;">:</td>
-        <td style="border:none !important; padding:1px 4px;">${npwpBarang}</td>
-      </tr>
+      <tr><td></td><td style="padding:1px 4px;">Jumlah/Jenis/Nomor Peti Kemas/Kemasan</td><td style="text-align:center;">:</td><td style="padding:1px 4px;">${jmlBarang}</td></tr>
+      <tr><td></td><td style="padding:1px 4px;">Jumlah/Jenis Barang</td><td style="text-align:center;">:</td><td style="padding:1px 4px;">${jenisBarang}</td></tr>
+      <tr><td></td><td style="padding:1px 4px;">Jenis/Nomor dan Tgl Dokumen</td><td style="text-align:center;">:</td><td style="padding:1px 4px;">${dokBarang}</td></tr>
+      <tr><td></td><td style="padding:1px 4px;">Pemilik/Importir/Eksportir/Kuasa*</td><td style="text-align:center;">:</td><td style="padding:1px 4px;">${pemilikBarang}</td></tr>
+      <tr><td></td><td style="padding:1px 4px;">Nomor Identitas (NPWP)</td><td style="text-align:center;">:</td><td style="padding:1px 4px;">${npwpBarang}</td></tr>
 
       <tr>
         <td style="border:none !important; font-weight:bold; vertical-align:top; padding:8px 0 2px 0;">c.</td>
         <td colspan="3" style="border:none !important; font-weight:bold; padding:8px 0 2px 0;">Bangunan atau Tempat</td>
       </tr>
-      <tr>
-        <td style="border:none !important;"></td>
-        <td style="border:none !important; padding:1px 4px;">Alamat Bangunan/Tempat</td>
-        <td style="border:none !important; padding:1px 0; text-align:center;">:</td>
-        <td style="border:none !important; padding:1px 4px;">${alamatBangunan}</td>
-      </tr>
-      <tr>
-        <td style="border:none !important;"></td>
-        <td style="border:none !important; padding:1px 4px;">No. Reg Bangunan/NPPBKC/NPWP</td>
-        <td style="border:none !important; padding:1px 0; text-align:center;">:</td>
-        <td style="border:none !important; padding:1px 4px;">${regBangunan}</td>
-      </tr>
-      <tr>
-        <td style="border:none !important;"></td>
-        <td style="border:none !important; padding:1px 4px;">Nama Pemilik/Yang Menguasai*</td>
-        <td style="border:none !important; padding:1px 0; text-align:center;">:</td>
-        <td style="border:none !important; padding:1px 4px;">${namaPemilikTempat}</td>
-      </tr>
-      <tr>
-        <td style="border:none !important;"></td>
-        <td style="border:none !important; padding:1px 4px;">Nomor Identitas</td>
-        <td style="border:none !important; padding:1px 0; text-align:center;">:</td>
-        <td style="border:none !important; padding:1px 4px;">${nikPemilikTempat}</td>
-      </tr>
+      <tr><td></td><td style="padding:1px 4px;">Alamat Bangunan/Tempat</td><td style="text-align:center;">:</td><td style="padding:1px 4px;">${alamatBangunan}</td></tr>
+      <tr><td></td><td style="padding:1px 4px;">No. Reg Bangunan/NPPBKC/NPWP</td><td style="text-align:center;">:</td><td style="padding:1px 4px;">${regBangunan}</td></tr>
+      <tr><td></td><td style="padding:1px 4px;">Nama Pemilik/Yang Menguasai*</td><td style="text-align:center;">:</td><td style="padding:1px 4px;">${namaPemilikTempat}</td></tr>
+      <tr><td></td><td style="padding:1px 4px;">Nomor Identitas</td><td style="text-align:center;">:</td><td style="padding:1px 4px;">${nikPemilikTempat}</td></tr>
     </table>
 
     ${formatTrailingDashes(`Berupa segel/tanda pengaman Kertas sebanyak 1 (satu) segel Nomor ${num} tanggal${tglCetakTTD}.`, '----------')}
@@ -625,24 +414,33 @@ export function BA_SEGEL(): string {
   </div>`;
 }
 
+// ----------------------------------------------------------------------------
+// [DOKUMEN TINDAK LANJUT 3/5] KEPUTUSAN BARANG DIKUASAI NEGARA (KEP BDN)
+// Deskripsi : Surat Keputusan Kepala Kantor menetapkan muatan barang impor yang
+//             melanggar aturan/larangan pembatasan menjadi Barang Dikuasai Negara.
+// Pihak TTD : Kepala Kantor Pelayanan Utama (KPU) Bea dan Cukai Tipe B Batam
+// ----------------------------------------------------------------------------
 export function KEP_BDN(): string {
-  if (store.activeRecordIndex < 0) return `<div class="report"><p>Data belum dipilih.</p></div>`;
-  let rec = store.databasePerkara[store.activeRecordIndex];
-  let num = getTLNumFormat('KEP_BDN');
+  if (store.activeRecordIndex < 0 || !store.databasePerkara[store.activeRecordIndex]) {
+    return `<div class="report"><p>Data belum dipilih.</p></div>`;
+  }
+  const rec = store.databasePerkara[store.activeRecordIndex];
+  const num = getTLNumFormat('KEP_BDN');
   
-  let noSBP = rec.Nomor_SBP ? `SBP-${rec.Nomor_SBP}/MANDIRI/PATLA/KPU.2/2026` : '(NOMOR SBP)';
-  let tglSBP = rec.Tanggal_SBP ? formatDateIndo(rec.Tanggal_SBP) : '(TANGGAL SBP)';
-  let noLP = rec.NoLP_LP_1 ? `LP-${rec.NoLP_LP_1}/PATLA/KPU.206/2026` : '(NOMOR LP)';
-  let tglLP = rec.Tanggal_LP_LP_1 ? formatDateIndo(rec.Tanggal_LP_LP_1) : '(TANGGAL LP)';
+  const noSBP = rec.Nomor_SBP ? `SBP-${rec.Nomor_SBP}/MANDIRI/PATLA/KPU.2/2026` : '(NOMOR SBP)';
+  const tglSBP = rec.Tanggal_SBP ? formatDateIndo(rec.Tanggal_SBP) : '(TANGGAL SBP)';
+  const noLP = rec.NoLP_LP_1 ? `LP-${rec.NoLP_LP_1}/PATLA/KPU.206/2026` : '(NOMOR LP)';
+  const tglLP = rec.Tanggal_LP_LP_1 ? formatDateIndo(rec.Tanggal_LP_LP_1) : '(TANGGAL LP)';
   
-  let lokasi = escText(rec.Lokasi_Penindakan || '(LOKASI PENINDAKAN)');
-  let pelaku = escText(rec.Nama_Pelaku || '(NAMA PELAKU)');
-  let modus = escText(rec.Modus_Operandi || 'melakukan pelanggaran');
-  let tglND = rec.KEP_Tanggal_ND ? formatDateIndo(rec.KEP_Tanggal_ND) : '28 September 2026';
+  const lokasi = escText(rec.Lokasi_Penindakan || '(LOKASI PENINDAKAN)');
+  const pelaku = escText(rec.Nama_Pelaku || '(NAMA PELAKU)');
+  const modus = escText(rec.Modus_Operandi || 'melakukan pelanggaran');
+  const tglND = rec.KEP_Tanggal_ND ? formatDateIndo(rec.KEP_Tanggal_ND) : '28 September 2026';
+  const namaKabid = escText(rec.kabid || getVal('form_kabid') || 'ZAKY FIRMANSYAH');
 
-  let listBarang = rec.KEP_List_Barang || [];
+  const listBarang = rec.KEP_List_Barang || [];
 
-  let rowsLampiranHtml = listBarang.length > 0 ? listBarang.map((item: any, idx: number) => `
+  const rowsLampiranHtml = listBarang.length > 0 ? listBarang.map((item: any, idx: number) => `
     <tr>
       <td style="border:1px solid #000; padding:6px; text-align:center; font-family:'Bookman Old Style', serif; font-size:12pt;">${idx + 1}.</td>
       <td style="border:1px solid #000; padding:6px; text-align:center; font-family:'Bookman Old Style', serif; font-size:12pt;">${escText(item.jumlah || '')}</td>
@@ -657,7 +455,7 @@ export function KEP_BDN(): string {
     </tr>
   `;
 
-  let ttdKepalaKantor = `
+  const ttdKepalaKantor = `
     <div style="page-break-inside: avoid !important; margin-top:20px; font-family:'Bookman Old Style', serif; font-size:12pt;">
       <table style="width:100%; border-collapse:collapse; border:none !important; font-family:'Bookman Old Style', serif; font-size:12pt;">
         <tr>
@@ -670,33 +468,15 @@ export function KEP_BDN(): string {
             </div>
             <div class="signature" style="height:45px;"></div>
             ${tteBadge()}
-            <div style="text-decoration:underline;">${escText(getVal('form_kabid') || 'ZAKY FIRMANSYAH')}</div>
+            <div style="text-decoration:underline;">${namaKabid}</div>
           </td>
         </tr>
       </table>
     </div>
   `;
 
-  let ttdLampiran = `
-    <div style="page-break-inside: avoid !important; margin-top:25px; font-family:'Bookman Old Style', serif; font-size:12pt;">
-      <table style="width:100%; border-collapse:collapse; border:none !important; font-family:'Bookman Old Style', serif; font-size:12pt;">
-        <tr>
-          <td style="border:none !important; width:55%;"></td>
-          <td style="border:none !important; width:45%; vertical-align:top; text-align:left;">
-            <div>
-              KEPALA KANTOR PELAYANAN UTAMA BEA DAN CUKAI TIPE B BATAM,
-            </div>
-            <div class="signature" style="height:45px;"></div>
-            ${tteBadge()}
-            <div style="text-decoration:underline;">${escText(getVal('form_kabid') || 'ZAKY FIRMANSYAH')}</div>
-          </td>
-        </tr>
-      </table>
-    </div>
-  `;
-
-  let lembarSatu = `<div class="report" style="font-family:'Bookman Old Style', serif; font-size:12pt; line-height:1.35; margin:0; padding:0;">
-    <!-- Header Surat -->
+  const lembarSatu = `
+  <div class="report" style="font-family:'Bookman Old Style', serif; font-size:12pt; line-height:1.35; margin:0; padding:0;">
     <table style="width:100%; border-collapse:collapse; border:none !important; font-family:'Bookman Old Style', serif; font-size:12pt; text-align:center; line-height:1.3; margin-bottom:12px;">
       <tr><td style="border:none !important; padding:2px 0;">KEPUTUSAN KEPALA KANTOR PELAYANAN UTAMA BEA DAN CUKAI TIPE B BATAM</td></tr>
       <tr><td style="border:none !important; padding:12px 0 2px 0;">NOMOR ${rec.KEP_Nomor_ND || num}</td></tr>
@@ -705,7 +485,6 @@ export function KEP_BDN(): string {
       <tr><td style="border:none !important; padding:16px 0 2px 0;">KEPALA KANTOR PELAYANAN UTAMA BEA DAN CUKAI TIPE B BATAM,</td></tr>
     </table>
     
-    <!-- Menimbang -->
     <table style="width:100%; border-collapse:collapse; border:none !important; font-size:12pt; font-family:'Bookman Old Style', serif; line-height:1.35; margin-bottom:10px;">
       <tr>
         <td style="width:120px; border:none !important; vertical-align:top; padding:2px 0;">Menimbang</td>
@@ -737,7 +516,6 @@ export function KEP_BDN(): string {
       </tr>
     </table>
 
-    <!-- Mengingat -->
     <table style="width:100%; border-collapse:collapse; border:none !important; font-size:12pt; font-family:'Bookman Old Style', serif; line-height:1.35; margin-bottom:10px;">
       <tr>
         <td style="width:120px; border:none !important; vertical-align:top; padding:2px 0;">Mengingat</td>
@@ -771,7 +549,6 @@ export function KEP_BDN(): string {
 
     <div style="text-align:center; font-family:'Bookman Old Style', serif; font-size:12pt; margin:12px 0;">MEMUTUSKAN:</div>
     
-    <!-- Menetapkan s.d. Salinan -->
     <table style="width:100%; border-collapse:collapse; border:none !important; font-size:12pt; font-family:'Bookman Old Style', serif; line-height:1.35; margin-bottom:10px;">
       <tr>
         <td style="width:120px; border:none !important; vertical-align:top; padding:2px 0;">Menetapkan</td>
@@ -816,7 +593,8 @@ export function KEP_BDN(): string {
     ${ttdKepalaKantor}
   </div>`;
 
-  let lembarKedua = `<div class="report" style="font-family:'Bookman Old Style', serif; font-size:12pt; line-height:1.35;">
+  const lembarKedua = `
+  <div class="report" style="font-family:'Bookman Old Style', serif; font-size:12pt; line-height:1.35;">
     <div style="font-size:12pt; text-align:left; line-height:1.3;">
       LAMPIRAN<br>
       KEPUTUSAN KEPALA KANTOR PELAYANAN UTAMA BEA DAN CUKAI TIPE B BATAM<br>
@@ -827,40 +605,50 @@ export function KEP_BDN(): string {
     <table class="rtable" style="width:100%; border-collapse:collapse; margin-top:12px; border:1px solid #000; font-size:12pt; font-family:'Bookman Old Style', serif;">
       <thead>
         <tr style="background:#f3f4f6;">
-          <th style="border:1px solid #000; padding:6px; text-align:center; width:5%; font-family:'Bookman Old Style', serif; font-size:12pt;">No</th>
-          <th style="border:1px solid #000; padding:6px; text-align:center; width:25%; font-family:'Bookman Old Style', serif; font-size:12pt;">Jumlah Barang</th>
-          <th style="border:1px solid #000; padding:6px; text-align:left; width:30%; font-family:'Bookman Old Style', serif; font-size:12pt;">Uraian Barang</th>
-          <th style="border:1px solid #000; padding:6px; text-align:center; width:13%; font-family:'Bookman Old Style', serif; font-size:12pt;">Kondisi</th>
-          <th style="border:1px solid #000; padding:6px; text-align:center; width:17%; font-family:'Bookman Old Style', serif; font-size:12pt;">Negara Asal</th>
-          <th style="border:1px solid #000; padding:6px; text-align:center; width:10%; font-family:'Bookman Old Style', serif; font-size:12pt;">Keterangan</th>
+          <th style="border:1px solid #000; padding:6px; text-align:center; width:5%;">No</th>
+          <th style="border:1px solid #000; padding:6px; text-align:center; width:25%;">Jumlah Barang</th>
+          <th style="border:1px solid #000; padding:6px; text-align:left; width:30%;">Uraian Barang</th>
+          <th style="border:1px solid #000; padding:6px; text-align:center; width:13%;">Kondisi</th>
+          <th style="border:1px solid #000; padding:6px; text-align:center; width:17%;">Negara Asal</th>
+          <th style="border:1px solid #000; padding:6px; text-align:center; width:10%;">Keterangan</th>
         </tr>
       </thead>
       <tbody>
         ${rowsLampiranHtml}
       </tbody>
     </table>
-    ${ttdLampiran}
+    ${ttdKepalaKantor}
   </div>`;
 
   return `${lembarSatu}<div class="pagebreak" style="page-break-before: always; break-before: page; margin-top: 30px;"></div>${lembarKedua}`;
 }
 
+// ----------------------------------------------------------------------------
+// [DOKUMEN TINDAK LANJUT 4/5] SURAT PENETAPAN SANKSI ADMINISTRASI (SPSA)
+// Deskripsi : Surat tagihan denda administrasi kepabeanan akibat kelalaian atau
+//             pelanggaran pemberitahuan pabean (sesuai pasal 9A UU Kepabeanan).
+// Pihak TTD : Kepala Kantor Pelayanan Utama Bea dan Cukai Tipe B Batam
+// ----------------------------------------------------------------------------
 export function SPSA(): string {
-  if (store.activeRecordIndex < 0) return `<div class="report"><p>Data belum dipilih.</p></div>`;
-  let rec = store.databasePerkara[store.activeRecordIndex];
+  if (store.activeRecordIndex < 0 || !store.databasePerkara[store.activeRecordIndex]) {
+    return `<div class="report"><p>Data belum dipilih.</p></div>`;
+  }
+  const rec = store.databasePerkara[store.activeRecordIndex];
+  const namaKabid = escText(rec.kabid || getVal('form_kabid') || 'Zaky Firmansyah');
 
-  let ttdSPSA = `
+  const ttdSPSA = `
     <div style="page-break-inside: avoid !important; display:flex; justify-content:flex-end; margin-top:16px;">
       <div style="text-align:left; width:45%; font-size:10pt;">
         Kepala Kantor,
         <div class="signature" style="height:55px;"></div>
         ${tteBadge()}
-        <b>${escText(getVal('form_kabid') || 'Zaky Firmansyah')}</b>
+        <b>${namaKabid}</b>
       </div>
     </div>
   `;
 
-  return `<div class="report" style="font-family:Arial, sans-serif; font-size:10pt; line-height:1.35;">
+  return `
+  <div class="report" style="font-family:Arial, sans-serif; font-size:10pt; line-height:1.35;">
     ${generateKopSurat('SPSA')}
     <div style="text-align:center; font-weight:bold; font-size:11pt; margin:16px 0 8px 0;">SURAT PENETAPAN SANKSI ADMINISTRASI (SPSA)</div>
     <table style="width:100%; border-collapse:collapse; margin-bottom:12px; font-size:10pt;">
@@ -871,54 +659,62 @@ export function SPSA(): string {
     <div style="margin-bottom:10px; font-size:10pt; line-height:1.3;">
       <b>Kepada Yth.</b><br>
       <table style="width:100%; border-collapse:collapse; font-size:10pt; margin-top:4px;">
-        <tr><td style="width:80px; vertical-align:top;">Nama</td><td style="width:15px; text-align:center; vertical-align:top;">:</td><td style="vertical-align:top;">${escText(rec.TL_Nama_Pemilik || rec.Nama_Pelaku || '-')}</td></tr>
-        <tr><td style="vertical-align:top;">No KTP</td><td style="text-align:center; vertical-align:top;">:</td><td style="vertical-align:top;">${escText(rec.TL_NIK_Pemilik || rec.Nomor_Identitas || '-')}</td></tr>
-        <tr><td style="vertical-align:top;">Alamat</td><td style="text-align:center; vertical-align:top;">:</td><td style="vertical-align:top;">${escText(rec.TL_Alamat_Pemilik || rec.Alamat_Pelaku || '-')}</td></tr>
+        <tr><td style="width:80px; vertical-align:top;">Nama</td><td style="width:15px; text-align:center; vertical-align:top;">:</td><td>${escText(rec.TL_Nama_Pemilik || rec.Nama_Pelaku || '-')}</td></tr>
+        <tr><td style="vertical-align:top;">No KTP</td><td style="text-align:center; vertical-align:top;">:</td><td>${escText(rec.TL_NIK_Pemilik || rec.Nomor_Identitas || '-')}</td></tr>
+        <tr><td style="vertical-align:top;">Alamat</td><td style="text-align:center; vertical-align:top;">:</td><td>${escText(rec.TL_Alamat_Pemilik || rec.Alamat_Pelaku || '-')}</td></tr>
       </table>
     </div>
     
-    <p style="text-align:justify; margin-bottom:8px; text-indent:40px;">Berdasarkan ketentuan pada pasal pelanggaran spsa (${escText(rec.SPSA_Pasal_Pelanggaran || '9A ayat (1) Undang-Undang Nomor 10 Tahun 1995 tentang Kepabeanan sebagaimana telah diubah dengan Undang-Undang Nomor 17 Tahun 2006 dan pasal 34 ayat (5) Peraturan Pemerintah nomor 41 tahun 2021 tentang Penyelenggaraan Kawasan Perdagangan Bebas')}), dengan ini ditetapkan sanksi administrasi berupa denda sebesar <b>${escText(rec.SPSA_Denda || 'Rp 10.000.000,- (sepuluh juta rupiah)')}</b> dengan alasan penetapan (${escText(rec.SPSA_Alasan || 'tidak menyerahkan pemberitahuan pabean atas barang yang diangkutnya sebelum keberangkatan sarana pengangkut')}) sebagaimana dimaksud pada pasal dasar denda (${escText(rec.SPSA_Pasal_Denda || '9A ayat (3) Undang-Undang Nomor 10 Tahun 1995 tentang Kepabeanan sebagaimana telah diubah dengan Undang-Undang Nomor 17 Tahun 2006')})[cite: 10].</p>
+    <p style="text-align:justify; margin-bottom:8px; text-indent:40px;">Berdasarkan ketentuan pada pasal pelanggaran spsa (${escText(rec.SPSA_Pasal_Pelanggaran || '9A ayat (1) Undang-Undang Nomor 10 Tahun 1995 tentang Kepabeanan sebagaimana telah diubah dengan Undang-Undang Nomor 17 Tahun 2006 dan pasal 34 ayat (5) Peraturan Pemerintah nomor 41 tahun 2021 tentang Penyelenggaraan Kawasan Perdagangan Bebas')}), dengan ini ditetapkan sanksi administrasi berupa denda sebesar <b>${escText(rec.SPSA_Denda || 'Rp 10.000.000,- (sepuluh juta rupiah)')}</b> dengan alasan penetapan (${escText(rec.SPSA_Alasan || 'tidak menyerahkan pemberitahuan pabean atas barang yang diangkutnya sebelum keberangkatan sarana pengangkut')}) sebagaimana dimaksud pada pasal dasar denda (${escText(rec.SPSA_Pasal_Denda || '9A ayat (3) Undang-Undang Nomor 10 Tahun 1995 tentang Kepabeanan sebagaimana telah diubah dengan Undang-Undang Nomor 17 Tahun 2006')}).</p>
     
-    <p style="text-align:justify; margin-bottom:8px; text-indent:40px;">Saudara wajib melunasi sanksi administrasi berupa denda tersebut paling lambat tanggal ${escText(rec.SPSA_Jatuh_Tempo || '18 Januari 2026')} dan bukti pelunasan agar disampaikan kepada Kepala Kantor Pelayanan Utama Bea dan Cukai Tipe B Batam[cite: 10].</p>
-    <p style="text-align:justify; margin-bottom:8px; text-indent:40px;">Apabila tagihan tidak dilunasi atau tidak diajukan keberatan sampai dengan tanggal ${escText(rec.SPSA_Jatuh_Tempo || '18 Januari 2026')}, dikenakan bunga yang terutang sebesar 2% (dua persen) setiap bulan untuk paling lama 24 (dua puluh empat) bulan dari jumlah yang terutang, bagian bulan dihitung satu bulan penuh[cite: 10].</p>
-    <p style="text-align:justify; margin-bottom:8px; text-indent:40px;">Keberatan atas penetapan ini hanya dapat diajukan secara tertulis kepada Direktur Jenderal Bea dan Cukai melalui Kantor Pelayanan Utama Bea dan Cukai Tipe B Batam sesuai dengan ketentuan tentang keberatan, paling lambat pada tanggal ${escText(rec.SPSA_Jatuh_Tempo || '18 Januari 2026')}[cite: 10].</p>
+    <p style="text-align:justify; margin-bottom:8px; text-indent:40px;">Saudara wajib melunasi sanksi administrasi berupa denda tersebut paling lambat tanggal ${escText(rec.SPSA_Jatuh_Tempo || '18 Januari 2026')} dan bukti pelunasan agar disampaikan kepada Kepala Kantor Pelayanan Utama Bea dan Cukai Tipe B Batam.</p>
+    <p style="text-align:justify; margin-bottom:8px; text-indent:40px;">Apabila tagihan tidak dilunasi atau tidak diajukan keberatan sampai dengan tanggal ${escText(rec.SPSA_Jatuh_Tempo || '18 Januari 2026')}, dikenakan bunga yang terutang sebesar 2% (dua persen) setiap bulan untuk paling lama 24 (dua puluh empat) bulan dari jumlah yang terutang, bagian bulan dihitung satu bulan penuh.</p>
+    <p style="text-align:justify; margin-bottom:8px; text-indent:40px;">Keberatan atas penetapan ini hanya dapat diajukan secara tertulis kepada Direktur Jenderal Bea dan Cukai melalui Kantor Pelayanan Utama Bea dan Cukai Tipe B Batam sesuai dengan ketentuan tentang keberatan, paling lambat pada tanggal ${escText(rec.SPSA_Jatuh_Tempo || '18 Januari 2026')}.</p>
     
     ${closeTLReportTag(ttdSPSA, escText(rec.SPSA_Tanggal || '09 September 2026'))}
     <div style="font-size:8.5pt; margin-top:12px; line-height:1.2;">
-      SPSA ini dibuat rangkap 2 (dua):[cite: 10]<br>
-      - Rangkap ke-1 untuk ${escText(rec.TL_Nama_Pemilik || rec.Nama_Pelaku || '-')}[cite: 10]<br>
-      - Rangkap ke-2 untuk Kepala KPU Bea dan Cukai Tipe B Batam[cite: 10]
+      SPSA ini dibuat rangkap 2 (dua):<br>
+      - Rangkap ke-1 untuk ${escText(rec.TL_Nama_Pemilik || rec.Nama_Pelaku || '-')}<br>
+      - Rangkap ke-2 untuk Kepala KPU Bea dan Cukai Tipe B Batam
     </div>
   </div>`;
 }
 
+// ----------------------------------------------------------------------------
+// [DOKUMEN TINDAK LANJUT 5/5] BAST PELIMPAHAN KE INSTANSI LAIN (BAST LIMPAH)
+// Deskripsi : Berita Acara serah terima pelimpahan penanganan perkara dan barang
+//             bukti ke instansi berwenang (DLHK, Karantina, Kepolisian, Kejaksaan, dll).
+// Pihak TTD : Pihak Pertama (Petugas Pelimpah BC) & Pihak Kedua (Pejabat Instansi Penerima)
+// ----------------------------------------------------------------------------
 export function BAST_LIMPAH(): string {
-  if (store.activeRecordIndex < 0) return `<div class="report"><p>Data belum dipilih.</p></div>`;
-  let rec = store.databasePerkara[store.activeRecordIndex];
-  let num = getTLNumFormat('BAST_LIMPAH');
+  if (store.activeRecordIndex < 0 || !store.databasePerkara[store.activeRecordIndex]) {
+    return `<div class="report"><p>Data belum dipilih.</p></div>`;
+  }
+  const rec = store.databasePerkara[store.activeRecordIndex];
+  const num = getTLNumFormat('BAST_LIMPAH');
   
-  let hari = escText(rec.Limpah_Hari || 'Kamis');
-  let tglHuruf = escText(rec.Limpah_Tgl_Huruf || 'dua belas Desember tahun dua ribu dua puluh enam');
-  let tglSurat = escText(rec.Limpah_Tanggal || '12 Desember 2026');
+  const hari = escText(rec.Limpah_Hari || 'Kamis');
+  const tglHuruf = escText(rec.Limpah_Tgl_Huruf || 'dua belas Desember tahun dua ribu dua puluh enam');
+  const tglSurat = escText(rec.Limpah_Tanggal || '12 Desember 2026');
   
-  let sarkut = escText(rec.Limpah_Sarkut || rec.Pengangkut || '-');
-  let barang = escText(rec.Limpah_Barang || rec.Uraian_Barang || '±1250 batang balok kayu');
-  let dokumen = escText(rec.Limpah_Dokumen || 'Dokumen Kapal, KTP, dan dokumen lainnya');
+  const sarkut = escText(rec.Limpah_Sarkut || rec.Pengangkut || '-');
+  const barang = escText(rec.Limpah_Barang || rec.Uraian_Barang || '±1250 batang balok kayu');
+  const dokumen = escText(rec.Limpah_Dokumen || 'Dokumen Kapal, KTP, dan dokumen lainnya');
   
-  let namaOrang = escText(rec.TL_Nama_Pemilik || rec.Nama_Pelaku || 'RAJA DOLI SIREGAR');
-  let nikOrang = escText(rec.TL_NIK_Pemilik || rec.Nomor_Identitas || '2102081511890006');
+  const namaOrang = escText(rec.TL_Nama_Pemilik || rec.Nama_Pelaku || 'RAJA DOLI SIREGAR');
+  const nikOrang = escText(rec.TL_NIK_Pemilik || rec.Nomor_Identitas || '2102081511890006');
   
-  let instansi = escText(rec.Instansi_Penerima || 'Dinas Lingkungan Hidup dan Kehutanan (DLHK) Provinsi Kepri');
-  let pejabatPenerima = escText(rec.Limpah_Pejabat_Penerima || 'Pejabat Instansi');
-  let jabatanPenerima = escText(rec.Limpah_Jabatan_Penerima || 'Kepala Dinas / Pejabat Yang Berwenang');
-  let nipPenerima = escText(rec.Limpah_NIP_Penerima || '-');
+  const instansi = escText(rec.Instansi_Penerima || 'Dinas Lingkungan Hidup dan Kehutanan (DLHK) Provinsi Kepri');
+  const pejabatPenerima = escText(rec.Limpah_Pejabat_Penerima || 'Pejabat Instansi');
+  const jabatanPenerima = escText(rec.Limpah_Jabatan_Penerima || 'Kepala Dinas / Pejabat Yang Berwenang');
+  const nipPenerima = escText(rec.Limpah_NIP_Penerima || '-');
 
-  let petugas1 = escText(rec.Limpah_Petugas_1 || rec.ketua_tim || 'Petugas Pelimpah 1');
-  let nip1 = escText(rec.Limpah_NIP_1 || '-');
-  let pangkat1 = escText(rec.Limpah_Pangkat_1 || '-');
-  let jabatan1 = escText(rec.Limpah_Jabatan_1 || 'Pemeriksa Bea dan Cukai');
+  const petugas1 = escText(rec.Limpah_Petugas_1 || rec.ketua_tim || 'Petugas Pelimpah 1');
+  const nip1 = escText(rec.Limpah_NIP_1 || rec.nip_ketua_tim || '-');
+  const pangkat1 = escText(rec.Limpah_Pangkat_1 || rec.gol_ketua_tim || '-');
+  const jabatan1 = escText(rec.Limpah_Jabatan_1 || rec.jabatan_ketua_tim || 'Pemeriksa Bea dan Cukai');
 
-  let ttdLimpah = `
+  const ttdLimpah = `
     <div class="sign" style="display:flex; justify-content:space-between; margin-top:20px; page-break-inside: avoid !important;">
       <div style="width:45%; text-align:left; font-size:10pt;">
         <b>PIHAK KEDUA,</b><br>
@@ -939,7 +735,8 @@ export function BAST_LIMPAH(): string {
     </div>
   `;
 
-  return `<div class="report" style="font-family:Arial, sans-serif; font-size:10pt; line-height:1.35;">
+  return `
+  <div class="report" style="font-family:Arial, sans-serif; font-size:10pt; line-height:1.35;">
     ${generateKopSurat('BAST_LIMPAH')}
     <div style="text-align:center; font-weight:bold; font-size:11pt; margin:16px 0 3px 0;">BERITA ACARA SERAH TERIMA</div>
     <div style="text-align:center; margin-bottom:14px; font-size:10pt;">Nomor : ${num}</div>
@@ -955,24 +752,9 @@ export function BAST_LIMPAH(): string {
         <td style="width:15px; vertical-align:top; text-align:center;">:</td>
         <td style="vertical-align:top;"><b>${petugas1}</b></td>
       </tr>
-      <tr>
-        <td></td>
-        <td style="vertical-align:top;">NIP</td>
-        <td style="vertical-align:top; text-align:center;">:</td>
-        <td style="vertical-align:top;">${nip1}</td>
-      </tr>
-      <tr>
-        <td></td>
-        <td style="vertical-align:top;">Pangkat/Gol</td>
-        <td style="vertical-align:top; text-align:center;">:</td>
-        <td style="vertical-align:top;">${pangkat1}</td>
-      </tr>
-      <tr>
-        <td></td>
-        <td style="vertical-align:top;">Jabatan</td>
-        <td style="vertical-align:top; text-align:center;">:</td>
-        <td style="vertical-align:top;">${jabatan1} pada Kantor Pelayanan Utama Bea dan Cukai Tipe B Batam, bertindak untuk dan atas nama jabatan selanjutnya disebut sebagai <b>PIHAK PERTAMA</b>.</td>
-      </tr>
+      <tr><td></td><td style="vertical-align:top;">NIP</td><td style="text-align:center;">:</td><td>${nip1}</td></tr>
+      <tr><td></td><td style="vertical-align:top;">Pangkat/Gol</td><td style="text-align:center;">:</td><td>${pangkat1}</td></tr>
+      <tr><td></td><td style="vertical-align:top;">Jabatan</td><td style="text-align:center;">:</td><td>${jabatan1} pada Kantor Pelayanan Utama Bea dan Cukai Tipe B Batam, bertindak untuk dan atas nama jabatan selanjutnya disebut sebagai <b>PIHAK PERTAMA</b>.</td></tr>
     </table>
 
     <table style="width:100%; border-collapse:collapse; margin-bottom:12px; font-size:10pt;">
@@ -982,18 +764,8 @@ export function BAST_LIMPAH(): string {
         <td style="width:15px; vertical-align:top; text-align:center;">:</td>
         <td style="vertical-align:top;"><b>${pejabatPenerima}</b></td>
       </tr>
-      <tr>
-        <td></td>
-        <td style="vertical-align:top;">NIP</td>
-        <td style="vertical-align:top; text-align:center;">:</td>
-        <td style="vertical-align:top;">${nipPenerima}</td>
-      </tr>
-      <tr>
-        <td></td>
-        <td style="vertical-align:top;">Jabatan</td>
-        <td style="vertical-align:top; text-align:center;">:</td>
-        <td style="vertical-align:top;">${jabatanPenerima} pada ${instansi}, bertindak untuk dan atas nama instansi selanjutnya disebut sebagai <b>PIHAK KEDUA</b>.</td>
-      </tr>
+      <tr><td></td><td style="vertical-align:top;">NIP</td><td style="text-align:center;">:</td><td>${nipPenerima}</td></tr>
+      <tr><td></td><td style="vertical-align:top;">Jabatan</td><td style="text-align:center;">:</td><td>${jabatanPenerima} pada ${instansi}, bertindak untuk dan atas nama instansi selanjutnya disebut sebagai <b>PIHAK KEDUA</b>.</td></tr>
     </table>
 
     <p style="text-align:justify; margin-bottom:10px; text-indent:30px;">
@@ -1017,11 +789,11 @@ export function BAST_LIMPAH(): string {
   </div>`;
 }
 
-(window as any).handleSingleValidationTL = handleSingleValidationTL;
-(window as any).getTLNumFormat = getTLNumFormat;
-(window as any).closeTLReportTag = closeTLReportTag;
-(window as any).BAST_PEMILIK = BAST_PEMILIK;
-(window as any).BA_SEGEL = BA_SEGEL;
-(window as any).KEP_BDN = KEP_BDN;
-(window as any).SPSA = SPSA;
-(window as any).BAST_LIMPAH = BAST_LIMPAH;
+// Window Binding
+if (typeof window !== 'undefined') {
+  (window as any).BAST_PEMILIK = BAST_PEMILIK;
+  (window as any).BA_SEGEL = BA_SEGEL;
+  (window as any).KEP_BDN = KEP_BDN;
+  (window as any).SPSA = SPSA;
+  (window as any).BAST_LIMPAH = BAST_LIMPAH;
+}

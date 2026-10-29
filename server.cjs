@@ -2,7 +2,7 @@
  * @file server.cjs
  * @description Universal Server Launcher (Zero-Dependency Node.js & Express Fallback)
  * Mengakomodasi parsing middleware form (JSON & URL-Encoded), pelacakan HTML modular,
- * dan penyajian data SQLite/JSON terpadu.
+ * penyajian data perkara, disposisi, dan konfigurasi sistem terpadu.
  */
 
 const http = require('http');
@@ -25,6 +25,7 @@ if (!fs.existsSync(DATA_DIR)) {
 const usersFile = path.join(DATA_DIR, 'users.json');
 const perkaraFile = path.join(DATA_DIR, 'perkara.json');
 const disposisiFile = path.join(DATA_DIR, 'disposisi.json');
+const configFile = path.join(DATA_DIR, 'config.json');
 
 if (!fs.existsSync(usersFile)) {
   fs.writeFileSync(usersFile, JSON.stringify([
@@ -37,10 +38,27 @@ if (!fs.existsSync(perkaraFile)) {
 if (!fs.existsSync(disposisiFile)) {
   fs.writeFileSync(disposisiFile, JSON.stringify([], null, 2));
 }
+if (!fs.existsSync(configFile)) {
+  fs.writeFileSync(configFile, JSON.stringify({}, null, 2));
+}
 
 function readJson(file) {
-  try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch { return []; }
+  try { 
+    return JSON.parse(fs.readFileSync(file, 'utf8')); 
+  } catch { 
+    return []; 
+  }
 }
+
+function readJsonObject(file) {
+  try {
+    const data = JSON.parse(fs.readFileSync(file, 'utf8'));
+    return (data && typeof data === 'object' && !Array.isArray(data)) ? data : {};
+  } catch {
+    return {};
+  }
+}
+
 function writeJson(file, data) {
   fs.writeFileSync(file, JSON.stringify(data, null, 2), 'utf8');
 }
@@ -103,7 +121,11 @@ const server = http.createServer((req, res) => {
         try {
           payload = JSON.parse(rawBody);
         } catch {
-          try { payload = querystring.parse(rawBody); } catch { payload = {}; }
+          try { 
+            payload = querystring.parse(rawBody); 
+          } catch { 
+            payload = {}; 
+          }
         }
       }
     }
@@ -118,11 +140,12 @@ const server = http.createServer((req, res) => {
           status: 'ok',
           app: 'AP3 Node.js & TypeScript Server',
           sqliteAvailable: false,
-          storageMode: 'JSON/SQLite Fallback',
+          storageMode: 'JSON File Database',
           time: new Date()
         }));
       }
 
+      // === AUTHENTICATION API ===
       if (pathname === '/api/auth/login' && req.method === 'POST') {
         const users = readJson(usersFile);
         const email = (payload.email || payload.username || '').toLowerCase().trim();
@@ -130,7 +153,11 @@ const server = http.createServer((req, res) => {
         const user = users.find(u => u.email.toLowerCase() === email && u.pass === pass);
         if (user) {
           res.writeHead(200);
-          return res.end(JSON.stringify({ success: true, message: 'Login berhasil.', user: { nama: user.nama, email: user.email, role: user.role } }));
+          return res.end(JSON.stringify({ 
+            success: true, 
+            message: 'Login berhasil.', 
+            user: { nama: user.nama, email: user.email, role: user.role } 
+          }));
         } else {
           res.writeHead(401);
           return res.end(JSON.stringify({ success: false, error: 'Email/Username atau kata sandi tidak valid.' }));
@@ -155,7 +182,11 @@ const server = http.createServer((req, res) => {
         users.push(newUser);
         writeJson(usersFile, users);
         res.writeHead(201);
-        return res.end(JSON.stringify({ success: true, message: 'Registrasi berhasil.', user: { nama: newUser.nama, email: newUser.email, role: newUser.role } }));
+        return res.end(JSON.stringify({ 
+          success: true, 
+          message: 'Registrasi berhasil.', 
+          user: { nama: newUser.nama, email: newUser.email, role: newUser.role } 
+        }));
       }
 
       if (pathname === '/api/auth/users' && req.method === 'GET') {
@@ -164,6 +195,41 @@ const server = http.createServer((req, res) => {
         return res.end(JSON.stringify({ success: true, data: users }));
       }
 
+      // === CONFIG / PENGATURAN SISTEM API ===
+      if (pathname === '/api/config' && req.method === 'GET') {
+        const configData = readJsonObject(configFile);
+        res.writeHead(200);
+        return res.end(JSON.stringify({ success: true, data: configData }));
+      }
+
+      if (pathname.startsWith('/api/config/') && req.method === 'GET') {
+        const key = decodeURIComponent(pathname.replace('/api/config/', ''));
+        const configData = readJsonObject(configFile);
+        res.writeHead(200);
+        return res.end(JSON.stringify({ 
+          success: true, 
+          key: key, 
+          value: configData[key] !== undefined ? configData[key] : null 
+        }));
+      }
+
+      if (pathname.startsWith('/api/config/') && req.method === 'POST') {
+        const key = decodeURIComponent(pathname.replace('/api/config/', ''));
+        const configData = readJsonObject(configFile);
+
+        const value = payload.value !== undefined ? payload.value : (payload[key] !== undefined ? payload[key] : payload);
+        configData[key] = value;
+        writeJson(configFile, configData);
+
+        res.writeHead(200);
+        return res.end(JSON.stringify({ 
+          success: true, 
+          message: `Konfigurasi '${key}' berhasil disimpan.`, 
+          data: { key, value } 
+        }));
+      }
+
+      // === PERKARA API ===
       if (pathname === '/api/perkara' && req.method === 'GET') {
         const data = readJson(perkaraFile);
         res.writeHead(200);
@@ -216,6 +282,7 @@ const server = http.createServer((req, res) => {
         return res.end(JSON.stringify({ success: true, message: 'Perkara berhasil dihapus.', data: list }));
       }
 
+      // === DISPOSISI API ===
       if (pathname === '/api/disposisi' && req.method === 'GET') {
         const data = readJson(disposisiFile);
         res.writeHead(200);
@@ -226,14 +293,12 @@ const server = http.createServer((req, res) => {
         let list = payload.list || payload.data || payload;
         if (typeof list === 'string') { try { list = JSON.parse(list); } catch {} }
         
-        // Jika payload adalah array utuh (bulk save), timpa file disposisi dengan array tersebut
         if (Array.isArray(list)) {
           writeJson(disposisiFile, list);
           res.writeHead(200);
           return res.end(JSON.stringify({ success: true, message: 'Seluruh data disposisi berhasil diperbarui.', data: list }));
         }
 
-        // Fallback untuk single item push
         const existingList = readJson(disposisiFile);
         let item = payload.disposisi || payload;
         const newDisp = {

@@ -1,5 +1,19 @@
-import { store } from '../state/store.js';
-import { escText } from '../utils/formatters.js';
+/**
+ * ============================================================================
+ * MODUL         : UI.TS
+ * DESKRIPSI     : Controller Antarmuka, Toast, Paginasi, & Modal Dialog (AP3)
+ * AUTHOR/OWNER  : AP3 Development Team
+ * LAST UPDATED  : 2026
+ * ============================================================================
+ */
+import { store, savePerkaraToStorage } from '../state/store.js';
+import { escText, tanggalKeTeks } from '../utils/formatters.js';
+/* ============================================================================
+ * [BAGIAN A] SISTEM UI GLOBAL & NOTIFIKASI UMUM APLIKASI
+ * ----------------------------------------------------------------------------
+ * Fungsi-fungsi dasar antarmuka yang dipakai bersama oleh seluruh modul.
+ * ============================================================================ */
+// Menampilkan pemberitahuan banner toast mengambang di pojok layar
 export function showToast(title, desc, type = "success") {
     let container = document.getElementById('toastContainer');
     if (!container)
@@ -21,6 +35,7 @@ export function showToast(title, desc, type = "success") {
         setTimeout(() => toast.remove(), 300);
     }, 3500);
 }
+// Menampilkan popup konfirmasi aksi penting (Ya / Batal)
 export function showToastConfirm(title, desc, onConfirm) {
     let container = document.getElementById('toastContainer');
     if (!container)
@@ -56,6 +71,34 @@ export function showToastConfirm(title, desc, onConfirm) {
         };
     }
 }
+// Mengatur ukuran kertas cetak preview (A4 vs F4 Folio)
+export function changePaperSize(size) {
+    store.selectedPaperSize = size;
+    let dynamicStyle = document.getElementById('dynamicPaperStyle');
+    let paperLabel = document.getElementById('currentPaperSizeLabel');
+    let settingSelect = document.getElementById('setting_paperSize');
+    if (settingSelect)
+        settingSelect.value = size;
+    if (size === 'A4') {
+        if (dynamicStyle)
+            dynamicStyle.innerHTML = `@page { size: A4; margin: 0; } @page landscape-page { size: A4 landscape; margin: 0; } @media print { .report { width: 210mm !important; min-height: 297mm !important; } .report.landscape { width: 297mm !important; min-height: 210mm !important; } }`;
+        if (paperLabel)
+            paperLabel.textContent = 'A4 (210 x 297 mm)';
+    }
+    else {
+        if (dynamicStyle)
+            dynamicStyle.innerHTML = `@page { size: 215mm 330mm; margin: 0; } @page landscape-page { size: 330mm 215mm; margin: 0; } @media print { .report { width: 215mm !important; min-height: 330mm !important; } .report.landscape { width: 330mm !important; min-height: 215mm !important; } }`;
+        if (paperLabel)
+            paperLabel.textContent = 'F4 / FOLIO (215 x 330 mm)';
+    }
+    if (window.showReportView)
+        window.showReportView(store.currentDoc);
+    if (window.showTLReportView)
+        window.showTLReportView(store.currentTLDoc);
+    if (window.saveData)
+        window.saveData();
+}
+// Paginasi otomatis saat tabel dokumen melebihi batas tinggi kertas cetak
 export function autoPaginateReports(containerId = 'reports') {
     let container = document.getElementById(containerId);
     if (!container)
@@ -133,6 +176,41 @@ export function autoPaginateReports(containerId = 'reports') {
         }
     });
 }
+// Menempelkan footer penomoran halaman (Hal 1, Hal 2, dst)
+export function applyPageNumbers(containerId = 'reports') {
+    let container = document.getElementById(containerId);
+    if (!container)
+        return;
+    container.querySelectorAll('.page-number-footer').forEach((el) => el.remove());
+    let reportCards = container.querySelectorAll('.report');
+    reportCards.forEach((card, index) => {
+        let footerEl = document.createElement('div');
+        footerEl.className = 'page-number-footer';
+        footerEl.innerText = String(index + 1);
+        card.appendChild(footerEl);
+    });
+}
+// Berpindah antar lembar halaman pada lembar pratinjau
+export function navigatePreviewPage(pageIndex, reportContainerId = 'reports') {
+    let reportsEl = document.getElementById(reportContainerId);
+    if (!reportsEl)
+        return;
+    let reportCards = Array.from(reportsEl.querySelectorAll('.report'));
+    let total = reportCards.length;
+    if (total === 0)
+        return;
+    if (pageIndex < 0)
+        pageIndex = 0;
+    if (pageIndex >= total)
+        pageIndex = total - 1;
+    store.currentActivePageIdx = pageIndex;
+    reportCards.forEach((card, idx) => {
+        card.style.display = (idx === pageIndex) ? 'block' : 'none';
+    });
+    let containerId = (reportContainerId === 'reports') ? 'pageSelectorContainer' : 'tlPageSelectorContainer';
+    renderPageSelector(total, containerId, reportContainerId);
+}
+// Menampilkan toolbar pemilih halaman (Prev / Hal X / Next)
 export function renderPageSelector(totalDocs, containerId = 'pageSelectorContainer', reportContainerId = 'reports') {
     let container = document.getElementById(containerId);
     if (!container)
@@ -161,6 +239,7 @@ export function renderPageSelector(totalDocs, containerId = 'pageSelectorContain
     </button>
   `;
 }
+// Memilih halaman spesifik dari nomor halaman tertentu atau mode ALL
 export function selectPreviewPage(pageIndex, reportContainerId = 'reports', clickedBtn = null) {
     store.selectedViewPage = pageIndex;
     let reportsEl = document.getElementById(reportContainerId);
@@ -184,38 +263,13 @@ export function selectPreviewPage(pageIndex, reportContainerId = 'reports', clic
         pb.style.display = (pageIndex === 'ALL') ? 'block' : 'none';
     });
 }
-export function applyPageNumbers(containerId = 'reports') {
-    let container = document.getElementById(containerId);
-    if (!container)
-        return;
-    container.querySelectorAll('.page-number-footer').forEach((el) => el.remove());
-    let reportCards = container.querySelectorAll('.report');
-    reportCards.forEach((card, index) => {
-        let footerEl = document.createElement('div');
-        footerEl.className = 'page-number-footer';
-        footerEl.innerText = String(index + 1);
-        card.appendChild(footerEl);
-    });
-}
-export function navigatePreviewPage(pageIndex, reportContainerId = 'reports') {
-    let reportsEl = document.getElementById(reportContainerId);
-    if (!reportsEl)
-        return;
-    let reportCards = Array.from(reportsEl.querySelectorAll('.report'));
-    let total = reportCards.length;
-    if (total === 0)
-        return;
-    if (pageIndex < 0)
-        pageIndex = 0;
-    if (pageIndex >= total)
-        pageIndex = total - 1;
-    store.currentActivePageIdx = pageIndex;
-    reportCards.forEach((card, idx) => {
-        card.style.display = (idx === pageIndex) ? 'block' : 'none';
-    });
-    let containerId = (reportContainerId === 'reports') ? 'pageSelectorContainer' : 'tlPageSelectorContainer';
-    renderPageSelector(total, containerId, reportContainerId);
-}
+/* ============================================================================
+ * [BAGIAN B] KONTROLLER KHUSUS: MENU LAPORAN (BERKAS INTI)
+ * ----------------------------------------------------------------------------
+ * Pengaturan header judul preview dan modal edit dokumen penelitian perkara:
+ * Dokumen: LPP, LPF, SPLIT, SPRIN CACAH, BA, LHP
+ * ============================================================================ */
+// 1. Memperbarui teks dan ikon header pratinjau dokumen Laporan
 export function updatePreviewHeaderUI(docType) {
     let rawType = (docType || store.currentDoc || 'LPP').toString().toUpperCase().trim();
     store.currentDoc = rawType;
@@ -238,51 +292,7 @@ export function updatePreviewHeaderUI(docType) {
     if (iconEl)
         iconEl.className = `fi ${meta.icon}`;
 }
-export function updateTLPreviewHeaderUI(docType) {
-    let rawType = (docType || store.currentTLDoc || 'BAST_PEMILIK').toString().toUpperCase().trim();
-    store.currentTLDoc = rawType;
-    const tlDocMeta = {
-        'ALL': { title: 'SEMUA DOKUMEN TINDAK LANJUT', icon: 'fi-rr-documents' },
-        'BAST_PEMILIK': { title: 'BAST KE PEMILIK / KUASA', icon: 'fi-rr-user-check' },
-        'BA_SEGEL': { title: 'BERITA ACARA BUKA SEGEL', icon: 'fi-rr-unlock' },
-        'KEP_BDN': { title: 'KEPUTUSAN BPP / BDN', icon: 'fi-rr-diploma' },
-        'SPSA': { title: 'SURAT PERINTAH SPSA', icon: 'fi-rr-shield-check' },
-        'BAST_LIMPAH': { title: 'BAST LIMPAH INSTANSI LAIN', icon: 'fi-rr-paper-plane' }
-    };
-    let titleEl = document.getElementById('tlPreviewHeaderText');
-    let iconEl = document.getElementById('tlPreviewHeaderIcon');
-    let meta = tlDocMeta[rawType] || { title: `DOKUMEN ${rawType}`, icon: 'fi-rr-document' };
-    if (titleEl)
-        titleEl.textContent = `PRATINJAU DOKUMEN: ${meta.title}`;
-    if (iconEl)
-        iconEl.className = `fi ${meta.icon}`;
-}
-export function changePaperSize(size) {
-    store.selectedPaperSize = size;
-    let dynamicStyle = document.getElementById('dynamicPaperStyle');
-    let paperLabel = document.getElementById('currentPaperSizeLabel');
-    let settingSelect = document.getElementById('setting_paperSize');
-    if (settingSelect)
-        settingSelect.value = size;
-    if (size === 'A4') {
-        if (dynamicStyle)
-            dynamicStyle.innerHTML = `@page { size: A4; margin: 0; } @page landscape-page { size: A4 landscape; margin: 0; } @media print { .report { width: 210mm !important; min-height: 297mm !important; } .report.landscape { width: 297mm !important; min-height: 210mm !important; } }`;
-        if (paperLabel)
-            paperLabel.textContent = 'A4 (210 x 297 mm)';
-    }
-    else {
-        if (dynamicStyle)
-            dynamicStyle.innerHTML = `@page { size: 215mm 330mm; margin: 0; } @page landscape-page { size: 330mm 215mm; margin: 0; } @media print { .report { width: 215mm !important; min-height: 330mm !important; } .report.landscape { width: 330mm !important; min-height: 215mm !important; } }`;
-        if (paperLabel)
-            paperLabel.textContent = 'F4 / FOLIO (215 x 330 mm)';
-    }
-    if (window.showReportView)
-        window.showReportView(store.currentDoc);
-    if (window.showTLReportView)
-        window.showTLReportView(store.currentTLDoc);
-    if (window.saveData)
-        window.saveData();
-}
+// 2. Membuka dialog modal edit isian parameter dokumen Laporan
 export function handleEditDocFocus(type) {
     if (store.activeRecordIndex < 0 && store.databasePerkara.length > 0) {
         store.activeRecordIndex = 0;
@@ -315,6 +325,48 @@ export function handleEditDocFocus(type) {
     if (modal)
         modal.classList.add('active');
 }
+// 3. Menutup dialog modal edit dokumen Laporan
+export function closeEditDocModal() {
+    let modal = document.getElementById('editDocModal');
+    if (modal)
+        modal.classList.remove('active');
+}
+// 4. Menyimpan perubahan form dokumen Laporan dan me-refresh tampilan preview
+export function saveAndCloseEditDocModal() {
+    closeEditDocModal();
+    if (window.refreshReportTableUI)
+        window.refreshReportTableUI();
+    if (window.updateReportLive)
+        window.updateReportLive();
+    showToast("PERUBAHAN TERSIMPAN", `Parameter ${store.currentDoc} berhasil diperbarui.`, "success");
+}
+/* ============================================================================
+ * [BAGIAN C] KONTROLLER KHUSUS: MENU TINDAK LANJUT (EKSEKUSI LHP)
+ * ----------------------------------------------------------------------------
+ * Pengaturan header pratinjau, modal edit parameter, serta tombol validasi LHP:
+ * Dokumen: BAST_PEMILIK, BA_SEGEL, KEP_BDN, SPSA, BAST_LIMPAH
+ * ============================================================================ */
+// 1. Memperbarui teks dan ikon header pratinjau dokumen Tindak Lanjut
+export function updateTLPreviewHeaderUI(docType) {
+    let rawType = (docType || store.currentTLDoc || 'BAST_PEMILIK').toString().toUpperCase().trim();
+    store.currentTLDoc = rawType;
+    const tlDocMeta = {
+        'ALL': { title: 'SEMUA DOKUMEN TINDAK LANJUT', icon: 'fi-rr-documents' },
+        'BAST_PEMILIK': { title: 'BAST KE PEMILIK / KUASA', icon: 'fi-rr-user-check' },
+        'BA_SEGEL': { title: 'BERITA ACARA BUKA SEGEL', icon: 'fi-rr-unlock' },
+        'KEP_BDN': { title: 'KEPUTUSAN BPP / BDN', icon: 'fi-rr-diploma' },
+        'SPSA': { title: 'SURAT PERINTAH SPSA', icon: 'fi-rr-shield-check' },
+        'BAST_LIMPAH': { title: 'BAST LIMPAH INSTANSI LAIN', icon: 'fi-rr-paper-plane' }
+    };
+    let titleEl = document.getElementById('tlPreviewHeaderText');
+    let iconEl = document.getElementById('tlPreviewHeaderIcon');
+    let meta = tlDocMeta[rawType] || { title: `DOKUMEN ${rawType}`, icon: 'fi-rr-document' };
+    if (titleEl)
+        titleEl.textContent = `PRATINJAU DOKUMEN: ${meta.title}`;
+    if (iconEl)
+        iconEl.className = `fi ${meta.icon}`;
+}
+// 2. Membuka dialog modal edit isian parameter dokumen Tindak Lanjut
 export function focusEditTLDoc(docType) {
     if (store.activeRecordIndex < 0 && store.databasePerkara.length > 0) {
         store.activeRecordIndex = 0;
@@ -346,24 +398,13 @@ export function focusEditTLDoc(docType) {
     if (modal)
         modal.classList.add('active');
 }
-export function closeEditDocModal() {
-    let modal = document.getElementById('editDocModal');
-    if (modal)
-        modal.classList.remove('active');
-}
-export function saveAndCloseEditDocModal() {
-    closeEditDocModal();
-    if (window.refreshReportTableUI)
-        window.refreshReportTableUI();
-    if (window.updateReportLive)
-        window.updateReportLive();
-    showToast("PERUBAHAN TERSIMPAN", `Parameter ${store.currentDoc} berhasil diperbarui.`, "success");
-}
+// 3. Menutup dialog modal edit dokumen Tindak Lanjut
 export function closeEditTLDocModal() {
     let modal = document.getElementById('editTLDocModal');
     if (modal)
         modal.classList.remove('active');
 }
+// 4. Menyimpan perubahan form dokumen Tindak Lanjut dan me-refresh preview
 export function saveAndCloseEditTLDocModal() {
     closeEditTLDocModal();
     if (window.refreshTLTableUI)
@@ -372,20 +413,131 @@ export function saveAndCloseEditTLDocModal() {
         window.showTLReportView(store.currentTLDoc);
     showToast("PERUBAHAN TERSIMPAN", `Parameter ${store.currentTLDoc} berhasil diperbarui.`, "success");
 }
+// 5. Tombol Validasi & Sinkronisasi data Laporan otomatis dari Perkara
+export function handleSingleValidation() {
+    if ((typeof store.activeRecordIndex === 'undefined' || store.activeRecordIndex < 0) && store.databasePerkara.length > 0) {
+        store.activeRecordIndex = 0;
+    }
+    if (typeof store.activeRecordIndex === 'undefined' || store.activeRecordIndex < 0 || !store.databasePerkara[store.activeRecordIndex]) {
+        showToast("INFORMASI", "Belum ada data perkara untuk divalidasi.", "warning");
+        return;
+    }
+    let activeRecord = store.databasePerkara[store.activeRecordIndex];
+    let noLp = activeRecord.NoLP_LP_1 || '';
+    let docTypes = ['LPP', 'LPF', 'SPLIT', 'SPRIN_CACAH', 'BA', 'LHP'];
+    docTypes.forEach(type => {
+        if (type === 'LPP') {
+            activeRecord.No_LPP = noLp.replace(/^LP/i, 'LPP');
+            activeRecord.Tanggal_LPP = activeRecord.Tanggal_LPP || activeRecord.Tanggal_LP_LP_1;
+        }
+        else if (type === 'LPF') {
+            activeRecord.No_LPF = noLp.replace(/^LP/i, 'LPF');
+            activeRecord.Tanggal_LPF = activeRecord.Tanggal_LPF || activeRecord.Tanggal_LP_LP_1;
+        }
+        else if (type === 'SPLIT') {
+            activeRecord.Nomor_SPLIT = noLp.replace(/^LP/i, 'SPLIT');
+            activeRecord.Tanggal_SPLIT = activeRecord.Tanggal_SPLIT || activeRecord.Tanggal_LP_LP_1;
+        }
+        else if (type === 'SPRIN_CACAH' && !activeRecord.No_SPRIN_CACAH) {
+            activeRecord.No_SPRIN_CACAH = noLp;
+            activeRecord.Tanggal_SPRIN_CACAH = activeRecord.Tanggal_SBP || activeRecord.Tanggal_LP_LP_1;
+        }
+        else if (type === 'BA' && !activeRecord.Nomor_BA) {
+            activeRecord.Nomor_BA = noLp;
+            activeRecord.Tanggal_BA = activeRecord.Tanggal_SBP || activeRecord.Tanggal_LP_LP_1;
+        }
+        else if (type === 'LHP') {
+            activeRecord.No_LHP = noLp.replace(/^LP/i, 'LHP');
+            activeRecord.Tanggal_LHP = activeRecord.Tanggal_LHP || activeRecord.Tanggal_LP_LP_1;
+        }
+    });
+    savePerkaraToStorage();
+    let existingToast = document.getElementById('customToastNotification');
+    if (!existingToast) {
+        let toastDiv = document.createElement('div');
+        toastDiv.id = 'customToastNotification';
+        toastDiv.innerHTML = `<i class="fi fi-rr-check-circle" style="color: #22c55e; margin-right: 8px;"></i><span id="toastMessage">Sudah divalidasi dan disinkronkan!</span>`;
+        toastDiv.style.cssText = "position: fixed; bottom: 20px; right: 20px; background: #0f172a; color: #ffffff; padding: 12px 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); display: flex; align-items: center; z-index: 9999; font-size: 14px; opacity: 0; transition: opacity 0.3s ease, transform 0.3s ease; transform: translateY(20px); border-left: 4px solid #10b981;";
+        document.body.appendChild(toastDiv);
+        existingToast = toastDiv;
+    }
+    else {
+        let msgEl = document.getElementById('toastMessage');
+        if (msgEl)
+            msgEl.innerText = "Sudah divalidasi dan disinkronkan!";
+    }
+    setTimeout(() => {
+        existingToast.style.opacity = '1';
+        existingToast.style.transform = 'translateY(0)';
+    }, 10);
+    setTimeout(() => {
+        existingToast.style.opacity = '0';
+        existingToast.style.transform = 'translateY(20px)';
+    }, 3000);
+    if (typeof window.refreshReportTableUI === 'function') {
+        window.refreshReportTableUI();
+    }
+}
+// 6. Tombol Validasi & Sinkronisasi data Tindak Lanjut otomatis dari LHP
+export function handleSingleValidationTL() {
+    if ((typeof store.activeRecordIndex === 'undefined' || store.activeRecordIndex < 0) && store.databasePerkara.length > 0) {
+        store.activeRecordIndex = 0;
+    }
+    if (typeof store.activeRecordIndex === 'undefined' || store.activeRecordIndex < 0 || !store.databasePerkara[store.activeRecordIndex]) {
+        showToast("INFORMASI", "Belum ada data perkara/LHP yang tersedia untuk divalidasi.", "warning");
+        return;
+    }
+    const activeRecord = store.databasePerkara[store.activeRecordIndex];
+    const noLhp = activeRecord.Nomor_LHP || activeRecord.NoLP_LP_1 || '1';
+    const tglLhp = activeRecord.Tanggal_LHP || activeRecord.Tanggal_LP_LP_1 || '';
+    activeRecord.TL_Tanggal_Surat = activeRecord.TL_Tanggal_Surat || tglLhp;
+    activeRecord.TL_Hari_BAST = activeRecord.TL_Hari_BAST || activeRecord.Hari_SBP || 'Selasa';
+    activeRecord.TL_Tgl_Huruf_BAST = activeRecord.TL_Tgl_Huruf_BAST || tanggalKeTeks(tglLhp);
+    activeRecord.TL_Nama_Pemilik = activeRecord.TL_Nama_Pemilik || activeRecord.Nama_Pelaku || '-';
+    activeRecord.TL_NIK_Pemilik = activeRecord.TL_NIK_Pemilik || activeRecord.Nomor_Identitas || '-';
+    activeRecord.TL_Alamat_Pemilik = activeRecord.TL_Alamat_Pemilik || activeRecord.Alamat_Pelaku || '-';
+    activeRecord.KEP_Tanggal_ND = activeRecord.KEP_Tanggal_ND || tglLhp;
+    activeRecord.KEP_Nomor_ND = activeRecord.KEP_Nomor_ND || `KEP-${noLhp}/KPU.2064/2026`;
+    activeRecord.SPSA_Nomor = activeRecord.SPSA_Nomor || noLhp;
+    activeRecord.SPSA_Tanggal = activeRecord.SPSA_Tanggal || tglLhp;
+    activeRecord.Limpah_Tanggal = activeRecord.Limpah_Tanggal || tglLhp;
+    savePerkaraToStorage();
+    const bannerBox = document.getElementById('tlValidatorBanner');
+    if (bannerBox)
+        bannerBox.style.display = 'flex';
+    const statusLabel = document.getElementById('tlActiveStatusLabel');
+    if (statusLabel) {
+        const lhpLabel = activeRecord.Nomor_LHP ? `LHP-${activeRecord.Nomor_LHP}` : `LP-${activeRecord.NoLP_LP_1}`;
+        statusLabel.textContent = `TERVALIDASI: ${lhpLabel} (Pelaku: ${escText(activeRecord.Nama_Pelaku)})`;
+    }
+    showToast("SUKSES", "Data Tindak Lanjut berhasil divalidasi & disinkronkan dari LHP!", "success");
+    if (typeof window.refreshTLTableUI === 'function') {
+        window.refreshTLTableUI();
+    }
+}
+/* ============================================================================
+ * [BAGIAN D] GLOBAL WINDOW EXPOSURE
+ * ----------------------------------------------------------------------------
+ * Binding ke window object agar dapat dipanggil dari onclick atribut HTML.
+ * ============================================================================ */
+// Global
 window.showToast = showToast;
 window.showToastConfirm = showToastConfirm;
+window.changePaperSize = changePaperSize;
 window.autoPaginateReports = autoPaginateReports;
-window.renderPageSelector = renderPageSelector;
-window.selectPreviewPage = selectPreviewPage;
 window.applyPageNumbers = applyPageNumbers;
 window.navigatePreviewPage = navigatePreviewPage;
+window.renderPageSelector = renderPageSelector;
+window.selectPreviewPage = selectPreviewPage;
+// Menu Laporan
 window.updatePreviewHeaderUI = updatePreviewHeaderUI;
-window.updateTLPreviewHeaderUI = updateTLPreviewHeaderUI; // pastikan ini as any, bukan asyn
-window.changePaperSize = changePaperSize;
 window.handleEditDocFocus = handleEditDocFocus;
-window.focusEditTLDoc = focusEditTLDoc;
 window.closeEditDocModal = closeEditDocModal;
 window.saveAndCloseEditDocModal = saveAndCloseEditDocModal;
+// Menu Tindak Lanjut
+window.updateTLPreviewHeaderUI = updateTLPreviewHeaderUI;
+window.focusEditTLDoc = focusEditTLDoc;
 window.closeEditTLDocModal = closeEditTLDocModal;
 window.saveAndCloseEditTLDocModal = saveAndCloseEditTLDocModal;
+window.handleSingleValidationTL = handleSingleValidationTL;
 //# sourceMappingURL=ui.js.map

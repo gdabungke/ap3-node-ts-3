@@ -1,6 +1,6 @@
 import { store, savePerkaraToStorage } from '../state/store.js';
 import { escText } from '../utils/formatters.js';
-import { showToast, showToastConfirm } from './ui.js';
+import { showToast, showToastConfirm } from '../utils/ui.js';
 
 export async function initUserAccounts(): Promise<void> {
   try {
@@ -366,6 +366,15 @@ export function confirmResetAllData(): void {
 
     location.reload();
   });
+}
+
+export function getFilteredDataForUser(): any[] {
+  if (!store.currentUser) return store.databasePerkara;
+  if (store.currentUser.role === 'Admin' || store.currentUser.role === 'Kepala Seksi Penyidikan') {
+    return store.databasePerkara;
+  } else {
+    return store.databasePerkara.filter((rec: any) => rec.disposisiPetugas && rec.disposisiPetugas.toLowerCase() === store.currentUser?.nama.toLowerCase());
+  }
 }
 
 (window as any).confirmResetAllData = confirmResetAllData;

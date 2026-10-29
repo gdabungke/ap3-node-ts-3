@@ -1,7 +1,7 @@
 import { store, savePerkaraToStorage } from '../state/store.js';
 import { escText, terbilangHuruf } from '../utils/formatters.js';
 import { validateMasterOperationalData } from '../utils/validators.js';
-import { showToast, showToastConfirm } from './ui.js';
+import { showToast, showToastConfirm } from '../utils/ui.js';
 import {
   MASTER_JENIS_IDENTITAS,
   MASTER_JENIS_PERKARA,
@@ -10,6 +10,7 @@ import {
   MASTER_SATUAN_KOLI,
   populateSelectElement
 } from '../config/constants.js';
+import { renderDisposisiTable } from './table.js';
 
 export function syncDspJenisPerkara(val: string): void {
   let el = document.getElementById('dsp_jenis_perkara') as HTMLInputElement;
@@ -153,7 +154,7 @@ export function updateDspCodePreviews(): void {
 let currentDisposisiPage = 1;
 const rowsPerPage = 5;
 
-async function fetchDisposisiList(): Promise<any[]> {
+export async function fetchDisposisiList(): Promise<any[]> {
   let cleaned: any[] = [];
   try {
     let res = await fetch('/api/disposisi');
@@ -676,189 +677,6 @@ export async function hapusDisposisi(idDisposisi: any): Promise<void> {
   );
 }
 
-export async function renderDisposisiTable(): Promise<void> {
-  let tbody = document.getElementById('disposisiTableBody');
-  if (!tbody) return;
-
-  let listDisposisi = await fetchDisposisiList();
-  let filtered = listDisposisi;
-  
-  let isPenyidik = store.currentUser && (
-    store.currentUser.role === 'Penyidik / Ketua Tim Peneliti' || 
-    store.currentUser.role === 'Penyidik'
-  );
-
-  if (isPenyidik) {
-    let curNama = (store.currentUser?.namaLengkap || store.currentUser?.nama || store.currentUser?.username || '').toLowerCase();
-    filtered = listDisposisi.filter((d: any) => 
-      d.targetPenyidik && curNama && d.targetPenyidik.trim().toLowerCase() === curNama
-    );
-  }
-
-  let totalPages = Math.ceil(filtered.length / rowsPerPage) || 1;
-  if (currentDisposisiPage > totalPages) currentDisposisiPage = totalPages;
-  if (currentDisposisiPage < 1) currentDisposisiPage = 1;
-
-  let startIdx = (currentDisposisiPage - 1) * rowsPerPage;
-  let paginatedData = filtered.slice(startIdx, startIdx + rowsPerPage);
-
-  if (paginatedData.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding:20px; color:var(--text-muted, #94a3b8);">Belum ada data disposisi berkas.</td></tr>`;
-    renderDisposisiPagination(totalPages, filtered.length);
-    return;
-  }
-
-  tbody.innerHTML = paginatedData.map((d: any, index: number) => {
-    let realIndex = listDisposisi.findIndex((item: any) => item.id === d.id);
-    let i = startIdx + index;
-    let actionBtn = '';
-    let rawStatus = String(d.status || d.statusDisposisi || 'DRAF');
-    
-    let isDraft = rawStatus.toUpperCase() === 'DRAF' || 
-                  rawStatus.toUpperCase().includes('BELUM DITUNJUK') || 
-                  rawStatus.toLowerCase().includes('ditolak');
-
-    let statusText = '';
-    let statusBadgeClass = 'badge-warning';
-
-    if (rawStatus.includes('Ditolak')) {
-      statusText = 'DITOLAK';
-      statusBadgeClass = 'badge-danger';
-    } else if (rawStatus.toLowerCase().includes('diterima') || rawStatus.toLowerCase().includes('ditindaklanjuti')) {
-      statusText = 'DISPOSISI DITERIMA';
-      statusBadgeClass = 'badge-success';
-    } else if (rawStatus.toLowerCase().includes('terkirim') || rawStatus.toLowerCase().includes('didisposisikan')) {
-      if (isPenyidik) {
-        statusText = 'DISPOSISI MASUK';
-        statusBadgeClass = 'badge-warning';
-      } else {
-        statusText = 'DISPOSISI TERKIRIM';
-        statusBadgeClass = 'badge-proposed';
-      }
-    } else {
-      statusText = 'DRAF';
-      statusBadgeClass = 'badge-draft';
-    }
-
-    let tglFormatted = d.tanggalDisposisi ? new Date(d.tanggalDisposisi).toLocaleDateString('id-ID', {day: 'numeric', month: 'short', year: 'numeric'}) : '-';
-
-    if (isPenyidik) {
-      if (!rawStatus.toLowerCase().includes('diterima') && !rawStatus.toLowerCase().includes('ditindaklanjuti') && !rawStatus.toLowerCase().includes('ditolak')) {
-        actionBtn = `
-          <div style="display:flex; gap:4px; justify-content:flex-end;">
-            <button type="button" class="btn primary btn-terima-dsp" onclick="responDisposisi('terima', '${d.id}')" style="padding:4px 8px; font-size:10px;">
-              <i class="fi fi-rr-check"></i> Terima
-            </button>
-            <button type="button" class="btn danger btn-tolak-dsp" onclick="responDisposisi('tolak', '${d.id}')" style="padding:4px 8px; font-size:10px;">
-              <i class="fi fi-rr-cross"></i> Tolak
-            </button>
-          </div>
-        `;
-      } else {
-        actionBtn = `<button type="button" class="btn secondary" style="padding:4px 8px; font-size:10px;" onclick='openDisposisiModal(${realIndex})'><i class="fi fi-rr-eye"></i> Detail</button>`;
-      }
-    } else {
-      if (isDraft) {
-        actionBtn = `
-          <div style="display:flex; gap:4px; justify-content:flex-end;">
-            <button type="button" class="btn warning" style="padding:4px 8px; font-size:10px;" onclick='openDisposisiModal(${realIndex})'>
-              <i class="fi fi-rr-edit"></i> Edit
-            </button>
-            <button type="button" class="btn danger" style="padding:4px 8px; font-size:10px;" onclick='hapusDisposisi("${d.id}")'>
-              <i class="fi fi-rr-trash"></i> Hapus
-            </button>
-          </div>
-        `;
-      } else {
-        actionBtn = `
-          <button type="button" class="btn secondary" style="padding:4px 8px; font-size:10px;" onclick='openDisposisiModal(${realIndex})'>
-            <i class="fi fi-rr-eye"></i> Detail
-          </button>
-        `;
-      }
-    }
-
-    let cleanSBP = String(d.noSbp || '').replace(/^SBP-?/i, '');
-    let cleanLP = String(d.noLp || '').replace(/^LP-?/i, '');
-
-    return `
-      <tr>
-        <td><b>${i + 1}</b></td>
-        <td>
-          <b>SBP-${escText(cleanSBP)}</b><br>
-          <small style="color:var(--text-muted, #94a3b8); font-size:10px;">Tgl: ${escText(d.tglSbp || '-')}</small>
-        </td>
-        <td>
-          <b>LP-${escText(cleanLP)}</b><br>
-          <small style="color:var(--text-muted, #94a3b8); font-size:10px;">Tgl: ${escText(d.tglLp || '-')}</small>
-        </td>
-        <td>
-          <span style="font-weight:600; font-size:12px; color:var(--text-main, #f8fafc);">${escText(d.pelaku || '-')}</span>
-        </td>
-        <td>
-          <span style="font-size:11px; color:var(--text-main, #cbd5e1); font-weight:500;">
-            <i class="fi fi-rr-document" style="font-size:10px; margin-right:3px;"></i>${escText(d.jenisPerkara || d.dokPemberitahuan || 'Kepabeanan & Cukai')}
-          </span>
-        </td>
-        <td>
-          <div style="display:flex; flex-direction:column; gap:4px; align-items:flex-start;">
-            <span class="badge" style="background:rgba(14, 165, 233, 0.15); color:#38bdf8; border:1px solid rgba(56, 189, 248, 0.3); font-size:11px; padding:2px 7px; border-radius:4px; white-space:normal; line-height:1.3; text-align:left;">
-              ${escText(d.komoditi || '-')}
-            </span>
-            <small style="color:var(--text-muted, #94a3b8); font-size:11px; line-height:1.35; word-break:break-word;">
-              <i class="fi fi-rr-box-alt" style="font-size:10px; margin-right:3px;"></i>${escText(d.uraianBarang || '-')}
-            </small>
-          </div>
-        </td>
-        <td>
-          <span class="badge-status ${statusBadgeClass}">${escText(statusText)}</span><br>
-          <small style="color:var(--text-muted, #94a3b8); font-size:10px;">Tgl: ${tglFormatted}</small>
-        </td>
-        <td>
-          <b>${escText(d.targetPenyidik || '-')}</b><br>
-          <small style="color:var(--text-muted, #94a3b8); font-size:10px;">Oleh: ${escText(d.pengusul || '-')}</small>
-        </td>
-        <td style="text-align:right;">${actionBtn}</td>
-      </tr>
-    `;
-  }).join('');
-
-  renderDisposisiPagination(totalPages, filtered.length);
-}
-
-function renderDisposisiPagination(totalPages: number, totalItems: number = 0): void {
-  let paginationContainer = document.getElementById('disposisiPaginationContainer') || document.getElementById('perkaraPageInfo')?.parentElement;
-  if (!paginationContainer) {
-    let cardBodyEl = document.querySelector('#disposisi .panel-body, #disposisi .data-table-container, #disposisi');
-    if (cardBodyEl) {
-      let div = document.createElement('div');
-      div.id = 'disposisiPaginationContainer';
-      div.style.cssText = 'display: flex; justify-content: space-between; align-items: center; margin-top: 16px; padding: 4px 8px; font-size: 12px;';
-      cardBodyEl.appendChild(div);
-      paginationContainer = div;
-    } else {
-      return;
-    }
-  }
-
-  const maxPage = totalPages > 0 ? totalPages : 1;
-  if (currentDisposisiPage > maxPage) currentDisposisiPage = maxPage;
-  if (currentDisposisiPage < 1) currentDisposisiPage = 1;
-
-  paginationContainer.innerHTML = `
-    <span style="color: var(--text-muted);">Halaman ${currentDisposisiPage} dari ${maxPage} <b style="margin-left: 8px; color: var(--text-main);">Total: ${totalItems} Data</b></span>
-    <div style="display: flex; gap: 4px;">
-      <button type="button" class="btn secondary" style="padding: 4px 10px; font-size: 11px;" ${currentDisposisiPage === 1 ? 'disabled' : ''} onclick="window.changeDisposisiPage(-1)">Sebelumnya</button>
-      <button type="button" class="btn secondary" style="padding: 4px 10px; font-size: 11px;" ${currentDisposisiPage >= maxPage ? 'disabled' : ''} onclick="window.changeDisposisiPage(1)">Selanjutnya</button>
-    </div>
-  `;
-}
-
-export function changeDisposisiPage(direction: number): void {
-  currentDisposisiPage += direction;
-  renderDisposisiTable();
-}
-
 export function terimaDisposisi(dspData: any): void {
   responDisposisi('terima', dspData.id || dspData.noLp);
 }
@@ -923,9 +741,52 @@ export async function responDisposisi(aksi: string, idDisposisi: any): Promise<v
       Uraian_Barang: teksBarang,
       Detail_Barang_LPP: teksBarang,
       disposisiPetugas: target.targetPenyidik || (store.currentUser ? (store.currentUser.namaLengkap || store.currentUser.nama) : 'Penyidik'),
-      statusAlur: "DITERIMA PENYIDIK"
+      statusAlur: "DITERIMA PENYIDIK",
+
+      kabid: localStorage.getItem('setting_defaultKabid') || '',
+      nip_kabid: localStorage.getItem('setting_defaultNipKabid') || '',
+      jabatan_kabid: 'Kepala Bidang Penindakan dan Penyidikan',
+      gol_kabid: 'Pembina (IV/a)',
+
+       // 2. Pejabat Eselon IV / Fungsional Ahli Pertama
+      nama_seksi: localStorage.getItem('setting_defaultKasi') || '',
+      nip_seksi: localStorage.getItem('setting_defaultNipKasi') || '',
+      jabatan_seksi: 'Kepala Seksi Penyidikan',
+      gol_seksi: 'Penata (III/c)',
+
+      // 3. Ketua Tim Peneliti (Otomatis nama penyidik yang ditunjuk di disposisi)
+      ketua_tim: target.targetPenyidik || '',
+      nip_ketua_tim: '',
+      jabatan_ketua_tim: 'Ketua Tim Peneliti',
+      gol_ketua_tim: 'Penata Muda Tk. I (III/b)',
+
+      // 4. Petugas Pelaksana / Tim
+      pembuat_lpp: '',
+      nip_pembuat_lpp: '',
+      jabatan_pembuat_lpp: 'Petugas LPP',
+      gol_pembuat_lpp: 'Pengatur (II/c)',
+
+      petugas_lpf: '',
+      nip_petugas_lpf: '',
+      jabatan_petugas_lpf: 'Petugas LPF',
+      gol_petugas_lpf: 'Pengatur (II/c)',
+
+      indak_1: '',
+      nip_indak_1: '',
+      jabatan_indak_1: 'Petugas Penindakan 1',
+      gol_indak_1: 'Pengatur (II/c)',
+
+      indak_2: '',
+      nip_indak_2: '',
+      jabatan_indak_2: 'Petugas Penindakan 2',
+      gol_indak_2: 'Pengatur (II/c)',
+
+      indak_lainnya: '',
+      nip_indak_lainnya: '',
+     jabatan_indak_lainnya: 'Petugas Penindakan 3',
+      gol_indak_lainnya: 'Pengatur (II/c)',
     };
-    
+
     if (foundIdx !== -1) {
       store.databasePerkara[foundIdx] = {
         ...store.databasePerkara[foundIdx],
@@ -1132,9 +993,7 @@ export function initDisposisiModule(): void {
 (window as any).closeModalUsulDisposisi = closeDisposisiModal;
 (window as any).simpanDraftDisposisi = simpanDraftDisposisi;
 (window as any).kirimDisposisiBerkat = kirimDisposisiBerkat;
-(window as any).renderDisposisiTable = renderDisposisiTable;
 (window as any).hapusDisposisi = hapusDisposisi;
-(window as any).changeDisposisiPage = changeDisposisiPage;
 (window as any).responDisposisi = responDisposisi;
 (window as any).terimaDisposisi = terimaDisposisi;
 (window as any).closeAlasanTolakModal = closeAlasanTolakModal;

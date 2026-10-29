@@ -13,3 +13,4 @@ export declare function toggleUserDropdown(event: MouseEvent): void;
 export declare function openProfileSettingTab(): void;
 export declare function handleLogout(): void;
 export declare function confirmResetAllData(): void;
+export declare function getFilteredDataForUser(): any[];

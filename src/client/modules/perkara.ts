@@ -8,6 +8,7 @@ import {
   MASTER_JENIS_PERKARA,
   MASTER_STATUS_PENANGKAPAN,
   MASTER_MODUS_OPERANDI,
+  MODUS_PASAL_MAP,
   MASTER_UMUR_PELAKU,
   MASTER_JENIS_KELAMIN,
   MASTER_PEKERJAAN,
@@ -32,10 +33,13 @@ import {
   formatModusVerb, 
   terbilangHuruf
 } from '../utils/formatters.js';
-import { showToast, showToastConfirm } from './ui.js';
+import { showToast, showToastConfirm } from '../utils/ui.js';
 import { refreshReportTableUI, updateReportLive } from './editor.js';
 import { validateMasterOperationalData } from '../utils/validators.js';
 import { generateNextBookingNumber } from '../utils/generators.js';
+import { getFilteredDataForUser } from '../modules/auth.js';
+import { updateDashboardStats } from '../modules/dashboard.js';
+import { renderPerkaraTable } from '../modules/table.js';
 
 let currentPerkaraPage = 1;
 const rowsPerPagePerkara = 5;
@@ -85,6 +89,9 @@ export function initPerkaraDropdownsFromMaster(): void {
   populateSelectElement('Jenis_Dok_Pemberitahuan_Select', MASTER_JENIS_DOKUMEN_PABEAN, 'Tanpa Dokumen', '');
   populateSelectElement('Jenis_Dok_Pelengkap_Select', MASTER_DOKUMEN_PELENGKAP, '-', '- (Tanpa Dokumen Pelengkap)');
 
+  populateSelectElement('auto_akhiran_select', MASTER_AKHIRAN_BARANG, '', '');
+  syncKondisiBarang();
+
   // 1. Kumpulkan seluruh master opsi jabatan
   const allJabatan = Array.from(new Set([...MASTER_JABATAN_DINAS, ...MASTER_JABATAN_TIM_PENELITI]));
 
@@ -113,38 +120,86 @@ export function populateAgeDropdown(): void {
   populateSelectElement('Umur_Pelaku', MASTER_UMUR_PELAKU, '', '- Pilih Usia -');
 }
 
-export function updateHariSBP(): void {
-  let tgl = (document.getElementById('Tanggal_SBP') as HTMLInputElement) ? (document.getElementById('Tanggal_SBP') as HTMLInputElement).value : '';
-  let hariEl = document.getElementById('Hari_SBP') as HTMLInputElement;
-  if (tgl && hariEl) {
-    let d = new Date(tgl + 'T12:00:00');
-    let days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+export function updateHariSBP(defaultDateVal?: string): void {
+  const hariEl = document.getElementById('Hari_SBP') as HTMLSelectElement | null;
+  const tglEl = document.getElementById('Tanggal_SBP') as HTMLInputElement | null;
+  if (!hariEl) return;
+
+  const listHari = ['-', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
+
+  // Jika opsi belum ada atau ter-reset, render ulang daftar hari
+  if (hariEl.options.length < 7) {
+    hariEl.innerHTML = listHari.map(h => `<option value="${h}">${h}</option>`).join('');
+  }
+
+  const tgl = (defaultDateVal || (tglEl ? tglEl.value : '')).trim();
+  if (!tgl || tgl === '-') {
+    hariEl.value = '-';
+    return;
+  }
+
+  let d: Date;
+  if (tgl.includes('/')) {
+    const [day, month, year] = tgl.split('/');
+    d = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), 12, 0, 0);
+  } else if (tgl.includes('-')) {
+    const [year, month, day] = tgl.split('-');
+    d = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), 12, 0, 0);
+  } else {
+    d = new Date(tgl);
+  }
+
+  const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+
+  if (!isNaN(d.getTime())) {
     hariEl.value = days[d.getDay()];
+  } else {
+    hariEl.value = '-';
+  }
+
+  if (typeof (window as any).generateKronologisOtomatis === 'function') {
+    (window as any).generateKronologisOtomatis();
   }
 }
 
-export function updateLiveCodePreviews(): void {
-  let valLP = (document.getElementById('NoLP_LP_1') as HTMLInputElement) ? (document.getElementById('NoLP_LP_1') as HTMLInputElement).value.trim() : '';
-  let valSBP = (document.getElementById('Nomor_SBP') as HTMLInputElement) ? (document.getElementById('Nomor_SBP') as HTMLInputElement).value.trim() : '';
-  let valSPRIN = (document.getElementById('No_SPRIN_Indak') as HTMLInputElement) ? (document.getElementById('No_SPRIN_Indak') as HTMLInputElement).value.trim() : '';
-  let statusPenangkapan = (document.getElementById('Status_Penangkapan_Select') as HTMLSelectElement) ? (document.getElementById('Status_Penangkapan_Select') as HTMLSelectElement).value : '-';
-  
-  let tipeSBP = statusPenangkapan.toUpperCase().includes('LIMPAHAN') ? 'LIMPAH' : 'MANDIRI';
+export function setPratinjauNomor(): void {
+  const elLP = (document.getElementById('NoLP') || document.getElementById('NoLP_LP_1')) as HTMLInputElement | null;
+  const elSBP = document.getElementById('Nomor_SBP') as HTMLInputElement | null;
+  const elSPRIN = document.getElementById('No_SPRIN_Indak') as HTMLInputElement | null;
+  const elStatus = document.getElementById('Status_Penangkapan_Select') as HTMLSelectElement | null;
 
-  let previewLP = document.getElementById('preview_NoLP');
-  let previewSBP = document.getElementById('preview_SBP');
-  let previewSPRIN = document.getElementById('preview_SPRIN');
+  const statusPenangkapan = elStatus ? elStatus.value : '-';
+  const tipeSBP = statusPenangkapan.toUpperCase().includes('LIMPAHAN') ? 'LIMPAH' : 'MANDIRI';
 
-  if (previewLP) {
-    previewLP.textContent = valLP !== '' ? `LP-${valLP}/KPU.206/2026` : 'LP-/KPU.206/2026';
+  // 1. Langsung masukkan format lengkap ke dalam kotak input (jika hanya berisi angka)
+  if (elLP && /^\d+$/.test(elLP.value.trim())) {
+    elLP.value = `LP-${elLP.value.trim()}/KPU.206/2026`;
   }
-  if (previewSBP) {
-    previewSBP.textContent = valSBP !== '' ? `SBP-${valSBP}/${tipeSBP}/KPU.2/2026` : `SBP-/${tipeSBP}/KPU.2/2026`;
+  if (elSBP && /^\d+$/.test(elSBP.value.trim())) {
+    elSBP.value = `SBP-${elSBP.value.trim()}/${tipeSBP}/KPU.2/2026`;
   }
-  if (previewSPRIN) {
-    let sprinPad = valSPRIN !== '' ? (valSPRIN.length < 2 ? String(valSPRIN).padStart(2, '0') : valSPRIN) : '01';
-    previewSPRIN.textContent = valSPRIN !== '' ? `SPRIN-${sprinPad}/KPU.206/2026` : 'SPRIN-/KPU.206/2026';
+  if (elSPRIN && /^\d+$/.test(elSPRIN.value.trim())) {
+    const rawVal = elSPRIN.value.trim();
+    const pad = rawVal.length < 2 ? rawVal.padStart(2, '0') : rawVal;
+    elSPRIN.value = `SPRIN-${pad}/KPU.206/2026`;
   }
+
+  // 2. Beri warna oranye emas pada kotak isian
+  [elLP, elSBP, elSPRIN].forEach((input) => {
+    if (input) {
+      input.style.color = '#f59e0b';
+      input.style.fontWeight = '600';
+    }
+  });
+
+  // 3. Kosongkan dan sembunyikan teks pratinjau di bawah kotak
+  ['preview_LP', 'preview_NoLP', 'preview_SBP', 'preview_SPRIN'].forEach(id => {
+    const previewEl = document.getElementById(id);
+    if (previewEl) {
+      previewEl.textContent = '';
+      previewEl.style.display = 'none';
+    }
+  });
 }
 
 export function generateKronologisOtomatis(): void {
@@ -194,141 +249,116 @@ export function handleJenisKoliSelectChange(val: string): void {
 }
 
 export function generateUraianBarangOtomatis(): void {
-  let jml = (document.getElementById('Jumlah_Koli') as HTMLInputElement) ? (document.getElementById('Jumlah_Koli') as HTMLInputElement).value.trim() : '';
-  let satuan = (document.getElementById('Jenis_Koli') as HTMLInputElement) ? (document.getElementById('Jenis_Koli') as HTMLInputElement).value.trim() : '';
-  let barang = (document.getElementById('auto_barang') as HTMLInputElement) ? (document.getElementById('auto_barang') as HTMLInputElement).value.trim() : '';
-  let akhiranTipe = (document.getElementById('auto_akhiran_select') as HTMLSelectElement) ? (document.getElementById('auto_akhiran_select') as HTMLSelectElement).value : '';
-  let kustomText = (document.getElementById('auto_kustom_text') as HTMLInputElement) ? (document.getElementById('auto_kustom_text') as HTMLInputElement).value.trim() : '';
+  const jml = (document.getElementById('Jumlah_Koli') as HTMLInputElement)?.value.trim() || '';
+  const satuan = (document.getElementById('Jenis_Koli') as HTMLInputElement)?.value.trim() || '';
+  const barangInput = (document.getElementById('auto_barang') as HTMLInputElement)?.value.trim() || '';
+  const akhiranTipe = (document.getElementById('auto_akhiran_select') as HTMLSelectElement)?.value || '';
+  const kustomText = (document.getElementById('auto_kustom_text') as HTMLInputElement)?.value.trim() || '';
 
-  let kustomContainer = document.getElementById('auto_kustom_container') as HTMLElement;
+  const kustomContainer = document.getElementById('auto_kustom_container') as HTMLElement | null;
   if (kustomContainer) {
     kustomContainer.style.display = (akhiranTipe === 'manual') ? 'block' : 'none';
   }
 
-  if (!jml && !satuan && !barang) return;
+  if (!jml && !satuan && !barangInput) return;
 
-  let cleanBarang = barang.replace(/[,.\s]+$/, '').trim();
-  let jmlTerbilang = terbilangHuruf(jml);
-  let formattedJml = jml ? `${jml} (${jmlTerbilang})` : '';
+  const jmlTerbilang = typeof terbilangHuruf === 'function' ? terbilangHuruf(jml) : '';
+  const formattedJml = jml ? `${jml} (${jmlTerbilang})` : '';
 
-  let parts = [formattedJml, satuan, cleanBarang].filter(p => p !== '' && p !== '-');
-  let baseText = parts.join(' ');
+  const baseParts = [formattedJml, satuan].filter(p => p !== '' && p !== '-');
+  let baseText = baseParts.join(' ');
+
+  const cleanBarang = barangInput.replace(/[,.\s]+$/, '').trim();
+
+  if (cleanBarang) {
+    baseText += (baseText ? ' ' : '') + cleanBarang;
+
+    const daftarItem = cleanBarang.split(',').map(s => s.trim()).filter(Boolean);
+    const jumlahItem = daftarItem.length;
+
+    let suffix = '';
+
+    if (akhiranTipe === 'manual') {
+      if (kustomText) {
+        const cleanKustom = kustomText.replace(/^[,.\s]+/, '');
+        suffix = jumlahItem > 1 ? `, ${cleanKustom}` : ` ${cleanKustom}`;
+      }
+    } else if (akhiranTipe !== '') {
+      const found = MASTER_AKHIRAN_BARANG.find(i => i.value === akhiranTipe);
+      if (found) {
+        const cleanLabel = found.label.replace(/^[,.\s]+/, '');
+        suffix = (jumlahItem > 1) ? `, ${cleanLabel}` : ` ${cleanLabel}`;
+      }
+    }
+
+    baseText += suffix;
+  }
 
   if (baseText) {
     baseText = baseText.charAt(0).toUpperCase() + baseText.slice(1);
   }
 
-  if (cleanBarang) {
-    if (akhiranTipe === 'dll') {
-      baseText += ', dll.';
-    } else if (akhiranTipe === 'etc') {
-      baseText += ', etc.';
-    } else if (akhiranTipe === 'barang_lainnya') {
-      baseText += ', dan barang lainnya';
-    } else if (akhiranTipe === 'manual' && kustomText) {
-      baseText += `, ${kustomText.replace(/^,\s*/, '')}`;
-    }
-  } else if (baseText && akhiranTipe) {
-    if (akhiranTipe === 'dll') {
-      baseText += ' dll.';
-    } else if (akhiranTipe === 'etc') {
-      baseText += ' etc.';
-    } else if (akhiranTipe === 'barang_lainnya') {
-      baseText += ' dan barang lainnya';
-    } else if (akhiranTipe === 'manual' && kustomText) {
-      baseText += ` ${kustomText.replace(/^,\s*/, '')}`;
-    }
-  }
-
-  let uraianTarget = document.getElementById('Uraian_Barang') as HTMLInputElement;
+  const uraianTarget = document.getElementById('Uraian_Barang') as HTMLInputElement | HTMLTextAreaElement | null;
   if (uraianTarget) {
     uraianTarget.value = baseText;
   }
 }
 
+if (typeof window !== 'undefined') {
+  (window as any).generateUraianBarangOtomatis = generateUraianBarangOtomatis;
+}
+
 export async function autoGenerateAndAddMasterPasal(modusText: string): Promise<void> {
   if (!modusText || modusText === '-') return;
 
-  let newPasalList: any[] = [];
+  const cleanModusInput = modusText.trim().toLowerCase();
 
-  if (/cukai|pita cukai|bkc|etiket|nppbkc/i.test(modusText)) {
-    if (/penyediaan|penimbunan/i.test(modusText)) {
-      newPasalList.push({ cluster: "UU CUKAI", pasal: "Pasal 54 UU NO. 39 TAHUN 2007 TENTANG CUKAI" });
-      newPasalList.push({ cluster: "UU CUKAI", pasal: "Pasal 56 UU NO. 39 TAHUN 2007 TENTANG CUKAI" });
-    } else if (/penyerahan/i.test(modusText)) {
-      newPasalList.push({ cluster: "UU CUKAI", pasal: "Pasal 54 UU NO. 39 TAHUN 2007 TENTANG CUKAI" });
-      newPasalList.push({ cluster: "UU CUKAI", pasal: "Pasal 55 UU NO. 39 TAHUN 2007 TENTANG CUKAI" });
-    } else if (/pengangkutan/i.test(modusText)) {
-      newPasalList.push({ cluster: "UU CUKAI", pasal: "Pasal 52 UU NO. 39 TAHUN 2007 TENTANG CUKAI" });
-      newPasalList.push({ cluster: "PERATURAN MENTERI KEUANGAN", pasal: "PMK NO. 161/PMK.04/2019 TENTANG TATA CARA PENGANGKUT BARANG KENA CUKAI" });
-    } else {
-      newPasalList.push({ cluster: "UU CUKAI", pasal: "Pasal 54 UU NO. 39 TAHUN 2007 TENTANG CUKAI" });
+  type PasalItem = (typeof MODUS_PASAL_MAP)[keyof typeof MODUS_PASAL_MAP][number];
+  let matchedPasalList: readonly PasalItem[] = [];
+
+  for (const [modusKey, pasalItems] of Object.entries(MODUS_PASAL_MAP)) {
+    if (modusKey.toLowerCase() === cleanModusInput) {
+      matchedPasalList = pasalItems;
+      break;
     }
   }
 
-  if (/luar daerah pabean|pembongkaran|workshop container|impor sementara/i.test(modusText)) {
-    if (/tanpa\/salah pemberitahuan|tidak diberitahukan/i.test(modusText)) {
-      newPasalList.push({ cluster: "UU KEPABEANAN", pasal: "Pasal 102 UU NO. 17 TAHUN 2006 TENTANG KEPABEANAN" });
-    }
-    if (/impor sementara/i.test(modusText)) {
-      newPasalList.push({ cluster: "UU KEPABEANAN", pasal: "Pasal 108 UU NO. 17 TAHUN 2006 TENTANG KEPABEANAN" });
-    }
-    if (/pembongkaran/i.test(modusText)) {
-      newPasalList.push({ cluster: "UU KEPABEANAN", pasal: "Pasal 103 UU NO. 17 TAHUN 2006 TENTANG KEPABEANAN" });
+  if (matchedPasalList.length === 0) {
+    for (const [modusKey, pasalItems] of Object.entries(MODUS_PASAL_MAP)) {
+      if (cleanModusInput.includes(modusKey.toLowerCase()) || modusKey.toLowerCase().includes(cleanModusInput)) {
+        matchedPasalList = pasalItems;
+        break;
+      }
     }
   }
 
-  if (/ke luar daerah pabean|outward manifest|ekspor/i.test(modusText)) {
-    newPasalList.push({ cluster: "UU KEPABEANAN", pasal: "Pasal 102A UU NO. 17 TAHUN 2006 TENTANG KEPABEANAN" });
-    if (/outward manifest/i.test(modusText)) {
-      newPasalList.push({ cluster: "UU KEPABEANAN", pasal: "Pasal 103 UU NO. 17 TAHUN 2006 TENTANG KEPABEANAN" });
-    }
-  }
-
-  if (/larangan dan pembatasan|perizinan|badan pengusahaan|instansi terkait/i.test(modusText)) {
-    newPasalList.push({ cluster: "UU KEPABEANAN", pasal: "Pasal 53 Ayat (4) UU NO. 17 TAHUN 2006 TENTANG KEPABEANAN" });
-    newPasalList.push({ cluster: "PERATURAN MENTERI/BADAN LAIN", pasal: "Peraturan Menteri Perdagangan Terkait Larangan Dan Pembatasan (Lartas)" });
-  }
-
-  if (/kawasan perdagangan bebas|pelabuhan bebas|batam|ftz|tempat lain dalam daerah pabean/i.test(modusText)) {
-    newPasalList.push({ cluster: "PERATURAN PEMERINTAH", pasal: "Pasal 71 Ayat (1) PP NO. 41 TAHUN 2021 TENTANG KAWASAN BEBAS BATAM" });
-    newPasalList.push({ cluster: "PERATURAN MENTERI KEUANGAN", pasal: "PMK NO. 34/PMK.04/2021 TENTANG PEMASUKAN DAN PENGELUARAN BARANG FTZ" });
-  }
-
-  if (/uang kertas asing|uang tunai|bank indonesia|seratus juta/i.test(modusText)) {
-    newPasalList.push({ cluster: "UU INSTANSI LAIN", pasal: "UU NO. 7 TAHUN 2011 TENTANG MATA UANG" });
-    newPasalList.push({ cluster: "PERATURAN MENTERI KEUANGAN", pasal: "PMK NO. 100/PMK.04/2018 TENTANG PEMBAWAAN UANG TUNAI" });
-    newPasalList.push({ cluster: "PERATURAN MENTERI/BADAN LAIN", pasal: "Peraturan Bank Indonesia NO. 20/2/PBI/2018 TENTANG PEMBAWAAN UKA" });
-  }
-
-  if (newPasalList.length === 0) return;
-
-  let customMap = await fetchServerConfig('customPasalMap', {});
-  let isNewAdded = false;
-
-  newPasalList.forEach((item: any) => {
-    if (!customMap[item.cluster]) customMap[item.cluster] = [];
-    let defaultList = (defaultPasalClusters as any)[item.cluster] || [];
-    if (!defaultList.includes(item.pasal) && !customMap[item.cluster].includes(item.pasal)) {
-      customMap[item.cluster].push(item.pasal);
-      isNewAdded = true;
-    }
-  });
-
-  if (isNewAdded) {
-    await saveServerConfig('customPasalMap', customMap);
-    await renderPasalCheckboxes();
-  }
+  if (matchedPasalList.length === 0) return;
 
   setTimeout(() => {
-    document.querySelectorAll('#pasal_pelanggaran_checkboxes input[type="checkbox"]').forEach((cb: any) => cb.checked = false);
-    
-    newPasalList.forEach((item: any) => {
-      let cb = document.querySelector(`#pasal_pelanggaran_checkboxes input[value="${item.pasal}"]`) as HTMLInputElement;
-      if (cb) cb.checked = true;
+    const allCheckboxes = document.querySelectorAll(
+      '#pasal_pelanggaran_checkboxes input[type="checkbox"]'
+    );
+    allCheckboxes.forEach((cb) => {
+      (cb as HTMLInputElement).checked = false;
     });
-    syncPasalPelanggaran();
-  }, 50);
+
+    matchedPasalList.forEach((item) => {
+      const escapedVal = CSS.escape(item.pasal);
+      const cb = document.querySelector(
+        `#pasal_pelanggaran_checkboxes input[value="${escapedVal}"]`
+      ) as HTMLInputElement | null;
+      
+      if (cb) {
+        cb.checked = true;
+      }
+    });
+
+    if (typeof (window as any).syncPasalPelanggaran === 'function') {
+      (window as any).syncPasalPelanggaran();
+    } else if (typeof syncPasalPelanggaran === 'function') {
+      syncPasalPelanggaran();
+    }
+  }, 10);
 }
 
 export function toggleAsalPerkaraManual(val: string): void {
@@ -489,10 +519,30 @@ export function syncIdentitasValue(): void {
 }
 
 export function syncKondisiBarang(): void {
-  let checkboxes = document.querySelectorAll('#kondisi_checkboxes input[type="checkbox"]:checked');
-  let selected = Array.from(checkboxes).map((cb: any) => cb.value);
-  let el = document.getElementById('Kondisi') as HTMLInputElement;
-  if (el) el.value = selected.length > 0 ? selected.join(', ') : '-';
+  const containerKondisi = document.getElementById('kondisi_checkboxes');
+  
+  if (containerKondisi) {
+    const existingCheckboxes = containerKondisi.querySelectorAll('input[type="checkbox"]');
+    if (existingCheckboxes.length === 0) {
+      containerKondisi.innerHTML = MASTER_KONDISI_BARANG.map(item => `
+        <label class="checkbox-item" style="margin-right: 14px; display: inline-flex; align-items: center; cursor: pointer; color: inherit; font-size: 13px;">
+          <input type="checkbox" value="${item}" onchange="syncKondisiBarang()" style="margin-right: 6px; cursor: pointer;"> 
+          ${item}
+        </label>
+      `).join('');
+    }
+  }
+
+  const checkboxes = document.querySelectorAll<HTMLInputElement>('#kondisi_checkboxes input[type="checkbox"]:checked');
+  const selected = Array.from(checkboxes).map(cb => cb.value);
+  const el = document.getElementById('Kondisi') as HTMLInputElement | null;
+  if (el) {
+    el.value = selected.length > 0 ? selected.join(', ') : '-';
+  }
+}
+
+if (typeof window !== 'undefined') {
+  (window as any).syncKondisiBarang = syncKondisiBarang;
 }
 
 export function syncPasalPelanggaran(): void {
@@ -519,7 +569,7 @@ export function syncPasalPelanggaran(): void {
 export function syncStatusPenangkapan(val: string): void {
   let el = document.getElementById('Status_Penangkapan') as HTMLInputElement;
   if (el) el.value = val;
-  updateLiveCodePreviews();
+  setPratinjauNomor();
   refreshReportTableUI();
   updateReportLive();
 }
@@ -618,148 +668,6 @@ export async function renderKantorDropdown(): Promise<void> {
   }
 }
 
-export function getFilteredDataForUser(): any[] {
-  if (!store.currentUser) return store.databasePerkara;
-  if (store.currentUser.role === 'Admin' || store.currentUser.role === 'Kepala Seksi Penyidikan') {
-    return store.databasePerkara;
-  } else {
-    return store.databasePerkara.filter((rec: any) => rec.disposisiPetugas && rec.disposisiPetugas.toLowerCase() === store.currentUser?.nama.toLowerCase());
-  }
-}
-
-export function updateDashboardStats(): void {
-  let filteredData = getFilteredDataForUser();
-
-  let stLP = document.getElementById('statLP');
-  let stK = document.getElementById('statKerugian');
-  let cntLpEl = document.getElementById('dash_cnt_lp');
-  let cntSbpEl = document.getElementById('dash_cnt_sbp');
-  let cntMandiriEl = document.getElementById('dash_cnt_mandiri');
-  let cntNhiEl = document.getElementById('dash_cnt_nhi');
-  let cntLimpahanEl = document.getElementById('dash_cnt_limpahan');
-
-  if (stLP) stLP.textContent = String(filteredData.length);
-  if (cntLpEl) cntLpEl.textContent = `${filteredData.filter((d: any) => d.NoLP_LP_1 && d.NoLP_LP_1 !== '-').length} Dokumen`;
-  if (cntSbpEl) cntSbpEl.textContent = `${filteredData.filter((d: any) => d.Nomor_SBP && d.Nomor_SBP !== '-').length} Dokumen`;
-
-  let totalKerugian = 0;
-  let cntBDN = 0;
-  let cntSPSA = 0;
-  let cntBAST = 0;
-  let cntLimpah = 0;
-  let cntOther = 0;
-
-  let cntMandiri = 0;
-  let cntNHI = 0;
-  let cntLimpahan = 0;
-
-  filteredData.forEach((rec: any) => {
-    let rawK = String(rec.Kerugian_Negara || '').replace(/[^0-9]/g, '');
-    let k = parseFloat(rawK || '0');
-    if (!isNaN(k)) totalKerugian += k;
-
-    let peny = rec.Penyelesaian_Perkara || '';
-    if (/dikuasai negara|bdn/i.test(peny)) cntBDN++;
-    else if (/spsa|denda/i.test(peny)) cntSPSA++;
-    else if (/kembalikan ke pemilik|pemilik/i.test(peny)) cntBAST++;
-    else if (/serah terima.*instansi|limpah/i.test(peny)) cntLimpah++;
-    else if (peny.trim() !== '' && peny !== '-') cntOther++;
-
-    let asal = (rec.Asal_Perkara || '').toUpperCase();
-    let statusTangkap = (rec.Status_Penangkapan || '').toUpperCase();
-    let sprin = (rec.No_SPRIN_Indak || '').toUpperCase();
-
-    if (asal.includes('LIMPAHAN') || statusTangkap.includes('LIMPAHAN')) {
-      cntLimpahan++;
-    } else if (asal.includes('NHI') || sprin.includes('NHI') || statusTangkap.includes('NHI')) {
-      cntNHI++;
-    } else {
-      cntMandiri++;
-    }
-  });
-
-  if (stK) stK.textContent = 'Rp ' + totalKerugian.toLocaleString('id-ID');
-
-  let elBdn = document.getElementById('tl_bdn_cnt');
-  if (elBdn) elBdn.textContent = String(cntBDN);
-  let elSpsa = document.getElementById('tl_spsa_cnt');
-  if (elSpsa) elSpsa.textContent = String(cntSPSA);
-  let elBast = document.getElementById('tl_bast_cnt');
-  if (elBast) elBast.textContent = String(cntBAST);
-  let elLimpah = document.getElementById('tl_limpah_cnt');
-  if (elLimpah) elLimpah.textContent = String(cntLimpah);
-  let elOther = document.getElementById('tl_other_cnt');
-  if (elOther) elOther.textContent = String(cntOther);
-
-  if (cntMandiriEl) cntMandiriEl.textContent = String(cntMandiri);
-  if (cntNhiEl) cntNhiEl.textContent = String(cntNHI);
-  if (cntLimpahanEl) cntLimpahanEl.textContent = String(cntLimpahan);
-
-  let recentTbody = document.getElementById('dashboardRecentCasesBody');
-  if (recentTbody) {
-    if (filteredData.length === 0) {
-      recentTbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:14px; color:var(--text-muted, #94a3b8);">Belum ada perkara yang terdaftar.</td></tr>`;
-    } else {
-      let recentItems = filteredData.slice(-3).reverse();
-
-      recentTbody.innerHTML = recentItems.map((rec: any) => {
-        let statusBadgeHtml = '';
-        let hasReport = (rec.No_LPP && rec.No_LPP !== '-') || (rec.Nomor_LHP && rec.Nomor_LHP !== '-');
-
-        if (hasReport || (rec.statusAlur && rec.statusAlur.includes('DIVALIDASI'))) {
-          statusBadgeHtml = `
-            <span class="badge" style="background:rgba(16, 185, 129, 0.15); color:#10b981; border:1px solid rgba(16, 185, 129, 0.3); font-size:10px; padding:2px 6px; border-radius:4px; display:inline-flex; align-items:center; gap:4px;">
-              <i class="fi fi-rr-document-signed"></i> PENYUSUNAN LAPORAN
-            </span>
-          `;
-        } else {
-          statusBadgeHtml = `
-            <span class="badge" style="background:rgba(245, 158, 11, 0.15); color:#f59e0b; border:1px solid rgba(245, 158, 11, 0.3); font-size:10px; padding:2px 6px; border-radius:4px; display:inline-flex; align-items:center; gap:4px;">
-              <i class="fi fi-rr-spinner"></i> MASIH PROSES
-            </span>
-          `;
-        }
-
-        let cleanLP = String(rec.NoLP_LP_1 || '-').replace(/^LP-?/i, '');
-        let cleanSBP = String(rec.Nomor_SBP || '-').replace(/^SBP-?/i, '');
-
-        return `
-          <tr class="recent-row-hover" style="border-bottom:1px solid rgba(255,255,255,0.04);">
-            <td style="padding:8px 6px;">
-              <b>LP-${escText(cleanLP)}</b> / <small style="color:var(--text-muted, #94a3b8);">SBP-${escText(cleanSBP)}</small>
-            </td>
-            <td style="padding:8px 6px;">
-              <span style="font-weight:600; color:var(--text-main, #f8fafc);">${escText(rec.Nama_Pelaku || '-')}</span>
-            </td>
-            <td style="padding:8px 6px;">
-              <span style="color:var(--primary, #38bdf8); font-size:11px;">${escText(rec.Komoditi || '-')}</span>
-            </td>
-            <td style="padding:8px 6px;">
-              ${statusBadgeHtml}
-            </td>
-            <td style="padding:8px 6px; text-align:right;">
-              <button type="button" class="btn secondary" style="font-size:10px; padding:3px 8px;" onclick="bukaPerkaraDariDashboard(${store.databasePerkara.indexOf(rec)})">
-                <i class="fi fi-rr-arrow-right"></i> Buka
-              </button>
-            </td>
-          </tr>
-        `;
-      }).join('');
-    }
-  }
-}
-
-export function bukaPerkaraDariDashboard(realIndex: number): void {
-  if (realIndex >= 0 && store.databasePerkara[realIndex]) {
-    store.activeRecordIndex = realIndex;
-    if ((window as any).loadRecordToCurrentView) {
-      (window as any).loadRecordToCurrentView(store.databasePerkara[realIndex]);
-    }
-    let navBtn = document.querySelector('[data-target="#laporan"]') as HTMLElement;
-    if (navBtn) navBtn.click();
-  }
-}
-
 export function loadRecordToCurrentView(rec: any): void {
   if (!rec) return;
 
@@ -768,8 +676,9 @@ export function loadRecordToCurrentView(rec: any): void {
     if (el) el.value = (val !== undefined && val !== null) ? String(val) : '';
   };
 
-  setSafe('NoLP_LP_1', rec.NoLP_LP_1);
-  setSafe('Tanggal_LP_LP_1', rec.Tanggal_LP_LP_1);
+  let lpVal = rec.NoLP || rec.NoLP_LP_1 || '';
+  setSafe('NoLP', lpVal);
+  setSafe('Tanggal_LP', rec.Tanggal_LP || rec.Tanggal_LP_LP_1);
   setSafe('Nomor_SBP', rec.Nomor_SBP);
   setSafe('Tanggal_SBP', rec.Tanggal_SBP);
   setSafe('Jam_Kejadian', rec.Jam_Kejadian);
@@ -1021,49 +930,41 @@ export function loadRecordToCurrentView(rec: any): void {
 
   const allJabatan = Array.from(new Set([...MASTER_JABATAN_DINAS, ...MASTER_JABATAN_TIM_PENELITI]));
 
-  // 1. Pejabat 1 (Eselon III/IV)
   setSafe('form_kabid', rec.kabid);
   setSafe('form_nip_kabid', rec.nip_kabid);
   populateSelectElement('form_jabatan_kabid', allJabatan, rec.jabatan_kabid || 'Kepala Bidang Penindakan dan Penyidikan', '- Pilih Jabatan -');
   populateSelectElement('form_gol_kabid', MASTER_GOLONGAN_PANGKAT, rec.gol_kabid || '', '- Pilih Golongan -');
 
-  // 2. Pejabat 2 (Eselon IV / Fungsional Ahli Pertama)
   setSafe('form_nama_seksi', rec.nama_seksi);
   setSafe('form_nip_seksi', rec.nip_seksi);
   populateSelectElement('form_jabatan_seksi', allJabatan, rec.jabatan_seksi || 'Kepala Seksi Penyidikan', '- Pilih Jabatan -');
   populateSelectElement('form_gol_seksi', MASTER_GOLONGAN_PANGKAT, rec.gol_seksi || '', '- Pilih Golongan -');
 
-  // 3. Ketua Tim
   setSafe('form_ketua_tim', rec.ketua_tim);
   setSafe('form_nip_ketua_tim', rec.nip_ketua_tim);
   populateSelectElement('form_jabatan_ketua_tim', allJabatan, rec.jabatan_ketua_tim || 'Ketua Tim Peneliti', '- Pilih Jabatan -');
   populateSelectElement('form_gol_ketua_tim', MASTER_GOLONGAN_PANGKAT, rec.gol_ketua_tim || '', '- Pilih Golongan -');
 
-  // 4. Pembuat LPP
   setSafe('form_pembuat_lpp', rec.pembuat_lpp);
   setSafe('form_nip_pembuat_lpp', rec.nip_pembuat_lpp);
   populateSelectElement('form_jabatan_pembuat_lpp', allJabatan, rec.jabatan_pembuat_lpp || 'Petugas LPP', '- Pilih Jabatan -');
   populateSelectElement('form_gol_pembuat_lpp', MASTER_GOLONGAN_PANGKAT, rec.gol_pembuat_lpp || '', '- Pilih Golongan -');
 
-  // 5. Petugas LPF
   setSafe('form_petugas_lpf', rec.petugas_lpf);
   setSafe('form_nip_petugas_lpf', rec.nip_petugas_lpf);
   populateSelectElement('form_jabatan_lpf', allJabatan, rec.jabatan_petugas_lpf || 'Petugas LPF', '- Pilih Jabatan -');
   populateSelectElement('form_gol_petugas_lpf', MASTER_GOLONGAN_PANGKAT, rec.gol_petugas_lpf || '', '- Pilih Golongan -');
 
-  // 6. Indak 1
   setSafe('form_indak_1', rec.indak_1);
   setSafe('form_nip_indak_1', rec.nip_indak_1);
   populateSelectElement('form_jabatan_indak_1', allJabatan, rec.jabatan_indak_1 || 'Petugas Penindakan 1', '- Pilih Jabatan -');
   populateSelectElement('form_gol_indak_1', MASTER_GOLONGAN_PANGKAT, rec.gol_indak_1 || '', '- Pilih Golongan -');
 
-  // 7. Indak 2
   setSafe('form_indak_2', rec.indak_2);
   setSafe('form_nip_indak_2', rec.nip_indak_2);
   populateSelectElement('form_jabatan_indak_2', allJabatan, rec.jabatan_indak_2 || 'Petugas Penindakan 2', '- Pilih Jabatan -');
   populateSelectElement('form_gol_indak_2', MASTER_GOLONGAN_PANGKAT, rec.gol_indak_2 || '', '- Pilih Golongan -');
 
-  // 8. Pelaksana Lainnya / Pencacah
   setSafe('form_indak_lainnya', rec.indak_lainnya);
   setSafe('form_nip_indak_lainnya', rec.nip_indak_lainnya);
   populateSelectElement('form_jabatan_indak_lainnya', allJabatan, rec.jabatan_indak_lainnya || 'Petugas Penindakan 3', '- Pilih Jabatan -');
@@ -1079,136 +980,6 @@ export function loadRecordToCurrentView(rec: any): void {
   if (typeof updateReportLive === 'function') updateReportLive();
 }
 
-export function renderPerkaraTable(): void {
-  let tbody = document.getElementById('perkaraTableBody');
-  if (!tbody) return;
-
-  let filtered = getFilteredDataForUser();
-
-  let totalPages = Math.ceil(filtered.length / rowsPerPagePerkara) || 1;
-  if (currentPerkaraPage > totalPages) currentPerkaraPage = totalPages;
-  if (currentPerkaraPage < 1) currentPerkaraPage = 1;
-
-  let startIdx = (currentPerkaraPage - 1) * rowsPerPagePerkara;
-  let paginatedData = filtered.slice(startIdx, startIdx + rowsPerPagePerkara);
-
-  if (paginatedData.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:16px; color:var(--text-muted);">Belum ada data perkara tersimpan.</td></tr>`;
-    renderPerkaraPagination(totalPages, filtered.length);
-    return;
-  }
-
-  let isAdmin = store.currentUser && (store.currentUser.role === 'Admin' || store.currentUser.role === 'Kepala Seksi Penyidikan');
-
-  tbody.innerHTML = paginatedData.map((rec: any, index: number) => {
-    let i = startIdx + index;
-    let originalIndex = filtered.indexOf(rec);
-
-    let statusBadge = `<span class="badge-status badge-draft">${escText(rec.statusAlur || 'DRAFT')}</span>`;
-    if (rec.statusAlur === 'DIUSULKAN') statusBadge = `<span class="badge-status badge-proposed">DIUSULKAN</span>`;
-    if (rec.statusAlur && rec.statusAlur.includes('DIVALIDASI')) statusBadge = `<span class="badge-status badge-ready">DIVALIDASI</span>`;
-
-    let isBooked = (rec.No_LPP && rec.No_LPP !== '-') || (rec.No_LPF && rec.No_LPF !== '-') || (rec.Nomor_SPLIT && rec.Nomor_SPLIT !== '-');
-    let bookingHtml = isBooked 
-      ? `<span class="badge" style="background:rgba(16, 185, 129, 0.15); color:#10b981; border:1px solid rgba(16, 185, 129, 0.3); font-size:11px; padding:2px 6px; border-radius:4px; display:inline-flex; align-items:center; gap:4px;">
-           <i class="fi fi-rr-check" style="font-size:10px;"></i> Ter-booking
-         </span>`
-      : `<span style="font-size:11px; color:var(--text-muted, #94a3b8);">-</span>`;
-
-    let cleanLP = String(rec.NoLP_LP_1 || '-').replace(/^LP-?/i, '');
-    let cleanSBP = String(rec.Nomor_SBP || '-').replace(/^SBP-?/i, '');
-
-    let actionButtons = `
-      <button type="button" class="btn warning" style="padding:4px 8px; font-size:10px;" onclick="editPerkara(${originalIndex})">
-        <i class="fi fi-rr-edit"></i> Edit
-      </button>
-    `;
-
-    if (isAdmin) {
-      actionButtons += `
-        <button type="button" class="btn danger" style="padding:4px 8px; font-size:10px;" onclick="deletePerkara(${originalIndex})">
-          <i class="fi fi-rr-trash"></i> Hapus
-        </button>
-      `;
-    }
-
-    return `
-      <tr>
-        <td><b>${i + 1}</b></td>
-        <td>
-          <b>LP-${escText(cleanLP)}</b><br>
-          <small style="color:var(--text-muted, #94a3b8); font-size:10px;">Tgl: ${escText(rec.Tanggal_LP_LP_1 || '-')}</small>
-        </td>
-        <td>
-          <b>SBP-${escText(cleanSBP)}</b><br>
-          <small style="color:var(--text-muted, #94a3b8); font-size:10px;">Tgl: ${escText(rec.Tanggal_SBP || '-')}</small>
-        </td>
-        <td>
-          <div style="display:flex; flex-direction:column; gap:2px;">
-            <span style="font-weight:600; font-size:12px; color:var(--text-main, #f8fafc);">${escText(rec.Nama_Pelaku || '-')}</span>
-            <small style="color:var(--text-muted, #94a3b8); font-size:11px;">
-              <i class="fi fi-rr-document" style="font-size:10px; margin-right:3px;"></i>${escText(rec.Jenis_Perkara || rec.Dokumen_Pemberitahuan || 'Kepabeanan & Cukai')}
-            </small>
-          </div>
-        </td>
-        <td>
-          <div style="display:flex; flex-direction:column; gap:4px; align-items:flex-start;">
-            <span class="badge" style="background:rgba(14, 165, 233, 0.15); color:#38bdf8; border:1px solid rgba(56, 189, 248, 0.3); font-size:11px; padding:2px 7px; border-radius:4px; white-space:normal; line-height:1.3; text-align:left;">
-              ${escText(rec.Komoditi || '-')}
-            </span>
-            <small style="color:var(--text-muted, #94a3b8); font-size:11px; line-height:1.35; word-break:break-word;">
-              <i class="fi fi-rr-box-alt" style="font-size:10px; margin-right:3px;"></i>${escText(rec.Uraian_Barang || rec.Detail_Barang_LPP || '-')}
-            </small>
-          </div>
-        </td>
-        <td>
-          ${statusBadge}<br>
-          <small style="color:var(--text-muted, #94a3b8); font-size:10px;">
-            PJ: ${escText(rec.disposisiPetugas || rec.Petugas_Disposisi || '-')}
-          </small>
-        </td>
-        <td>
-          ${bookingHtml}
-        </td>
-        <td style="text-align:right;">
-          <div style="display:flex; gap:4px; justify-content:flex-end; flex-wrap:wrap;">
-            ${actionButtons}
-          </div>
-        </td>
-      </tr>
-    `;
-  }).join('');
-
-  renderPerkaraPagination(totalPages, filtered.length);
-}
-
-function renderPerkaraPagination(totalPages: number, totalItems: number = 0): void {
-  let paginationContainer = document.getElementById('perkaraPaginationContainer');
-  if (!paginationContainer) {
-    let cardBodyEl = document.querySelector('#data .panel-body, #data .data-table-container, #data');
-    if (cardBodyEl) {
-      let div = document.createElement('div');
-      div.id = 'perkaraPaginationContainer';
-      div.style.cssText = 'display: flex; justify-content: space-between; align-items: center; margin-top: 16px; padding: 4px 8px; font-size: 12px;';
-      cardBodyEl.appendChild(div);
-      paginationContainer = div;
-    } else {
-      return;
-    }
-  }
-
-  const maxPage = totalPages > 0 ? totalPages : 1;
-  if (currentPerkaraPage > maxPage) currentPerkaraPage = maxPage;
-
-  paginationContainer.innerHTML = `
-    <span style="color: var(--text-muted);">Halaman ${currentPerkaraPage} dari ${maxPage} <b style="margin-left: 8px; color: var(--text-main);">Total: ${totalItems} Data</b></span>
-    <div style="display: flex; gap: 4px;">
-      <button type="button" class="btn secondary" style="padding: 4px 10px; font-size: 11px;" ${currentPerkaraPage === 1 ? 'disabled' : ''} onclick="window.changePerkaraPage(-1)">Sebelumnya</button>
-      <button type="button" class="btn secondary" style="padding: 4px 10px; font-size: 11px;" ${currentPerkaraPage >= maxPage ? 'disabled' : ''} onclick="window.changePerkaraPage(1)">Selanjutnya</button>
-    </div>
-  `;
-}
-
 export function addNewPerkaraModal(): void {
   let title = document.getElementById('modalTitle');
   if (title) title.textContent = "Input Data Perkara";
@@ -1222,6 +993,8 @@ export function addNewPerkaraModal(): void {
     if (el.type === 'checkbox') el.checked = false;
     else el.value = '';
   });
+
+  syncKondisiBarang();
 
   if (document.getElementById('Jenis_Koli')) (document.getElementById('Jenis_Koli') as HTMLElement).style.display = 'none';
   if (document.getElementById('auto_kustom_container')) (document.getElementById('auto_kustom_container') as HTMLElement).style.display = 'none';
@@ -1259,10 +1032,13 @@ export function addNewPerkaraModal(): void {
     catLpfEl.value = "Setuju dengan usulan tim peneliti, segera tindak lanjuti proses penyusunan administrasi penanganan perkara sesuai ketentuan yang berlaku.";
   }
 
-  let inputNoSprin = document.getElementById('No_SPRIN_Indak') as HTMLInputElement;
-  let inputTglSprin = document.getElementById('Tanggal_SPRIN_Indak') as HTMLInputElement;
+  // Elemen input dokumen memakai NoLP secara konsisten
+  let inputNoLp = (document.getElementById('NoLP') || document.getElementById('NoLP_LP_1')) as HTMLInputElement;
+  let inputTglLp = (document.getElementById('Tanggal_LP') || document.getElementById('Tanggal_LP_LP_1')) as HTMLInputElement;
   let inputNoSbp = document.getElementById('Nomor_SBP') as HTMLInputElement;
   let inputTglSbp = document.getElementById('Tanggal_SBP') as HTMLInputElement;
+  let inputNoSprin = document.getElementById('No_SPRIN_Indak') as HTMLInputElement;
+  let inputTglSprin = document.getElementById('Tanggal_SPRIN_Indak') as HTMLInputElement;
 
   let currentPerkaraId = null;
   let editRecordIdxInput = document.getElementById('editingRecordIndex') as HTMLInputElement;
@@ -1270,30 +1046,61 @@ export function addNewPerkaraModal(): void {
     currentPerkaraId = editRecordIdxInput.value;
   }
 
-  const setupPerkaraBlur = (numInput: HTMLInputElement, dateInput: HTMLInputElement, labelName: string, numKey: string, dateKey: string) => {
-    if (numInput && !numInput.dataset.validationAttached) {
-      numInput.dataset.validationAttached = 'true';
-      numInput.addEventListener('blur', () => {
-        let noVal = numInput.value;
-        let tglVal = dateInput ? dateInput.value : '';
+  const setupPerkaraBlur = (numInput: HTMLInputElement | null, dateInput: HTMLInputElement | null, labelName: string, numKey: string, dateKey: string) => {
+  if (numInput && !numInput.dataset.validationAttached) {
+    numInput.dataset.validationAttached = 'true';
 
-        if (noVal) {
-          let docItems = [{ num: noVal, date: tglVal, numKey: numKey, dateKey: dateKey, label: labelName }];
-          let validation = validateMasterOperationalData(docItems, {}, currentPerkaraId);
+    numInput.style.color = '#eca223';
+    numInput.style.fontWeight = '400';
 
-          if (!validation.isValid) {
-            showToast(validation.message, 'error');
-            numInput.focus();
-          }
+    // Kembalikan ke angka murni saat diklik lagi agar mudah diedit
+    numInput.addEventListener('focus', () => {
+      if (numInput.value.includes('/')) {
+        const m = numInput.value.match(/^(?:LP|SBP|SPRIN)-0*(\d+)/i);
+        if (m && m[1]) {
+          numInput.value = m[1];
         }
-      });
-    }
-  };
+      }
+    });
 
-  setupPerkaraBlur(inputNoSprin, inputTglSprin, 'SPRIN INDAK', 'noSprin', 'tglSprin');
-  setupPerkaraBlur(inputNoSbp, inputTglSbp, 'SBP', 'noSbp', 'tglSbp');
+    // Saat kursor keluar, langsung ubah isi kotak menjadi format lengkap
+    numInput.addEventListener('blur', () => {
+      setPratinjauNomor();
 
-  updateLiveCodePreviews();
+      const noVal = numInput.value.trim();
+      const tglVal = dateInput ? dateInput.value : '';
+
+      if (noVal) {
+        const docItems = [{ num: noVal, date: tglVal, numKey: numKey, dateKey: dateKey, label: labelName }];
+        const validation = validateMasterOperationalData(docItems, {}, currentPerkaraId);
+
+        if (!validation.isValid) {
+          showToast(validation.message, 'error');
+          numInput.focus();
+        }
+      }
+    });
+  }
+};
+
+  // Pasang listener format & validasi
+  setupPerkaraBlur(inputNoLp, inputTglLp, 'Nomor LP', 'NoLP', 'Tanggal_LP');
+  setupPerkaraBlur(inputNoSbp, inputTglSbp, 'SBP', 'noSbp', 'Tanggal_SBP');
+  setupPerkaraBlur(inputNoSprin, inputTglSprin, 'SPRIN INDAK', 'noSprin', 'Tanggal_SPRIN_Indak');
+
+  ['preview_LP', 'preview_NoLP', 'preview_SBP', 'preview_SPRIN'].forEach(id => {
+    let el = document.getElementById(id);
+    if (el) el.innerHTML = '';
+  });
+
+  if (inputTglSbp && !inputTglSbp.dataset.hariAttached) {
+    inputTglSbp.dataset.hariAttached = 'true';
+    inputTglSbp.addEventListener('change', () => updateHariSBP());
+    inputTglSbp.addEventListener('input', () => updateHariSBP());
+  }
+
+  updateHariSBP();
+
   let modal = document.getElementById('perkaraModal');
   if (modal) modal.classList.add('active');
 }
@@ -1307,12 +1114,28 @@ export function editPerkara(idx: number): void {
   let editIdx = document.getElementById('editingRecordIndex') as HTMLInputElement;
   if (editIdx) editIdx.value = String(realIdx >= 0 ? realIdx : idx);
 
+  let currentNoLp = rec.NoLP || rec.NoLP_LP_1 || '';
   let title = document.getElementById('modalTitle');
-  if (title) title.textContent = `Edit Data Perkara LP-${rec.NoLP_LP_1 || ''}`;
+  if (title) title.textContent = `Edit Data Perkara LP-${currentNoLp}`;
 
   initPerkaraDropdownsFromMaster();
   loadRecordToCurrentView(rec);
-  updateLiveCodePreviews();
+
+  const inputTglSbp = document.getElementById('Tanggal_SBP') as HTMLInputElement | null;
+  if (inputTglSbp && !inputTglSbp.dataset.hariAttached) {
+    inputTglSbp.dataset.hariAttached = 'true';
+    inputTglSbp.addEventListener('change', () => updateHariSBP());
+    inputTglSbp.addEventListener('input', () => updateHariSBP());
+  }
+
+  setTimeout(() => {
+    updateHariSBP(rec.Tanggal_SBP);
+    if (rec.Modus_Operandi) {
+      autoGenerateAndAddMasterPasal(rec.Modus_Operandi);
+    }
+  }, 50);
+
+  setPratinjauNomor();
   let modal = document.getElementById('perkaraModal');
   if (modal) modal.classList.add('active');
 }
@@ -1399,8 +1222,8 @@ export function executePerkaraSubmission(): void {
     let tglSprinVal = (document.getElementById('Tanggal_SPRIN_Indak') as HTMLInputElement)?.value || '';
     let noSbpVal = ((document.getElementById('Nomor_SBP') as HTMLInputElement)?.value || '').trim();
     let tglSbpVal = (document.getElementById('Tanggal_SBP') as HTMLInputElement)?.value || '';
-    let noLpVal = ((document.getElementById('NoLP_LP_1') as HTMLInputElement)?.value || '').trim() || '1';
-    let tglLpVal = (document.getElementById('Tanggal_LP_LP_1') as HTMLInputElement)?.value || '';
+    let noLpVal = (((document.getElementById('NoLP') || document.getElementById('NoLP_LP_1')) as HTMLInputElement)?.value || '').trim() || '1';
+    let tglLpVal = ((document.getElementById('Tanggal_LP') || document.getElementById('Tanggal_LP_LP_1')) as HTMLInputElement)?.value || '';
 
     let noLppVal = (existingRec && existingRec.No_LPP) ? existingRec.No_LPP : generateNextBookingNumber('', 'No_LPP', '', 3);
     let tglLppVal = (existingRec && existingRec.Tanggal_LPP) ? existingRec.Tanggal_LPP : tglLpVal;
@@ -1421,7 +1244,7 @@ export function executePerkaraSubmission(): void {
     let docsToValidate: any[] = [
       { num: noSprinVal, date: tglSprinVal, numKey: 'No_SPRIN_Indak', dateKey: 'Tanggal_SPRIN_Indak', label: 'Nomor SPRIN INDAK' },
       { num: noSbpVal, date: tglSbpVal, numKey: 'Nomor_SBP', dateKey: 'Tanggal_SBP', label: 'Nomor SBP' },
-      { num: noLpVal, date: tglLpVal, numKey: 'NoLP_LP_1', dateKey: 'Tanggal_LP_LP_1', label: 'Nomor LP' },
+      { num: noLpVal, date: tglLpVal, numKey: 'NoLP', dateKey: 'Tanggal_LP', label: 'Nomor LP' },
       { num: noLppVal, date: tglLppVal, numKey: 'No_LPP', dateKey: 'Tanggal_LPP', label: 'Nomor LPP' },
       { num: noLpfVal, date: tglLpfVal, numKey: 'No_LPF', dateKey: 'Tanggal_LPF', label: 'Nomor LPF' },
       { num: noSplitVal, date: tglSplitVal, numKey: 'Nomor_SPLIT', dateKey: 'Tanggal_SPLIT', label: 'Nomor SPLIT' },
@@ -1462,7 +1285,9 @@ export function executePerkaraSubmission(): void {
       Tanggal_SPRIN_Indak: tglSprinVal,
       Nomor_SBP: noSbpVal,
       Tanggal_SBP: tglSbpVal,
+      NoLP: noLpVal,
       NoLP_LP_1: noLpVal,
+      Tanggal_LP: tglLpVal,
       Tanggal_LP_LP_1: tglLpVal,
       Jam_Kejadian: valSafe('Jam_Kejadian'),
       Hari_SBP: valSafe('Hari_SBP'),
@@ -1606,135 +1431,13 @@ export async function loadData(): Promise<void> {
   await renderPasalCheckboxes();
 }
 
-export function exportDataToExcel(): void {
-  let data = getFilteredDataForUser();
-  if (!data || data.length === 0) {
-    showToast("DATA KOSONG", "Tidak ada data perkara untuk diekspor.", "warning");
-    return;
-  }
-
-  let headers = [
-    "No", "No LP", "Tanggal LP", "No SBP", "Tanggal SBP", 
-    "Nama Pelaku", "Identitas", "Komoditi", "Uraian Barang", 
-    "Kerugian Negara", "Status Workflow", "Disposisi Peneliti"
-  ];
-
-  let csvRows = [headers.join(";")];
-
-  data.forEach((rec: any, idx: number) => {
-    let row = [
-      idx + 1,
-      `"LP-${rec.NoLP_LP_1 || '-'}"`,
-      `"${rec.Tanggal_LP_LP_1 || '-'}"`,
-      `"${rec.Nomor_SBP || '-'}"`,
-      `"${rec.Tanggal_SBP || '-'}"`,
-      `"${(rec.Nama_Pelaku || '-').replace(/"/g, '""')}"`,
-      `"${(rec.Nomor_Identitas || '-').replace(/"/g, '""')}"`,
-      `"${(rec.Komoditi || '-').replace(/"/g, '""')}"`,
-      `"${(rec.Uraian_Barang || '-').replace(/"/g, '""')}"`,
-      `"${(rec.Kerugian_Negara || 'Rp 0').replace(/"/g, '""')}"`,
-      `"${rec.statusAlur || 'DRAFT'}"`,
-      `"${(rec.disposisiPetugas || '-').replace(/"/g, '""')}"`
-    ];
-    csvRows.push(row.join(";"));
-  });
-
-  let csvContent = "\uFEFF" + csvRows.join("\r\n");
-  let blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-  let url = URL.createObjectURL(blob);
-  
-  let link = document.createElement("a");
-  link.setAttribute("href", url);
-  link.setAttribute("download", `Data_Perkara_AP3_${new Date().toISOString().slice(0, 10)}.csv`);
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-
-  showToast("EKSPOR BERHASIL", "File Excel (.csv) berhasil diunduh.", "success");
-}
-
-export function exportDataToPDF(): void {
-  let data = getFilteredDataForUser();
-  if (!data || data.length === 0) {
-    showToast("DATA KOSONG", "Tidak ada data perkara untuk dicetak ke PDF.", "warning");
-    return;
-  }
-
-  let tableRows = data.map((rec: any, i: number) => `
-    <tr>
-      <td style="text-align:center; padding:6px; border:1px solid #333;">${i + 1}</td>
-      <td style="padding:6px; border:1px solid #333; font-weight:bold;">LP-${escText(rec.NoLP_LP_1 || '-')}</td>
-      <td style="padding:6px; border:1px solid #333;">${escText(rec.Tanggal_LP_LP_1 || '-')}</td>
-      <td style="padding:6px; border:1px solid #333;">SBP-${escText(rec.Nomor_SBP || '-')}</td>
-      <td style="padding:6px; border:1px solid #333;">${escText(rec.Nama_Pelaku || '-')}</td>
-      <td style="padding:6px; border:1px solid #333;">${escText(rec.Komoditi || '-')}</td>
-      <td style="padding:6px; border:1px solid #333;">${escText(rec.Kerugian_Negara || '-')}</td>
-      <td style="padding:6px; border:1px solid #333;">${escText(rec.statusAlur || 'DRAFT')}</td>
-      <td style="padding:6px; border:1px solid #333;">${escText(rec.disposisiPetugas || '-')}</td>
-    </tr>
-  `).join('');
-
-  let printWindow = window.open('', '_blank');
-  if (!printWindow) return;
-  printWindow.document.write(`
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <title>Laporan Data Perkara AP3</title>
-      <style>
-        body { font-family: Arial, sans-serif; font-size: 10pt; margin: 20px; color: #000; }
-        h2 { text-align: center; margin-bottom: 4px; text-transform: uppercase; }
-        p { text-align: center; font-size: 9pt; margin-top: 0; margin-bottom: 16px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 9pt; }
-        th { background: #f0f0f0; border: 1px solid #333; padding: 6px; text-align: left; }
-      </style>
-    </head>
-    <body>
-      <h2>Daftar Data Perkara AP3</h2>
-      <p>Tanggal Cetak: ${new Date().toLocaleDateString('id-ID')}</p>
-      <table>
-        <thead>
-          <tr>
-            <th style="width:30px; text-align:center;">No</th>
-            <th>No. LP</th>
-            <th>Tgl LP</th>
-            <th>No. SBP</th>
-            <th>Nama Pelaku</th>
-            <th>Komoditi</th>
-            <th>Kerugian Negara</th>
-            <th>Status</th>
-            <th>Disposisi</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${tableRows}
-        </tbody>
-      </table>
-    </body>
-    </html>
-  `);
-  printWindow.document.close();
-  printWindow.focus();
-  setTimeout(() => {
-    printWindow.print();
-  }, 300);
-}
-
-export function changePerkaraPage(direction: number): void {
-  currentPerkaraPage += direction;
-  renderPerkaraTable();
-}
-
 (window as any).addNewPerkaraModal = addNewPerkaraModal;
-(window as any).changePerkaraPage = changePerkaraPage;
 (window as any).editPerkara = editPerkara;
 (window as any).deletePerkara = deletePerkara;
 (window as any).closeModal = closeModal;
 (window as any).confirmAndSubmitPerkara = confirmAndSubmitPerkara;
 (window as any).executePerkaraSubmission = executePerkaraSubmission;
 (window as any).submitPerkaraForm = submitPerkaraForm;
-(window as any).exportDataToExcel = exportDataToExcel;
-(window as any).exportDataToPDF = exportDataToPDF;
 (window as any).syncStatusPenangkapan = syncStatusPenangkapan;
 (window as any).syncJenisPelanggaran = syncJenisPelanggaran;
 (window as any).syncJenisPenindakan = syncJenisPenindakan;
@@ -1745,7 +1448,7 @@ export function changePerkaraPage(direction: number): void {
 (window as any).updateHariSBP = updateHariSBP;
 (window as any).generateKronologisOtomatis = generateKronologisOtomatis;
 (window as any).generateKesimpulanOtomatis = generateKesimpulanOtomatis;
-(window as any).updateLiveCodePreviews = updateLiveCodePreviews;
+(window as any).setPratinjauNomor = setPratinjauNomor;
 (window as any).toggleAsalPerkaraManual = toggleAsalPerkaraManual;
 (window as any).togglePekerjaanManual = togglePekerjaanManual;
 (window as any).toggleUkuranKontainerManual = toggleUkuranKontainerManual;

@@ -1,6 +1,6 @@
 import { store, savePerkaraToStorage } from '../state/store.js';
 import { escText } from '../utils/formatters.js';
-import { showToast, showToastConfirm } from './ui.js';
+import { showToast, showToastConfirm } from '../utils/ui.js';
 export async function initUserAccounts() {
     try {
         let response = await fetch('/api/auth/users');
@@ -356,6 +356,16 @@ export function confirmResetAllData() {
         }
         location.reload();
     });
+}
+export function getFilteredDataForUser() {
+    if (!store.currentUser)
+        return store.databasePerkara;
+    if (store.currentUser.role === 'Admin' || store.currentUser.role === 'Kepala Seksi Penyidikan') {
+        return store.databasePerkara;
+    }
+    else {
+        return store.databasePerkara.filter((rec) => rec.disposisiPetugas && rec.disposisiPetugas.toLowerCase() === store.currentUser?.nama.toLowerCase());
+    }
 }
 window.confirmResetAllData = confirmResetAllData;
 window.handleLoginSubmit = handleLoginSubmit;

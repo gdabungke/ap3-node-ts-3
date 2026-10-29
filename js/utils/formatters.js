@@ -4,32 +4,77 @@
 export function formatProperCase(str) {
     if (!str || str === '-')
         return '-';
-    let cleanStr = str.toString().trim();
-    let connectors = ['dan', 'di', 'ke', 'dari', 'yang', 'untuk', 'pada', 'dengan', 'dalam', 'atas', 'oleh', 'sebagai', 'atau', 'serta'];
-    let uppercaseWords = [
-        'WIB', 'FTZ', 'PP', 'UU', 'PMK', 'NIK', 'NIB', 'NPWP', 'SIM', 'SBP', 'LP', 'LPP', 'LPF',
-        'SPLIT', 'LHP', 'BAP', 'BA', 'KPU', 'BC', 'TMP', 'B', 'C', 'DKI', 'NO', 'NO.', 'NOMOR',
-        'PBI', 'BPOM', 'BKC', 'NPPBKC', 'EA', 'MMEA', 'HT', 'BDN', 'SPSA', 'BAST', 'CN', 'PIBK'
+    // 1. Kata hubung dan preposisi yang wajib huruf kecil
+    const connectors = [
+        'dan', 'di', 'ke', 'dari', 'yang', 'untuk', 'pada', 'dengan',
+        'dalam', 'atas', 'oleh', 'sebagai', 'atau', 'serta',
+        'terkait', 'karena', 'tanpa', 'salah'
     ];
-    let words = cleanStr.split(/\s+/);
-    let formattedWords = words.map((w, index) => {
-        let lowerW = w.toLowerCase();
-        let upperW = w.toUpperCase();
-        if (/[0-9]/.test(w) && /[a-zA-Z]/.test(w)) {
-            return upperW;
+    // 2. Akronim resmi instansi/regulasi/badan usaha (Wajib Huruf Besar Semua)
+    const uppercaseWords = [
+        'PT', 'CV', 'UD', 'PO', 'NV', 'FIRMA', 'TBK', 'BUMN', 'BUMD',
+        'UU', 'PP', 'PMK', 'PER', 'KEP', 'SE', 'SOP', 'UUD', 'KUHP', 'KUHAP',
+        'FTZ', 'TLDDP', 'KPBPB', 'PLB', 'TPB', 'KPU', 'BC', 'TMP', 'KPPBC', 'DJBC',
+        'BPOM', 'PBI', 'WIB', 'WITA', 'WIT',
+        'SBP', 'LP', 'LPP', 'LPF', 'SPLIT', 'LHP', 'BAP', 'BA', 'BDN', 'SPSA', 'BAST',
+        'EA', 'MMEA', 'HT', 'REL', 'HPTL', 'BKC', 'NPPBKC', 'NPP',
+        'CN', 'PIBK', 'PIB', 'PEB', 'SPBL', 'SPJM', 'SPJK', 'SPPB', 'NHI'
+    ];
+    // Format satu kata inti tanpa tanda baca
+    const formatWord = (core, isFirst) => {
+        const lower = core.toLowerCase();
+        const upper = core.toUpperCase();
+        // Standar penulisan nomor regulasi (Kembalikan 'No' murni tanpa titik tambahan)
+        if (lower === 'no' || lower === 'no.')
+            return 'No';
+        if (lower === 'nomor')
+            return 'Nomor';
+        // Standar penulisan istilah khusus
+        if (lower === 'lartas')
+            return 'Lartas';
+        // Singkatan resmi regulasi & institusi
+        if (uppercaseWords.includes(upper)) {
+            return upper;
         }
-        if (w.includes('/') || (w.includes('.') && /[a-zA-Z]/.test(w) && w.length > 4)) {
-            return upperW;
+        // Angka tahun atau nomor urut murni (misal: 17, 2006, 41, 2021)
+        if (/^[0-9]+$/.test(core)) {
+            return core;
         }
-        if (uppercaseWords.includes(upperW) || uppercaseWords.includes(upperW.replace(/[^A-Z]/g, ''))) {
-            return upperW;
+        // Nomor berkode garis miring dinas (misal: 34/PMK.04/2021)
+        if (core.includes('/') && /[0-9]/.test(core)) {
+            return upper;
         }
-        if (connectors.includes(lowerW) && index > 0) {
-            return lowerW;
+        // Kata sambung di tengah kalimat (dan, atau, dari, dalam, dll)
+        if (connectors.includes(lower) && !isFirst) {
+            return lower;
         }
-        return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
-    });
-    return formattedWords.join(' ');
+        // Khusus kata "Tentang" pada judul undang-undang tetap diawali huruf kapital
+        if (lower === 'tentang') {
+            return 'Tentang';
+        }
+        // Default Title Case (Kapital huruf pertama saja)
+        return core.charAt(0).toUpperCase() + core.slice(1).toLowerCase();
+    };
+    // Tangani pembungkus tanda baca seperti koma, titik, atau tanda kurung
+    const processWordWithPunctuation = (rawWord, isFirst) => {
+        const match = rawWord.match(/^([^a-zA-Z0-9]*)(.*?)([^a-zA-Z0-9]*)$/);
+        if (!match)
+            return rawWord;
+        const prefix = match[1];
+        const core = match[2];
+        const suffix = match[3];
+        if (!core)
+            return rawWord;
+        // Kata majemuk bergaris miring (misal: "tanpa/salah", "dan/atau")
+        if (core.includes('/') && !/[0-9]/.test(core)) {
+            const parts = core.split('/');
+            const formattedParts = parts.map(p => formatWord(p, isFirst)).join('/');
+            return `${prefix}${formattedParts}${suffix}`;
+        }
+        return `${prefix}${formatWord(core, isFirst)}${suffix}`;
+    };
+    const words = str.toString().trim().split(/\s+/);
+    return words.map((w, index) => processWordWithPunctuation(w, index === 0)).join(' ');
 }
 export function getVal(id) {
     let el = document.getElementById(id);

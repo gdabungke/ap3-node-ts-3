@@ -1,13 +1,18 @@
-import { store, savePerkaraToStorage, loadPerkaraFromStorage } from './state/store.js';
-import { defaultPasalClusters, defaultKantorList } from './config/constants.js';
+import { store } from './state/store.js';
+import { initSettingPejabatDropdowns } from './modules/storage.js';
+import { updateDashboardStats } from './modules/dashboard.js'; 
+import { renderPerkaraTable, renderDisposisiTable } from './modules/table.js';
+
 import * as formatters from './utils/formatters.js';
-import * as ui from './modules/ui.js';
+import * as ui from './utils/ui.js';
 import * as auth from './modules/auth.js';
 import * as disposisi from './modules/disposisi.js';
 import * as perkara from './modules/perkara.js';
 import * as editor from './modules/editor.js';
 import * as laporan from './templates/laporan.js';
 import * as tindaklanjut from './templates/tindaklanjut.js';
+
+initSettingPejabatDropdowns();
 
 // Expose all modules and functions to window for seamless inline event handlers
 const allModules: any[] = [formatters, ui, auth, disposisi, perkara, editor, laporan, tindaklanjut];
@@ -70,12 +75,12 @@ document.addEventListener("DOMContentLoaded", function() {
       if(activeTab) activeTab.classList.add('active');
 
       if(targetId === 'disposisi') {
-        disposisi.renderDisposisiTable();
+        renderDisposisiTable();
         disposisi.checkDisposisiAccessByRole();
       }
 
       if(targetId === 'dasbor') {
-        perkara.updateDashboardStats();
+        updateDashboardStats();
       } else if(targetId === 'laporan') {
         let sel = document.getElementById('docFilterSelect') as HTMLSelectElement;
         let selectedType = sel ? sel.value : store.currentDoc;
@@ -113,12 +118,12 @@ document.addEventListener("DOMContentLoaded", function() {
   });
 
   perkara.loadData();
-  perkara.renderPerkaraTable();
-  perkara.updateDashboardStats();
+  renderPerkaraTable();
+  updateDashboardStats();
   ui.changePaperSize('F4');
   editor.switchDocTab(store.currentDoc); 
   editor.switchTLDocTab(store.currentTLDoc);
-  perkara.updateLiveCodePreviews();
+  perkara.setPratinjauNomor();
 });
 
 // Otomatis aktif saat tombol cetak ditekan atau Ctrl+P
@@ -152,3 +157,4 @@ document.addEventListener('click', function(e: MouseEvent) {
     if (id) disposisi.responDisposisi('tolak', id);
   }
 });
+

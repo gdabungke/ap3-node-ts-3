@@ -1,275 +1,60 @@
-import { store, savePerkaraToStorage } from '../state/store.js';
-import { escText, getVal, formatDate, formatDateIndo, formatModusVerb, autoGenerateTeksTanggalBA, formatTrailingDashes, formatRowTrailingDashes } from '../utils/formatters.js';
-import { showToast } from '../modules/ui.js';
+/**
+ * ============================================================================
+ * MODUL TEMPLATE : LAPORAN.TS
+ * KELOMPOK       : BERKAS PERKARA INTI & PROSES PENELITIAN PENINDAKAN
+ * DESKRIPSI      : Berisi murni fungsi cetak dokumen administrasi laporan:
+ *                  1. LPP()         -> Lembar Penerimaan Perkara (Poin A s.d. H)
+ *                  2. LPF()         -> Lembar Penelitian Formal (Poin A s.d. F)
+ *                  3. SPLIT()       -> Surat Perintah Penelitian
+ *                  4. SPRIN_CACAH() -> Surat Perintah Pencacahan Barang
+ *                  5. BA()          -> Berita Acara Pencacahan (2 Halaman Lengkap)
+ *                  6. LHP()         -> Lembar Hasil Penelitian (Bagian A s.d. G)
+ * ============================================================================
+ */
 
-// FUNGSI KOP SURAT
-export function generateKopSurat(jenisDokumen: string): string {
-  const listKopLama = ['lpp', 'lpf', 'split'];
-  const doc = (jenisDokumen || '').toLowerCase();
+import { store } from '../state/store.js';
+import { 
+  escText, 
+  getVal, 
+  formatDate, 
+  formatDateIndo, 
+  formatModusVerb, 
+  autoGenerateTeksTanggalBA, 
+  formatTrailingDashes 
+} from '../utils/formatters.js';
+import { 
+  baseReport, 
+  getDocNum, 
+  tteBadge 
+} from './components.js';
 
-  if (listKopLama.includes(doc)) {
-    return `<div class="office-left" style="font-family: Arial, Helvetica, sans-serif !important; font-weight: bold; font-size: 10pt; line-height: 1.3; margin-bottom: 14px;">
-      KEMENTERIAN KEUANGAN REPUBLIK INDONESIA<br>
-      DIREKTORAT JENDERAL BEA DAN CUKAI<br>
-      KANTOR PELAYANAN UTAMA BEA DAN CUKAI TIPE B BATAM
-    </div>`;
-  }
-
-  return `<div class="surat-kop" style="width: 100% !important; box-sizing: border-box !important; margin: 0 0 14px 0 !important; padding: 0 !important; font-family: Arial, Helvetica, sans-serif !important;">
-    <table style="width: 100% !important; border-collapse: collapse !important; border: none !important; table-layout: fixed !important; margin: 0 !important;">
-      <colgroup>
-        <col style="width: calc(2.3cm + 12px) !important;">
-        <col style="width: calc(100% - (2.3cm + 12px)) !important;">
-      </colgroup>
-      <tr>
-        <td style="width: calc(2.3cm + 12px) !important; vertical-align: top !important; text-align: right !important; padding: 0 3px 0 12px !important; border: none !important; box-sizing: border-box !important;">
-          <img src="./assets/img/kemenkeu-logo.png" alt="Logo Kemenkeu" style="width: 2.3cm !important; height: 2.2cm !important; max-width: 2.3cm !important; max-height: 2.2cm !important; filter: grayscale(100%) contrast(150%) !important; mix-blend-mode: multiply !important; display: block !important; margin: 0 !important; margin-left: auto !important; margin-top: 1px !important;" />
-        </td>
-
-        <td style="vertical-align: top !important; text-align: center !important; padding: 0 0 0 6px !important; border: none !important;">
-          <div style="font-size: 13pt !important; font-weight: bold !important; line-height: 1 !important; color: #000000 !important; text-transform: uppercase !important; margin: 1px 0 3px 0 !important;">
-            KEMENTERIAN KEUANGAN REPUBLIK INDONESIA
-          </div>
-
-          <div style="font-size: 11pt !important; font-weight: bold !important; line-height: 1.15 !important; color: #000000 !important; text-transform: uppercase !important; margin: 0 0 1px 0 !important;">
-            DIREKTORAT JENDERAL BEA DAN CUKAI
-          </div>
-          <div style="font-size: 11pt !important; font-weight: bold !important; line-height: 1.15 !important; color: #000000 !important; text-transform: uppercase !important; margin: 0 0 4px 0 !important;">
-            KANTOR PELAYANAN UTAMA BEA DAN CUKAI TIPE B BATAM
-          </div>
-
-          <div style="font-size: 7pt !important; line-height: 1.25 !important; color: #000000 !important; margin: 0 !important; text-transform: none !important; word-wrap: break-word !important; overflow-wrap: break-word !important; white-space: normal !important; text-align: center !important;">
-            Jalan Kuda Laut, Batu Ampar, Batam, Kepulauan Riau 29432; TELEPON (0778) 458818, 458263; FAKSIMILE (0778)<br>
-            458149; LAMAN www.bcbatam.beacukai.go.id; PUSAT KONTAK LAYANAN 1500225; SUREL bckpubatam@customs.go.id,<br>
-            kpubc.batam@kemenkeu.go.id
-          </div>
-        </td>
-      </tr>
-    </table>
-
-    <hr style="border: none !important; border-top: 1.5pt solid #000000 !important; margin: 4px 0 0 0 !important; padding: 0 !important; width: 100% !important;" />
-  </div>`;
-}
-
-// FUNGSI FORMAT PENOMORAN
-export function getDocNum(type: string, customInput?: string): string {
-  let formatted = '-';
-  let activeRec = (store.activeRecordIndex >= 0 && store.databasePerkara[store.activeRecordIndex]) ? store.databasePerkara[store.activeRecordIndex] : {};
-
-  if (type === 'GET_ELEMENT') {
-    let el = document.getElementById(customInput || '') as HTMLInputElement;
-    return el ? el.value.trim() : '';
-  }
-
-  if (type === 'SPRIN_INDAK') {
-    let val = customInput || getVal('No_SPRIN_Indak') || activeRec.No_SPRIN_Indak || '';
-    let tgl = formatDate('Tanggal_SPRIN_Indak');
-    if (val && val !== '-' && val !== '') {
-      let sprinPad = val.length < 2 ? String(val).padStart(2, '0') : val;
-      let noFormatted = `SPRIN-${sprinPad}/KPU.206/2026`;
-      formatted = tgl !== '-' ? `${noFormatted} tanggal ${tgl}` : noFormatted;
-    }
-  } 
-  else if (type === 'SBP') {
-    let val = customInput || getVal('Nomor_SBP') || activeRec.Nomor_SBP || '';
-    let status = getVal('Status_Penangkapan') || activeRec.Status_Penangkapan || '';
-    let tipe = status.toUpperCase().includes('LIMPAHAN') ? 'LIMPAH' : 'MANDIRI';
-    formatted = (val && val !== '-') ? `SBP-${val}/${tipe}/KPU.2/2026` : `SBP-/${tipe}/KPU.2/2026`;
-  } 
-  else if (type === 'LP') {
-    let val = customInput || getVal('NoLP_LP_1') || activeRec.NoLP_LP_1 || '';
-    formatted = (val && val !== '-') ? `LP-${val}/KPU.206/2026` : 'LP-/KPU.206/2026';
-  } 
-  else if (type === 'LPP') {
-    let val = customInput || getDocNum('GET_ELEMENT', 'No_LPP') || activeRec.No_LPP || '';
-    let cleaned = val.replace(/^(LPP)[-\s]*/i, '').trim();
-    formatted = (cleaned && cleaned !== '-') ? `LPP-${cleaned}/KPU.206/2026` : 'LPP-/KPU.206/2026';
-  } 
-  else if (type === 'LPF') {
-    let val = customInput || getDocNum('GET_ELEMENT', 'No_LPF') || activeRec.No_LPF || '';
-    let cleaned = val.replace(/^(LPF)[-\s]*/i, '').trim();
-    formatted = (cleaned && cleaned !== '-') ? `LPF-${cleaned}/KPU.206/2026` : 'LPF-/KPU.206/2026';
-  } 
-  else if (type === 'SPLIT') {
-    let val = customInput || getDocNum('GET_ELEMENT', 'Nomor_SPLIT') || activeRec.Nomor_SPLIT || '';
-    let cleaned = val.replace(/^(SPLIT|SPLI)[-\s]*/i, '').trim();
-    formatted = (cleaned && cleaned !== '-') ? `SPLIT-${cleaned}/KPU.206/2026` : 'SPLIT-/KPU.206/2026';
-  } 
-  else if (type === 'SPRIN_CACAH') {
-    let val = customInput || getDocNum('GET_ELEMENT', 'No_SPRIN_CACAH') || activeRec.No_SPRIN_CACAH || '';
-    formatted = (val && val !== '-') ? `PRIN-${val}/KPU.206/CACAH/2026` : 'PRIN-/KPU.206/CACAH/2026';
-  } 
-  else if (type === 'BA_CACAH') {
-    let val = customInput || getDocNum('GET_ELEMENT', 'Nomor_BA') || activeRec.Nomor_BA || '';
-    formatted = (val && val !== '-') ? `BA-${val}/KPU.206/CACAH/2026` : 'BA-/KPU.206/CACAH/2026';
-  } 
-  else if (type === 'LHP') {
-    let val = customInput || getDocNum('GET_ELEMENT', 'Nomor_LHP') || activeRec.Nomor_LHP || '';
-    formatted = (val && val !== '-') ? `LHP-${val}/KPU.206/2026` : 'LHP-/KPU.206/2026';
-  }
-
-  return formatted;
-}
-
-export function syncLPToDocs(val: string): void {
-  let elLpp = document.getElementById('No_LPP') as HTMLInputElement;
-  let elLpf = document.getElementById('No_LPF') as HTMLInputElement;
-  if (elLpp && !elLpp.value) elLpp.value = val;
-  if (elLpf && !elLpf.value) elLpf.value = val;
-  if ((window as any).refreshReportTableUI) (window as any).refreshReportTableUI();
-  if ((window as any).updateReportLive) (window as any).updateReportLive();
-}
-
-export function tteBadge(): string {
-  return `<div class="tte-badge" style="font-size:8.5pt; color:#9ca3af !important; margin:3px 0 2px 0; font-style:normal; font-weight:normal; text-align:left; letter-spacing:0.01em;">Ditandatangani secara elektronik</div>`;
-}
-
-export function baseReport(title: string, no: string, isBA: boolean = false, docType: string = ''): string {
-  let detectedType = docType;
-  if (!detectedType) {
-    const t = title.toUpperCase();
-    if (t.includes('LPP')) detectedType = 'LPP';
-    else if (t.includes('LPF')) detectedType = 'LPF';
-    else if (t.includes('SPLIT')) detectedType = 'SPLIT';
-    else if (t.includes('LHP')) detectedType = 'LHP';
-    else if (t.includes('PENCACAHAN') && !t.includes('SURAT PERINTAH')) detectedType = 'BA';
-    else if (t.includes('SURAT PERINTAH PENCACAHAN')) detectedType = 'SPRIN_CACAH';
-  }
-
-  const dokumenGunakanKopLama = ['LPP', 'LPF', 'SPLIT'];
-  let kopContent = '';
-
-  if (dokumenGunakanKopLama.includes((detectedType || '').toUpperCase())) {
-    kopContent = `<div class="office-left" style="font-family: Arial, Helvetica, sans-serif !important; font-weight: bold; font-size: 10pt; line-height: 1.3; margin-bottom: 15px;">
-      KEMENTERIAN KEUANGAN REPUBLIK INDONESIA<br>
-      DIREKTORAT JENDERAL BEA DAN CUKAI<br>
-      KANTOR PELAYANAN UTAMA BEA DAN CUKAI TIPE B BATAM
-    </div>`;
-  } else {
-    kopContent = generateKopSurat(detectedType);
-  }
-
-  return `<div class="report" style="font-family: Arial, Helvetica, sans-serif !important; font-size: 10pt; color: #000 !important; line-height: 1.3;">
-    ${kopContent}
-    <div class="title-center" style="font-family: Arial, Helvetica, sans-serif; text-align:center; font-weight:bold; font-size:11.5pt; margin:14px 0 4px 0;">${title}</div>
-    <div class="nomor-center" style="font-family: Arial, Helvetica, sans-serif; text-align:center; margin-bottom:16px;">Nomor : ${no}</div>`;
-}
-
-export function buildTableKv(rows: any[]): string {
-  return `<table class="rtable" style="width:100%; border-collapse:collapse; font-family:Arial, sans-serif;">${rows.map(r => {
-    if (r.length === 3) {
-      return `<tr>
-        <td style="width:4%; vertical-align:top;">${r[0]}</td>
-        <td style="width:28%; vertical-align:top;">${r[1]}</td>
-        <td style="width:3%; text-align:center; vertical-align:top;">${r[1] ? ':' : ''}</td>
-        <td style="text-align:justify; vertical-align:top;">${r[2] || '-'}</td>
-      </tr>`;
-    } else {
-      return `<tr>
-        <td style="width:32%; vertical-align:top;">${r[0]}</td>
-        <td style="width:3%; text-align:center; vertical-align:top;">:</td>
-        <td style="text-align:justify; vertical-align:top;">${r[1] || '-'}</td>
-      </tr>`;
-    }
-  }).join('')}</table>`;
-}
-
-export function handleSingleValidation(): void {
-  if ((typeof store.activeRecordIndex === 'undefined' || store.activeRecordIndex < 0) && store.databasePerkara.length > 0) {
-    store.activeRecordIndex = 0;
-  }
-
-  if (typeof store.activeRecordIndex === 'undefined' || store.activeRecordIndex < 0 || !store.databasePerkara[store.activeRecordIndex]) {
-    showToast("INFORMASI", "Belum ada data perkara untuk divalidasi.", "warning");
-    return;
-  }
-
-  let activeRecord = store.databasePerkara[store.activeRecordIndex];
-  let noLp = activeRecord.NoLP_LP_1 || '';
-
-  let docTypes = ['LPP', 'LPF', 'SPLIT', 'SPRIN_CACAH', 'BA', 'LHP'];
-  docTypes.forEach(type => {
-    if (type === 'LPP') {
-      activeRecord.No_LPP = noLp.replace(/^LP/i, 'LPP');
-      activeRecord.Tanggal_LPP = activeRecord.Tanggal_LPP || activeRecord.Tanggal_LP_LP_1;
-    } else if (type === 'LPF') {
-      activeRecord.No_LPF = noLp.replace(/^LP/i, 'LPF');
-      activeRecord.Tanggal_LPF = activeRecord.Tanggal_LPF || activeRecord.Tanggal_LP_LP_1;
-    } else if (type === 'SPLIT') {
-      activeRecord.Nomor_SPLIT = noLp.replace(/^LP/i, 'SPLIT');
-      activeRecord.Tanggal_SPLIT = activeRecord.Tanggal_SPLIT || activeRecord.Tanggal_LP_LP_1;
-    } else if (type === 'SPRIN_CACAH' && !activeRecord.No_SPRIN_CACAH) {
-      activeRecord.No_SPRIN_CACAH = noLp;
-      activeRecord.Tanggal_SPRIN_CACAH = activeRecord.Tanggal_SBP || activeRecord.Tanggal_LP_LP_1;
-    } else if (type === 'BA' && !activeRecord.Nomor_BA) {
-      activeRecord.Nomor_BA = noLp;
-      activeRecord.Tanggal_BA = activeRecord.Tanggal_SBP || activeRecord.Tanggal_LP_LP_1;
-    } else if (type === 'LHP') {
-      activeRecord.No_LHP = noLp.replace(/^LP/i, 'LHP');
-      activeRecord.Tanggal_LHP = activeRecord.Tanggal_LHP || activeRecord.Tanggal_LP_LP_1;
-    }
-  });
-
-  savePerkaraToStorage();
-
-  let existingToast = document.getElementById('customToastNotification');
-  if (!existingToast) {
-    let toastDiv = document.createElement('div');
-    toastDiv.id = 'customToastNotification';
-    toastDiv.innerHTML = `<i class="fi fi-rr-check-circle" style="color: #22c55e; margin-right: 8px;"></i><span id="toastMessage">Sudah divalidasi dan disinkronkan!</span>`;
-    toastDiv.style.cssText = "position: fixed; bottom: 20px; right: 20px; background: #0f172a; color: #ffffff; padding: 12px 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); display: flex; align-items: center; z-index: 9999; font-size: 14px; opacity: 0; transition: opacity 0.3s ease, transform 0.3s ease; transform: translateY(20px); border-left: 4px solid #10b981;";
-    document.body.appendChild(toastDiv);
-    existingToast = toastDiv;
-  } else {
-    let msgEl = document.getElementById('toastMessage');
-    if (msgEl) msgEl.innerText = "Sudah divalidasi dan disinkronkan!";
-  }
-
-  setTimeout(() => {
-    existingToast!.style.opacity = '1';
-    existingToast!.style.transform = 'translateY(0)';
-  }, 10);
-
-  setTimeout(() => {
-    existingToast!.style.opacity = '0';
-    existingToast!.style.transform = 'translateY(20px)';
-  }, 3000);
-
-  if (typeof (window as any).refreshReportTableUI === 'function') {
-    (window as any).refreshReportTableUI();
-  }
-}
-
-// FUNGSI PENGATURAN HALAMANAN LPP,LPF,SPLIT,SPRIN CACAH, BA CACAH, DAN LHP
+// ============================================================================
+// 1. TEMPLATE DOKUMEN: LEMBAR PENERIMAAN PERKARA (LPP)
+// ============================================================================
 export function LPP(): string {
-  let tglLPP = formatDate('Tanggal_LPP') !== '-' ? formatDate('Tanggal_LPP') : formatDate('Tanggal_LP_LP_1');
-  let rawJam = (document.getElementById('Jam_Kejadian') as HTMLInputElement) ? (document.getElementById('Jam_Kejadian') as HTMLInputElement).value.trim() : '';
-  let jamFormatted = rawJam ? rawJam.replace(':', '.') + ' WIB' : '-';
-  let umurVal = getVal('Umur_Pelaku');
-  let umurFormatted = (umurVal !== '-' && umurVal !== '') ? umurVal + ' tahun' : '-';
-  
-  let tglDokPab = formatDate('Tanggal_Dokumen_Pemberitahuan');
-  let dokPabVal = getVal('Dokumen_Pemberitahuan');
+  const tglLPP = formatDate('Tanggal_LPP') !== '-' ? formatDate('Tanggal_LPP') : formatDate('Tanggal_LP_LP_1');
+  const rawJam = (document.getElementById('Jam_Kejadian') as HTMLInputElement)?.value?.trim() || '';
+  const jamFormatted = rawJam ? rawJam.replace(':', '.') + ' WIB' : '-';
+  const umurVal = getVal('Umur_Pelaku');
+  const umurFormatted = (umurVal !== '-' && umurVal !== '') ? umurVal + ' tahun' : '-';
+  const tglDokPab = formatDate('Tanggal_Dokumen_Pemberitahuan');
+  const dokPabVal = getVal('Dokumen_Pemberitahuan');
   let dokPabDisplay = 'Tanpa Dokumen';
 
   if (!dokPabVal.toLowerCase().includes('tanpa dokumen') && dokPabVal && dokPabVal !== '-') {
-    let selJenis = (document.getElementById('Jenis_Dok_Pemberitahuan_Select') as HTMLSelectElement) ? (document.getElementById('Jenis_Dok_Pemberitahuan_Select') as HTMLSelectElement).value : '';
-    let jenisDok = selJenis === 'LAINNYA' 
-      ? ((document.getElementById('Jenis_Dok_Pemberitahuan_Manual') as HTMLInputElement) ? (document.getElementById('Jenis_Dok_Pemberitahuan_Manual') as HTMLInputElement).value.trim() : '') 
+    const selJenis = (document.getElementById('Jenis_Dok_Pemberitahuan_Select') as HTMLSelectElement)?.value || '';
+    const jenisDok = selJenis === 'LAINNYA'
+      ? ((document.getElementById('Jenis_Dok_Pemberitahuan_Manual') as HTMLInputElement)?.value?.trim() || '')
       : (selJenis !== '-' ? selJenis : '');
-    let nomorDok = (document.getElementById('Nomor_Dok_Pemberitahuan') as HTMLInputElement) 
-      ? (document.getElementById('Nomor_Dok_Pemberitahuan') as HTMLInputElement).value.trim() 
-      : '';
-
+    const nomorDok = (document.getElementById('Nomor_Dok_Pemberitahuan') as HTMLInputElement)?.value?.trim() || '';
     let rawString = (jenisDok ? jenisDok + ' ' : '') + (nomorDok ? nomorDok : dokPabVal);
     rawString = rawString.trim().replace(/^nomor\s+/i, '').replace(/^no\.?\s+/i, '');
-
-    let matchBC = rawString.match(/^(BC\s*\d+(?:\.\d+)?|[A-Z]{2,10})\s*(?:nomor\s+|no\.?\s+)?(.*)$/i);
-
+    const matchBC = rawString.match(/^(BC\s*\d+(?:\.\d+)?|[A-Z]{2,10})\s*(?:nomor\s+|no\.?\s+)?(.*)$/i);
     let finalDokText = '';
+
     if (matchBC && matchBC[2].trim()) {
-      let jns = matchBC[1].trim();
-      let no = matchBC[2].trim();
+      const jns = matchBC[1].trim();
+      const no = matchBC[2].trim();
       finalDokText = `${escText(jns)} nomor ${escText(no)}`;
     } else if (rawString.toLowerCase().includes('nomor')) {
       finalDokText = escText(rawString);
@@ -280,12 +65,11 @@ export function LPP(): string {
     if (tglDokPab && tglDokPab !== '-') {
       finalDokText += ` tanggal ${tglDokPab}`;
     }
-
     dokPabDisplay = finalDokText;
   }
 
-  return baseReport('LEMBAR PENERIMAAN PERKARA (LPP)', getDocNum('LPP'), false) + 
-  `<!-- HEADER ATAS -->
+  return baseReport('LEMBAR PENERIMAAN PERKARA (LPP)', getDocNum('lpp'), false) + `
+  <!-- HEADER ATAS -->
   <table class="rtable" style="width:100%; border-collapse:collapse; margin-bottom:12px; font-family:Arial, sans-serif; font-size:10pt; line-height:1.35; table-layout:fixed;">
     <colgroup>
       <col style="width:115px;">
@@ -298,7 +82,7 @@ export function LPP(): string {
     <tr>
       <td style="vertical-align:top;">LP/ Surat Nomor</td>
       <td style="text-align:center; vertical-align:top;">:</td>
-      <td style="vertical-align:top;">${getDocNum('LPP')}</td>
+      <td style="vertical-align:top;">${getDocNum('lpp')}</td>
       <td style="vertical-align:top;">Tanggal</td>
       <td style="text-align:center; vertical-align:top;">:</td>
       <td style="vertical-align:top; white-space:nowrap;">${tglLPP}</td>
@@ -306,7 +90,7 @@ export function LPP(): string {
     <tr>
       <td style="vertical-align:top;">SBP Nomor</td>
       <td style="text-align:center; vertical-align:top;">:</td>
-      <td style="vertical-align:top;">${getDocNum('SBP')}</td>
+      <td style="vertical-align:top;">${getDocNum('sbp')}</td>
       <td style="vertical-align:top;">Tanggal</td>
       <td style="text-align:center; vertical-align:top;">:</td>
       <td style="vertical-align:top; white-space:nowrap;">${formatDate('Tanggal_SBP')}</td>
@@ -473,7 +257,7 @@ export function LPP(): string {
     </tr>
   </table>
 
-  <!-- BLOK TANDA TANGAN -->
+  <!-- BLOK TANDA TANGAN LPP -->
   <div style="page-break-inside: avoid !important; margin-top:20px; font-family:Arial, sans-serif; font-size:10pt;">
     <div style="display:flex; justify-content:flex-end;">
       <div style="width:40%; text-align:left;">Batam, ${tglLPP}</div>
@@ -503,19 +287,20 @@ export function LPP(): string {
   </div></div>`;
 }
 
+// ============================================================================
+// 2. TEMPLATE DOKUMEN: LEMBAR PENELITIAN FORMAL (LPF)
+// ============================================================================
 export function LPF(): string {
-  let tglLPF = formatDate('Tanggal_LPF') !== '-' ? formatDate('Tanggal_LPF') : formatDate('Tanggal_LP_LP_1');
-  let rawJam = (document.getElementById('Jam_Kejadian') as HTMLInputElement) ? (document.getElementById('Jam_Kejadian') as HTMLInputElement).value.trim() : '';
-  let jamFormatted = rawJam ? rawJam.replace(':', '.') : '-';
-  let umurVal = getVal('Umur_Pelaku');
-  let umurFormatted = (umurVal !== '-' && umurVal !== '') ? umurVal + ' tahun' : '-';
-  
-  let tglDokPab = formatDate('Tanggal_Dokumen_Pemberitahuan');
-  let dokPabVal = getVal('Dokumen_Pemberitahuan');
-  let selJenis = (document.getElementById('Jenis_Dok_Pemberitahuan_Select') as HTMLSelectElement) ? (document.getElementById('Jenis_Dok_Pemberitahuan_Select') as HTMLSelectElement).value : '';
-  let jenisDokManual = (document.getElementById('Jenis_Dok_Pemberitahuan_Manual') as HTMLInputElement) ? (document.getElementById('Jenis_Dok_Pemberitahuan_Manual') as HTMLInputElement).value.trim() : '';
-  let nomorDok = (document.getElementById('Nomor_Dok_Pemberitahuan') as HTMLInputElement) ? (document.getElementById('Nomor_Dok_Pemberitahuan') as HTMLInputElement).value.trim() : '';
-
+  const tglLPF = formatDate('Tanggal_LPF') !== '-' ? formatDate('Tanggal_LPF') : formatDate('Tanggal_LP_LP_1');
+  const rawJam = (document.getElementById('Jam_Kejadian') as HTMLInputElement)?.value?.trim() || '';
+  const jamFormatted = rawJam ? rawJam.replace(':', '.') : '-';
+  const umurVal = getVal('Umur_Pelaku');
+  const umurFormatted = (umurVal !== '-' && umurVal !== '') ? umurVal + ' tahun' : '-';
+  const tglDokPab = formatDate('Tanggal_Dokumen_Pemberitahuan');
+  const dokPabVal = getVal('Dokumen_Pemberitahuan');
+  const selJenis = (document.getElementById('Jenis_Dok_Pemberitahuan_Select') as HTMLSelectElement)?.value || '';
+  const jenisDokManual = (document.getElementById('Jenis_Dok_Pemberitahuan_Manual') as HTMLInputElement)?.value?.trim() || '';
+  const nomorDok = (document.getElementById('Nomor_Dok_Pemberitahuan') as HTMLInputElement)?.value?.trim() || '';
   let jenisDokPabeanDisplay = '-';
   let nomorDokPabeanDisplay = '-';
 
@@ -524,17 +309,16 @@ export function LPF(): string {
     nomorDokPabeanDisplay = '-';
   } else {
     jenisDokPabeanDisplay = selJenis === 'LAINNYA' ? (jenisDokManual || 'Lainnya') : (selJenis !== '-' ? selJenis : 'BC 2.0');
-
     if (nomorDok) {
       nomorDokPabeanDisplay = escText(nomorDok);
     } else {
-      let rawClean = dokPabVal.replace(/^(BC\s*\d+(?:\.\d+)?|[A-Z]{2,10})/i, '').replace(/^nomor\s+/i, '').replace(/^no\.?\s+/i, '').trim();
+      const rawClean = dokPabVal.replace(/^(BC\s*\d+(?:\.\d+)?|[A-Z]{2,10})/i, '').replace(/^nomor\s+/i, '').replace(/^no\.?\s+/i, '').trim();
       nomorDokPabeanDisplay = escText(rawClean || '-');
     }
   }
 
-  return baseReport('LEMBAR PENELITIAN FORMAL (LPF)', getDocNum('LPF'), false) + 
-  `<table class="rtable" style="width:100%; border-collapse:collapse; font-family:Arial, sans-serif; font-size:10pt; line-height:1.35; table-layout:fixed;">
+  return baseReport('LEMBAR PENELITIAN FORMAL (LPF)', getDocNum('lpf'), false) + `
+  <table class="rtable" style="width:100%; border-collapse:collapse; font-family:Arial, sans-serif; font-size:10pt; line-height:1.35; table-layout:fixed;">
     <colgroup>
       <col style="width:24px;">
       <col style="width:20px;">
@@ -618,21 +402,21 @@ export function LPF(): string {
       <td style="vertical-align:top;">1.</td>
       <td style="vertical-align:top;">No. Surat Perintah/Tugas</td>
       <td style="text-align:center; vertical-align:top;">:</td>
-      <td style="text-align:justify; vertical-align:top;">${getDocNum('SPRIN_INDAK')}</td>
+      <td style="text-align:justify; vertical-align:top;">${getDocNum('sprin_indak')}</td>
     </tr>
     <tr>
       <td></td>
       <td style="vertical-align:top;">2.</td>
       <td style="vertical-align:top;">No. SBP</td>
       <td style="text-align:center; vertical-align:top;">:</td>
-      <td style="text-align:justify; vertical-align:top;">${getDocNum('SBP')} tanggal ${formatDate('Tanggal_SBP')}</td>
+      <td style="text-align:justify; vertical-align:top;">${getDocNum('sbp')} tanggal ${formatDate('Tanggal_SBP')}</td>
     </tr>
     <tr>
       <td></td>
       <td style="vertical-align:top;">3.</td>
       <td style="vertical-align:top;">No. LP/LK/Lap. Polisi</td>
       <td style="text-align:center; vertical-align:top;">:</td>
-      <td style="text-align:justify; vertical-align:top;">${getDocNum('LP')} tanggal ${formatDate('Tanggal_LP_LP_1')}</td>
+      <td style="text-align:justify; vertical-align:top;">${getDocNum('lpp')} tanggal ${formatDate('Tanggal_LP_LP_1')}</td>
     </tr>
     <tr>
       <td></td>
@@ -805,6 +589,7 @@ export function LPF(): string {
     </tr>
   </table>
 
+  <!-- BLOK TANDA TANGAN LPF -->
   <div style="page-break-inside: avoid !important; margin-top:20px; font-family:Arial, sans-serif;">
     <div style="display:flex; justify-content:flex-end;">
       <div style="width:40%; text-align:left;">Batam, ${tglLPF}</div>
@@ -834,36 +619,38 @@ export function LPF(): string {
   </div></div>`;
 }
 
+// ============================================================================
+// 3. TEMPLATE DOKUMEN: SURAT PERINTAH PENELITIAN (SPLIT)
+// ============================================================================
 export function SPLIT(): string {
-  let tglSplit = formatDate('Tanggal_SPLIT') !== '-' ? formatDate('Tanggal_SPLIT') : formatDate('Tanggal_LP_LP_1');
-  let hari = getVal('Hari_SBP');
-  let tglIndo = formatDate('Tanggal_SBP');
-  let rawJam = (document.getElementById('Jam_Kejadian') as HTMLInputElement) ? (document.getElementById('Jam_Kejadian') as HTMLInputElement).value.trim() : '';
-  let jamFormatted = rawJam ? rawJam.replace(':', '.') + ' WIB' : '-';
-  let lokasi = getVal('Lokasi_Penindakan');
-  let rawModus = getVal('Modus_Operandi');
-  let modusVerb = formatModusVerb(rawModus);
+  const tglSplit = formatDate('Tanggal_SPLIT') !== '-' ? formatDate('Tanggal_SPLIT') : formatDate('Tanggal_LP_LP_1');
+  const hari = getVal('Hari_SBP');
+  const tglIndo = formatDate('Tanggal_SBP');
+  const rawJam = (document.getElementById('Jam_Kejadian') as HTMLInputElement)?.value?.trim() || '';
+  const jamFormatted = rawJam ? rawJam.replace(':', '.') + ' WIB' : '-';
+  const lokasi = getVal('Lokasi_Penindakan');
+  const rawModus = getVal('Modus_Operandi');
+  const modusVerb = formatModusVerb(rawModus);
+  const uraianPerkaraSplit = `Pada hari ${hari}, tanggal ${tglIndo} sekitar pukul ${jamFormatted} di ${lokasi} yang dilakukan penindakan oleh Petugas Bea Cukai Batam yang ${modusVerb}`;
 
-  let uraianPerkaraSplit = `Pada hari ${hari}, tanggal ${tglIndo} sekitar pukul ${jamFormatted} di ${lokasi} yang dilakukan penindakan oleh Petugas Bea Cukai Batam yang ${modusVerb}`;
-
-  let pegawai = [
+  const pegawai = [
     { nama: getVal('form_ketua_tim'), nip: getVal('form_nip_ketua_tim'), pkt: getVal('form_gol_ketua_tim'), jab: getVal('form_jabatan_ketua_tim') || 'Ketua Tim Peneliti' },
     { nama: getVal('form_pembuat_lpp'), nip: getVal('form_nip_pembuat_lpp'), pkt: getVal('form_gol_pembuat_lpp'), jab: getVal('form_jabatan_pembuat_lpp') || 'Anggota Tim Peneliti' },
     { nama: getVal('form_petugas_lpf'), nip: getVal('form_nip_petugas_lpf'), pkt: getVal('form_gol_petugas_lpf'), jab: getVal('form_jabatan_petugas_lpf') || 'Anggota Tim Peneliti' },
     { nama: getVal('form_indak_1'), nip: getVal('form_nip_indak_1'), pkt: getVal('form_gol_indak_1'), jab: getVal('form_jabatan_indak_1') || 'Anggota Tim Peneliti' }
   ];
 
-  let pegawaiHtml = pegawai.map((p, i) => `
+  const pegawaiHtml = pegawai.map((p, i) => `
     <table style="width:100%; border:none; margin-bottom:3px; border-collapse:collapse; font-size:10pt;">
-      <tr><td style="width:25px; vertical-align:top;">${i+1}.</td><td style="width:110px; vertical-align:top;">Nama</td><td style="width:15px; text-align:center; vertical-align:top;">:</td><td style="vertical-align:top;"><b>${escText(p.nama)}</b></td></tr>
+      <tr><td style="width:25px; vertical-align:top;">${i + 1}.</td><td style="width:110px; vertical-align:top;">Nama</td><td style="width:15px; text-align:center; vertical-align:top;">:</td><td style="vertical-align:top;"><b>${escText(p.nama)}</b></td></tr>
       <tr><td></td><td style="vertical-align:top;">NIP</td><td style="text-align:center; vertical-align:top;">:</td><td style="vertical-align:top;">${escText(p.nip)}</td></tr>
       <tr><td></td><td style="vertical-align:top;">Pangkat / Gol.</td><td style="text-align:center; vertical-align:top;">:</td><td style="vertical-align:top;">${escText(p.pkt)}</td></tr>
       <tr><td></td><td style="vertical-align:top;">Jabatan</td><td style="text-align:center; vertical-align:top;">:</td><td style="vertical-align:top;">${escText(p.jab)}</td></tr>
     </table>
   `).join('');
 
-  return baseReport('SURAT PERINTAH PENELITIAN (SPLIT)', getDocNum('SPLIT'), false) + 
-  `<table class="rtable" style="width:100%; border-collapse:collapse; font-size:10pt; line-height:1.3;">
+  return baseReport('SURAT PERINTAH PENELITIAN (SPLIT)', getDocNum('split'), false) + `
+  <table class="rtable" style="width:100%; border-collapse:collapse; font-size:10pt; line-height:1.3;">
     <tr>
       <td style="width:110px; vertical-align:top;"><b>Dasar</b></td>
       <td style="width:15px; text-align:center; vertical-align:top;">:</td>
@@ -872,7 +659,7 @@ export function SPLIT(): string {
           <tr><td style="width:20px; vertical-align:top;">1.</td><td style="text-align:justify; vertical-align:top;">Undang-undang nomor 10 tahun 1995 tentang Kepabeanan sebagaimana telah diubah dengan Undang-undang nomor 17 tahun 2006 dan/atau Undang-undang nomor 11 tahun 1995 tentang Cukai sebagaimana telah diubah dengan Undang-undang nomor 39 tahun 2007;</td></tr>
           <tr><td style="vertical-align:top;">2.</td><td style="text-align:justify; vertical-align:top;">Peraturan Pemerintah nomor 41 tahun 2021 tentang Penyelenggaraan Kawasan Perdagangan Bebas dan Pelabuhan Bebas;</td></tr>
           <tr><td style="vertical-align:top;">3.</td><td style="text-align:justify; vertical-align:top;">Peraturan Menteri Keuangan nomor 183/PMK.01/2020 tentang perubahan atas Peraturan Menteri Keuangan nomor 188/PMK.01/2016 tentang Organisasi dan Tata Kerja Instansi Vertikal Direktorat Jenderal Bea dan Cukai;</td></tr>
-          <tr><td style="vertical-align:top;">4.</td><td style="text-align:justify; vertical-align:top;">Laporan Pelanggaran Nomor ${getDocNum('LP')} tanggal ${formatDate('Tanggal_LP_LP_1')}.</td></tr>
+          <tr><td style="vertical-align:top;">4.</td><td style="text-align:justify; vertical-align:top;">Laporan Pelanggaran Nomor ${getDocNum('lpp')} tanggal ${formatDate('Tanggal_LP_LP_1')}.</td></tr>
         </table>
       </td>
     </tr>
@@ -933,9 +720,11 @@ export function SPLIT(): string {
   </div></div>`;
 }
 
+// ============================================================================
+// 4. TEMPLATE DOKUMEN: SURAT PERINTAH PENCACAHAN (SPRIN CACAH)
+// ============================================================================
 export function SPRIN_CACAH(): string {
-  let tglSprin = formatDate('Tanggal_Sprin_Cacah') !== '-' ? formatDate('Tanggal_Sprin_Cacah') : formatDate('Tanggal_SBP');
-  
+  const tglSprin = formatDate('Tanggal_Sprin_Cacah') !== '-' ? formatDate('Tanggal_Sprin_Cacah') : formatDate('Tanggal_SBP');
   let listPegawai = JSON.parse(localStorage.getItem('sprinPegawaiList') || '[]');
   if (listPegawai.length === 0) {
     listPegawai = [
@@ -946,17 +735,17 @@ export function SPRIN_CACAH(): string {
     ];
   }
 
-  let pegawaiHtml = listPegawai.map((p: any, i: number) => `
+  const pegawaiHtml = listPegawai.map((p: any, i: number) => `
     <table style="width:100%; border:none; margin-bottom:3px; border-collapse:collapse; font-size:10pt;">
-      <tr><td style="width:25px; vertical-align:top;">${i+1}.</td><td style="width:110px; vertical-align:top;">Nama</td><td style="width:15px; text-align:center; vertical-align:top;">:</td><td style="vertical-align:top;"><b>${escText(p.nama)}</b></td></tr>
+      <tr><td style="width:25px; vertical-align:top;">${i + 1}.</td><td style="width:110px; vertical-align:top;">Nama</td><td style="width:15px; text-align:center; vertical-align:top;">:</td><td style="vertical-align:top;"><b>${escText(p.nama)}</b></td></tr>
       <tr><td></td><td style="vertical-align:top;">NIP</td><td style="text-align:center; vertical-align:top;">:</td><td style="vertical-align:top;">${escText(p.nip)}</td></tr>
       <tr><td></td><td style="vertical-align:top;">Pangkat / Gol.</td><td style="text-align:center; vertical-align:top;">:</td><td style="vertical-align:top;">${escText(p.pangkat || p.pkt || '-')}</td></tr>
       <tr><td></td><td style="vertical-align:top;">Jabatan</td><td style="text-align:center; vertical-align:top;">:</td><td style="vertical-align:top;">${escText(p.jabatan || p.jab || '-')}</td></tr>
     </table>
   `).join('');
 
-  return baseReport('SURAT PERINTAH PENCACAHAN BARANG HASIL PENINDAKAN', getDocNum('SPRIN_CACAH'), false) + 
-  `<table class="rtable" style="width:100%; border-collapse:collapse; font-size:10pt; line-height:1.3;">
+  return baseReport('SURAT PERINTAH PENCACAHAN BARANG HASIL PENINDAKAN', getDocNum('sprin_cacah'), false) + `
+  <table class="rtable" style="width:100%; border-collapse:collapse; font-size:10pt; line-height:1.3;">
     <tr>
       <td style="width:110px; vertical-align:top;"><b>Dasar</b></td>
       <td style="width:15px; text-align:center; vertical-align:top;">:</td>
@@ -965,7 +754,7 @@ export function SPRIN_CACAH(): string {
           <tr><td style="width:20px; vertical-align:top;">1.</td><td style="text-align:justify; vertical-align:top;">Undang-undang nomor 10 tahun 1995 tentang Kepabeanan sebagaimana telah diubah dengan Undang-undang nomor 17 tahun 2006 dan/atau Undang-undang nomor 11 tahun 1995 tentang Cukai sebagaimana telah diubah dengan Undang-undang nomor 39 tahun 2007;</td></tr>
           <tr><td style="vertical-align:top;">2.</td><td style="text-align:justify; vertical-align:top;">Peraturan Pemerintah nomor 41 Tahun 2021 tentang Penyelenggaraan Kawasan Perdagangan Bebas dan Pelabuhan Bebas;</td></tr>
           <tr><td style="vertical-align:top;">3.</td><td style="text-align:justify; vertical-align:top;">Pasal 95 ayat 1 Peraturan Direktur Jenderal Bea dan Cukai Nomor P-8/BC/2025 tentang Tata Laksana Pengawasan di Bidang Kepabeanan dan Cukai;</td></tr>
-          <tr><td style="vertical-align:top;">4.</td><td style="text-align:justify; vertical-align:top;">Laporan Pelanggaran nomor ${getDocNum('LP')} tanggal ${formatDate('Tanggal_LP_LP_1')}.</td></tr>
+          <tr><td style="vertical-align:top;">4.</td><td style="text-align:justify; vertical-align:top;">Laporan Pelanggaran nomor ${getDocNum('lpp')} tanggal ${formatDate('Tanggal_LP_LP_1')}.</td></tr>
         </table>
       </td>
     </tr>
@@ -991,7 +780,7 @@ export function SPRIN_CACAH(): string {
       <td style="width:15px; text-align:center; vertical-align:top; padding-top:4px;">:</td>
       <td style="text-align:justify; vertical-align:top; padding-top:4px;">
         <table style="width:100%; border-collapse:collapse; font-size:10pt;">
-          <tr><td style="width:20px; vertical-align:top;">1.</td><td style="text-align:justify; vertical-align:top;">Melakukan pencacahan atas Laporan Pelanggaran nomor ${getDocNum('LP')} tanggal ${formatDate('Tanggal_LP_LP_1')};</td></tr>
+          <tr><td style="width:20px; vertical-align:top;">1.</td><td style="text-align:justify; vertical-align:top;">Melakukan pencacahan atas Laporan Pelanggaran nomor ${getDocNum('lpp')} tanggal ${formatDate('Tanggal_LP_LP_1')};</td></tr>
           <tr><td style="vertical-align:top;">2.</td><td style="text-align:justify; vertical-align:top;">Setelah melaksanakan Surat Perintah ini agar melaporkan kepada yang memberi perintah;</td></tr>
           <tr><td style="vertical-align:top;">3.</td><td style="text-align:justify; vertical-align:top;">Surat Perintah ini berlaku dari tanggal ${formatDate('Tanggal_LP_LP_1')} sampai dengan selesai.</td></tr>
         </table>
@@ -1014,26 +803,25 @@ export function SPRIN_CACAH(): string {
   </div></div>`;
 }
 
+// ============================================================================
+// 5. TEMPLATE DOKUMEN: BERITA ACARA PENCACAHAN (BA CACAH - 2 HALAMAN LENGKAP)
+// ============================================================================
 export function BA(): string {
-  let paperLandscapeClass = store.selectedPaperSize === 'A4' ? 'report landscape paper-a4' : 'report landscape';
-  let items = JSON.parse(localStorage.getItem('cacahItems') || '[]');
-  
-  let rawDateBA = getVal('Tanggal_BA') || getVal('Tanggal_SBP') || '';
-  let dateInfo = autoGenerateTeksTanggalBA(rawDateBA);
+  const paperLandscapeClass = store.selectedPaperSize === 'A4' ? 'report landscape paper-a4' : 'report landscape';
+  const items = JSON.parse(localStorage.getItem('cacahItems') || '[]');
+  const rawDateBA = getVal('Tanggal_BA') || getVal('Tanggal_SBP') || '';
+  const dateInfo = autoGenerateTeksTanggalBA(rawDateBA);
+  const hariCacah = (getVal('Hari_Cacah') || dateInfo.hari || '-').toLowerCase();
+  const teksTgl = (getVal('TeksTanggal') || dateInfo.teksLengkap || '-').toLowerCase();
+  const tglSprin = formatDate('Tanggal_Sprin_Cacah') !== '-' ? formatDate('Tanggal_Sprin_Cacah') : formatDate('Tanggal_SBP');
+  const noSprin = getDocNum('sprin_cacah');
+  const noSBP = getDocNum('sbp');
+  const lokasi = escText(getVal('Lokasi_Penindakan'));
+  const tglBA = formatDate('Tanggal_BA') !== '-' ? formatDate('Tanggal_BA') : formatDate('Tanggal_SBP');
+  const noBA = getDocNum('ba');
 
-  let hariCacah = (getVal('Hari_Cacah') || dateInfo.hari || '-').toLowerCase();
-  let teksTgl = (getVal('TeksTanggal') || dateInfo.teksLengkap || '-').toLowerCase();
-
-  let tglSprin = formatDate('Tanggal_Sprin_Cacah') !== '-' ? formatDate('Tanggal_Sprin_Cacah') : formatDate('Tanggal_SBP');
-  let noSprin = getDocNum('SPRIN_CACAH');
-  let noSBP = getDocNum('SBP');
-  let lokasi = escText(getVal('Lokasi_Penindakan'));
-  let tglBA = formatDate('Tanggal_BA') !== '-' ? formatDate('Tanggal_BA') : formatDate('Tanggal_SBP');
-  let noBA = getDocNum('BA_CACAH');
-
-  let listPegawai = JSON.parse(localStorage.getItem('sprinPegawaiList') || '[]');
-  let p1, p2, p3, p4, p5, p6;
-
+  const listPegawai = JSON.parse(localStorage.getItem('sprinPegawaiList') || '[]');
+  let p1: any, p2: any, p3: any, p4: any, p5: any, p6: any;
   if (listPegawai.length >= 6) {
     p1 = { nama: listPegawai[0].nama, nip: listPegawai[0].nip, pkt: listPegawai[0].pangkat || listPegawai[0].pkt, jab: listPegawai[0].jabatan || listPegawai[0].jab };
     p2 = { nama: listPegawai[1].nama, nip: listPegawai[1].nip, pkt: listPegawai[1].pangkat || listPegawai[1].pkt, jab: listPegawai[1].jabatan || listPegawai[1].jab };
@@ -1050,11 +838,11 @@ export function BA(): string {
     p6 = { nama: getVal('form_indak_lainnya'), nip: getVal('form_nip_indak_lainnya'), pkt: getVal('form_gol_indak_lainnya'), jab: getVal('form_jabatan_indak_lainnya') || 'Petugas Penindakan 3' };
   }
 
-  let timPeneliti = [p1, p2, p3];
-  let timPenindakan = [p4, p5, p6];
-  let allPetugas = [p1, p2, p3, p4, p5, p6];
+  const timPeneliti = [p1, p2, p3];
+  const timPenindakan = [p4, p5, p6];
+  const allPetugas = [p1, p2, p3, p4, p5, p6];
 
-  let renderTabelPegawai = (list: any[], startNumber: number = 1) => list.map((p, idx) => `
+  const renderTabelPegawai = (list: any[], startNumber = 1) => list.map((p, idx) => `
     <table style="width:100%; border-collapse:collapse; margin-bottom:4px; font-family:Arial, sans-serif; font-size:11pt;">
       <tr>
         <td style="width:5%; text-align:right; padding-right:12px; vertical-align:top;">${startNumber + idx}.</td>
@@ -1083,7 +871,7 @@ export function BA(): string {
     </table>
   `).join('');
 
-  let renderSignaturesBA_P1 = () => `
+  const renderSignaturesBA_P1 = () => `
     <div style="page-break-inside: avoid !important; margin-top:20px; font-family:Arial, sans-serif;">
       <div style="text-align:left; margin-bottom:12px; font-weight:normal;">
         Yang Melakukan Pencacahan,
@@ -1101,94 +889,94 @@ export function BA(): string {
     </div>
   `;
 
-  let page1 = baseReport('BERITA ACARA PENCACAHAN', noBA, true) + 
-  formatTrailingDashes(`Pada hari ini ${hariCacah} tanggal ${teksTgl} di Tempat Penimbunan Pabean Kantor Pelayanan Utama Bea Cukai Tipe B Batam, berdasarkan Surat Perintah Pencacahan Barang Hasil Penindakan (SPPBHP) Kepala Bidang Penindakan dan Penyidikan nomor ${noSprin} tanggal ${tglSprin}, kami:`, '---------') +
-  renderTabelPegawai(timPeneliti, 1) +
-  formatTrailingDashes('bersama-sama dengan:') +
-  renderTabelPegawai(timPenindakan, 4) +
-  formatTrailingDashes(`telah melakukan pencacahan terhadap Barang Hasil Penindakan yang berasal dari penindakan di ${lokasi} sesuai dengan Surat Bukti Penindakan Nomor ${noSBP}, dengan hasil pencacahan sebagaimana terlampir.`) +
-  formatTrailingDashes('Atas Barang Hasil Penindakan tersebut di atas kemudian dilakukan penyimpanan di Tempat Penimbunan Pabean Kantor Pelayanan Utama Bea Cukai Tipe B Batam.') +
-  formatTrailingDashes('Demikian Berita Acara ini dibuat dengan sebenarnya dan ditandatangani pada tempat dan waktu tersebut di atas.') +
-  renderSignaturesBA_P1() + `</div>`;
+  const page1 = baseReport('BERITA ACARA PENCACAHAN', noBA, true) +
+    formatTrailingDashes(`Pada hari ini ${hariCacah} tanggal ${teksTgl} di Tempat Penimbunan Pabean Kantor Pelayanan Utama Bea Cukai Tipe B Batam, berdasarkan Surat Perintah Pencacahan Barang Hasil Penindakan (SPPBHP) Kepala Bidang Penindakan dan Penyidikan nomor ${noSprin} tanggal ${tglSprin}, kami:`, '---------') +
+    renderTabelPegawai(timPeneliti, 1) +
+    formatTrailingDashes('bersama-sama dengan:') +
+    renderTabelPegawai(timPenindakan, 4) +
+    formatTrailingDashes(`telah melakukan pencacahan terhadap Barang Hasil Penindakan yang berasal dari penindakan di ${lokasi} sesuai dengan Surat Bukti Penindakan Nomor ${noSBP}, dengan hasil pencacahan sebagaimana terlampir.`) +
+    formatTrailingDashes('Atas Barang Hasil Penindakan tersebut di atas kemudian dilakukan penyimpanan di Tempat Penimbunan Pabean Kantor Pelayanan Utama Bea Cukai Tipe B Batam.') +
+    formatTrailingDashes('Demikian Berita Acara ini dibuat dengan sebenarnya dan ditandatangani pada tempat dan waktu tersebut di atas.') +
+    renderSignaturesBA_P1() + `</div>`;
 
-  let page2 = `<div class="pagebreak"></div>
-  <div class="${paperLandscapeClass}">
-    <div style="display:flex; justify-content:flex-end; margin-bottom:12px;">
-      <div style="width:30%; text-align:justify;">
-        <div style="margin-bottom:4px; font-size:10.5pt; font-weight:bold;">Lampiran Berita Acara Pencacahan</div>
-        <table style="border:none; width:100%; border-collapse:collapse; font-size:9.5pt;">
-          <tr><td style="width:25%; vertical-align:top;">Nomor</td><td style="width:4%; text-align:center; vertical-align:top;">:</td><td style="vertical-align:top;">${noBA}</td></tr>
-          <tr><td style="vertical-align:top;">Tanggal</td><td style="text-align:center; vertical-align:top;">:</td><td style="vertical-align:top;">${tglBA}</td></tr>
-        </table>
+  const page2 = `
+    <div class="pagebreak"></div>
+    <div class="${paperLandscapeClass}">
+      <div style="display:flex; justify-content:flex-end; margin-bottom:12px;">
+        <div style="width:30%; text-align:justify;">
+          <div style="margin-bottom:4px; font-size:10.5pt; font-weight:bold;">Lampiran Berita Acara Pencacahan</div>
+          <table style="border:none; width:100%; border-collapse:collapse; font-size:9.5pt;">
+            <tr><td style="width:25%; vertical-align:top;">Nomor</td><td style="width:4%; text-align:center; vertical-align:top;">:</td><td style="vertical-align:top;">${noBA}</td></tr>
+            <tr><td style="vertical-align:top;">Tanggal</td><td style="text-align:center; vertical-align:top;">:</td><td style="vertical-align:top;">${tglBA}</td></tr>
+          </table>
+        </div>
       </div>
-    </div>
-    
-    <table class="rtable" style="font-size:9pt; width:100%; border-collapse:collapse; border:1px solid #000; text-align:center;">
-      <thead>
-        <tr>
-          <th rowspan="3" style="text-align:center; width:4%; border:1px solid #000; padding:6px; vertical-align:middle;">No.</th>
-          <th rowspan="3" style="text-align:center; width:12%; border:1px solid #000; padding:6px; vertical-align:middle;">Kode Komoditi</th>
-          <th rowspan="3" style="text-align:center; width:20%; border:1px solid #000; padding:6px; vertical-align:middle;">Jenis / Uraian Barang</th>
-          <th colspan="6" style="text-align:center; border:1px solid #000; padding:5px;">Data Fisik & Pabean</th>
-          <th rowspan="3" style="text-align:center; width:18%; border:1px solid #000; padding:6px; vertical-align:middle;">Keterangan</th>
-        </tr>
-        <tr>
-          <th colspan="2" style="text-align:center; border:1px solid #000; padding:4px;">Ciri Khusus</th>
-          <th rowspan="2" style="text-align:center; width:8%; border:1px solid #000; padding:4px; vertical-align:middle;">Jumlah</th>
-          <th rowspan="2" style="text-align:center; width:7%; border:1px solid #000; padding:4px; vertical-align:middle;">Satuan</th>
-          <th rowspan="2" style="text-align:center; width:8%; border:1px solid #000; padding:4px; vertical-align:middle;">Neg. Asal</th>
-          <th rowspan="2" style="text-align:center; width:9%; border:1px solid #000; padding:4px; vertical-align:middle;">Kondisi</th>
-        </tr>
-        <tr>
-          <th style="text-align:center; border:1px solid #000; font-size:8pt; padding:3px; width:7%;">Merk</th>
-          <th style="text-align:center; border:1px solid #000; font-size:8pt; padding:3px; width:7%;">Tipe</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${items.length === 0 ? `
+      
+      <table class="rtable" style="font-size:9pt; width:100%; border-collapse:collapse; border:1px solid #000; text-align:center;">
+        <thead>
           <tr>
-            <td colspan="10" style="text-align:center; border:1px solid #000; padding:24px 14px; background:#fafafa;">
-              <div style="font-weight:bold; color:#b45309; font-size:10pt; margin-bottom:4px; display:flex; align-items:center; justify-content:center; gap:6px;">
-                <i class="fi fi-rr-exclamation"></i> Data Rincian Barang Hasil Pencacahan Belum Diisi
-              </div>
-              <div style="font-size:8.5pt; color:#64748b;">Silakan pilih filter dokumen <b>BA Cacah</b> di atas, lalu klik tombol <b>+ Tambah Barang Cacah</b> untuk memasukkan uraian barang agar muncul di baris tabel ini.</div>
-            </td>
-          </tr>` : 
-          items.map((x: any, i: number) => `<tr>
-            <td style="text-align:center; border:1px solid #000; vertical-align:top; padding:6px;">${i + 1}</td>
-            <td style="text-align:center; border:1px solid #000; vertical-align:top; padding:6px;">${escText(x.komoditi || getVal('Komoditi'))}</td>
-            <td style="text-align:left; border:1px solid #000; vertical-align:top; padding:6px;">${escText(x.uraian)}</td>
-            <td style="text-align:center; border:1px solid #000; vertical-align:top; padding:6px;">${escText(x.merek || (getVal('Merek') !== '-' ? getVal('Merek') : '-'))}</td>
-            <td style="text-align:center; border:1px solid #000; vertical-align:top; padding:6px;">${escText(x.tipe || (getVal('Tipe') !== '-' ? getVal('Tipe') : '-'))}</td>
-            <td style="text-align:center; border:1px solid #000; vertical-align:top; padding:6px;">${escText(x.jumlah)}</td>
-            <td style="text-align:center; border:1px solid #000; vertical-align:top; padding:6px;">${escText(getVal('Jenis_Koli'))}</td>
-            <td style="text-align:center; border:1px solid #000; vertical-align:top; padding:6px;">${escText(x.asal || '-')}</td>
-            <td style="text-align:center; border:1px solid #000; vertical-align:top; padding:6px;">${escText(x.kondisi)}</td>
-            <td style="text-align:left; border:1px solid #000; vertical-align:top; padding:6px;">${escText(x.keterangan || '-')}</td>
-          </tr>`).join('')}
-      </tbody>
-    </table>
-  </div>`;
+            <th rowspan="3" style="text-align:center; width:4%; border:1px solid #000; padding:6px; vertical-align:middle;">No.</th>
+            <th rowspan="3" style="text-align:center; width:12%; border:1px solid #000; padding:6px; vertical-align:middle;">Kode Komoditi</th>
+            <th rowspan="3" style="text-align:center; width:20%; border:1px solid #000; padding:6px; vertical-align:middle;">Jenis / Uraian Barang</th>
+            <th colspan="6" style="text-align:center; border:1px solid #000; padding:5px;">Data Fisik & Pabean</th>
+            <th rowspan="3" style="text-align:center; width:18%; border:1px solid #000; padding:6px; vertical-align:middle;">Keterangan</th>
+          </tr>
+          <tr>
+            <th colspan="2" style="text-align:center; border:1px solid #000; padding:4px;">Ciri Khusus</th>
+            <th rowspan="2" style="text-align:center; width:8%; border:1px solid #000; padding:4px; vertical-align:middle;">Jumlah</th>
+            <th rowspan="2" style="text-align:center; width:7%; border:1px solid #000; padding:4px; vertical-align:middle;">Satuan</th>
+            <th rowspan="2" style="text-align:center; width:8%; border:1px solid #000; padding:4px; vertical-align:middle;">Neg. Asal</th>
+            <th rowspan="2" style="text-align:center; width:9%; border:1px solid #000; padding:4px; vertical-align:middle;">Kondisi</th>
+          </tr>
+          <tr>
+            <th style="text-align:center; border:1px solid #000; font-size:8pt; padding:3px; width:7%;">Merk</th>
+            <th style="text-align:center; border:1px solid #000; font-size:8pt; padding:3px; width:7%;">Tipe</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${items.length === 0 ? `
+            <tr>
+              <td colspan="10" style="text-align:center; border:1px solid #000; padding:24px 14px; background:#fafafa;">
+                <div style="font-weight:bold; color:#b45309; font-size:10pt; margin-bottom:4px; display:flex; align-items:center; justify-content:center; gap:6px;">
+                  <i class="fi fi-rr-exclamation"></i> Data Rincian Barang Hasil Pencacahan Belum Diisi
+                </div>
+                <div style="font-size:8.5pt; color:#64748b;">Silakan pilih filter dokumen <b>BA Cacah</b> di atas, lalu klik tombol <b>+ Tambah Barang Cacah</b> untuk memasukkan uraian barang agar muncul di baris tabel ini.</div>
+              </td>
+            </tr>` :
+            items.map((x: any, i: number) => `<tr>
+              <td style="text-align:center; border:1px solid #000; vertical-align:top; padding:6px;">${i + 1}</td>
+              <td style="text-align:center; border:1px solid #000; vertical-align:top; padding:6px;">${escText(x.komoditi || getVal('Komoditi'))}</td>
+              <td style="text-align:left; border:1px solid #000; vertical-align:top; padding:6px;">${escText(x.uraian)}</td>
+              <td style="text-align:center; border:1px solid #000; vertical-align:top; padding:6px;">${escText(x.merek || (getVal('Merek') !== '-' ? getVal('Merek') : '-'))}</td>
+              <td style="text-align:center; border:1px solid #000; vertical-align:top; padding:6px;">${escText(x.tipe || (getVal('Tipe') !== '-' ? getVal('Tipe') : '-'))}</td>
+              <td style="text-align:center; border:1px solid #000; vertical-align:top; padding:6px;">${escText(x.jumlah)}</td>
+              <td style="text-align:center; border:1px solid #000; vertical-align:top; padding:6px;">${escText(getVal('Jenis_Koli'))}</td>
+              <td style="text-align:center; border:1px solid #000; vertical-align:top; padding:6px;">${escText(x.asal || '-')}</td>
+              <td style="text-align:center; border:1px solid #000; vertical-align:top; padding:6px;">${escText(x.kondisi)}</td>
+              <td style="text-align:left; border:1px solid #000; vertical-align:top; padding:6px;">${escText(x.keterangan || '-')}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
 
   return page1 + page2;
 }
 
+// ============================================================================
+// 6. TEMPLATE DOKUMEN: LEMBAR HASIL PENELITIAN (LHP)
+// ============================================================================
 export function LHP(): string {
-  let tglLHP = formatDate('Tanggal_LHP') !== '-' ? formatDate('Tanggal_LHP') : formatDate('Tanggal_LP_LP_1');
-  let rawJam = (document.getElementById('Jam_Kejadian') as HTMLInputElement) ? (document.getElementById('Jam_Kejadian') as HTMLInputElement).value.trim() : '';
-  let jamFormatted = rawJam ? rawJam.replace(':', '.') + ' WIB' : '-';
-
-  let tglDokPab = formatDate('Tanggal_Dokumen_Pemberitahuan');
-  let dokPabVal = getVal('Dokumen_Pemberitahuan');
-
-  let selJenis = (document.getElementById('Jenis_Dok_Pemberitahuan_Select') as HTMLSelectElement) ? (document.getElementById('Jenis_Dok_Pemberitahuan_Select') as HTMLSelectElement).value : '';
-  let jenisDok = selJenis === 'LAINNYA' 
-    ? ((document.getElementById('Jenis_Dok_Pemberitahuan_Manual') as HTMLInputElement) ? (document.getElementById('Jenis_Dok_Pemberitahuan_Manual') as HTMLInputElement).value.trim() : '') 
+  const tglLHP = formatDate('Tanggal_LHP') !== '-' ? formatDate('Tanggal_LHP') : formatDate('Tanggal_LP_LP_1');
+  const rawJam = (document.getElementById('Jam_Kejadian') as HTMLInputElement)?.value?.trim() || '';
+  const jamFormatted = rawJam ? rawJam.replace(':', '.') + ' WIB' : '-';
+  const tglDokPab = formatDate('Tanggal_Dokumen_Pemberitahuan');
+  const dokPabVal = getVal('Dokumen_Pemberitahuan');
+  const selJenis = (document.getElementById('Jenis_Dok_Pemberitahuan_Select') as HTMLSelectElement)?.value || '';
+  const jenisDok = selJenis === 'LAINNYA'
+    ? ((document.getElementById('Jenis_Dok_Pemberitahuan_Manual') as HTMLInputElement)?.value?.trim() || '')
     : (selJenis !== '-' ? selJenis : '');
-  let nomorDok = (document.getElementById('Nomor_Dok_Pemberitahuan') as HTMLInputElement) 
-    ? (document.getElementById('Nomor_Dok_Pemberitahuan') as HTMLInputElement).value.trim() 
-    : '';
-
+  const nomorDok = (document.getElementById('Nomor_Dok_Pemberitahuan') as HTMLInputElement)?.value?.trim() || '';
   let jenisDokPabeanDisplay = '-';
   let nomorTglPabeanDisplay = '-';
 
@@ -1198,9 +986,7 @@ export function LHP(): string {
   } else {
     let rawString = (jenisDok ? jenisDok + ' ' : '') + (nomorDok ? nomorDok : dokPabVal);
     rawString = rawString.trim().replace(/^nomor\s+/i, '').replace(/^no\.?\s+/i, '');
-
-    let matchBC = rawString.match(/^(BC\s*\d+(?:\.\d+)?|[A-Z]{2,10})\s*(?:nomor\s+|no\.?\s+)?(.*)$/i);
-
+    const matchBC = rawString.match(/^(BC\s*\d+(?:\.\d+)?|[A-Z]{2,10})\s*(?:nomor\s+|no\.?\s+)?(.*)$/i);
     let nomorSaja = '';
     if (matchBC) {
       jenisDokPabeanDisplay = escText(matchBC[1].trim());
@@ -1209,51 +995,37 @@ export function LHP(): string {
       jenisDokPabeanDisplay = escText(jenisDok || 'BC 2.0');
       nomorSaja = rawString;
     }
-
     nomorSaja = nomorSaja.replace(/^nomor\s+/i, '').replace(/^no\.?\s+/i, '').trim();
-
-    let partsNomorTgl: string[] = [];
-    if (nomorSaja) {
-      partsNomorTgl.push(escText(nomorSaja));
-    }
-    if (tglDokPab && tglDokPab !== '-') {
-      partsNomorTgl.push(`tanggal ${tglDokPab}`);
-    }
-
+    const partsNomorTgl: string[] = [];
+    if (nomorSaja) partsNomorTgl.push(escText(nomorSaja));
+    if (tglDokPab && tglDokPab !== '-') partsNomorTgl.push(`tanggal ${tglDokPab}`);
     nomorTglPabeanDisplay = partsNomorTgl.length > 0 ? partsNomorTgl.join(' ') : '-';
   }
 
-  let rec = (store.activeRecordIndex >= 0 && store.databasePerkara[store.activeRecordIndex]) ? store.databasePerkara[store.activeRecordIndex] : {};
-  let selPelengkap = (document.getElementById('Jenis_Dok_Pelengkap_Select') as HTMLSelectElement) ? (document.getElementById('Jenis_Dok_Pelengkap_Select') as HTMLSelectElement).value : (rec.Jenis_Dok_Pelengkap_Select || '-');
-  let manualPelengkap = (document.getElementById('Jenis_Dok_Pelengkap_Manual') as HTMLInputElement) ? (document.getElementById('Jenis_Dok_Pelengkap_Manual') as HTMLInputElement).value.trim() : (rec.Jenis_Dok_Pelengkap_Manual || '');
-  let nomorPelengkap = (document.getElementById('Nomor_Dok_Pelengkap') as HTMLInputElement) ? (document.getElementById('Nomor_Dok_Pelengkap') as HTMLInputElement).value.trim() : (rec.Nomor_Dok_Pelengkap || '');
-  let rawTglPelengkap = (document.getElementById('Tanggal_Dok_Pelengkap') as HTMLInputElement) ? (document.getElementById('Tanggal_Dok_Pelengkap') as HTMLInputElement).value : (rec.Tanggal_Dok_Pelengkap || '');
-  let tglPelengkapIndo = rawTglPelengkap ? formatDateIndo(rawTglPelengkap) : '';
-
+  const rec = (store.activeRecordIndex >= 0 && store.databasePerkara[store.activeRecordIndex]) ? store.databasePerkara[store.activeRecordIndex] : {};
+  const selPelengkap = (document.getElementById('Jenis_Dok_Pelengkap_Select') as HTMLSelectElement)?.value || (rec.Jenis_Dok_Pelengkap_Select || '-');
+  const manualPelengkap = (document.getElementById('Jenis_Dok_Pelengkap_Manual') as HTMLInputElement)?.value?.trim() || (rec.Jenis_Dok_Pelengkap_Manual || '');
+  const nomorPelengkap = (document.getElementById('Nomor_Dok_Pelengkap') as HTMLInputElement)?.value?.trim() || (rec.Nomor_Dok_Pelengkap || '');
+  const rawTglPelengkap = (document.getElementById('Tanggal_Dok_Pelengkap') as HTMLInputElement)?.value || (rec.Tanggal_Dok_Pelengkap || '');
+  const tglPelengkapIndo = rawTglPelengkap ? formatDateIndo(rawTglPelengkap) : '';
   let jenisPelengkapDisplay = '-';
   let nomorTglPelengkapDisplay = '-';
 
   if (selPelengkap !== '-' && selPelengkap !== '') {
     jenisPelengkapDisplay = selPelengkap === 'LAINNYA' ? (manualPelengkap || 'Lainnya') : selPelengkap;
-
-    let partsPelengkap: string[] = [];
-    if (nomorPelengkap) {
-      partsPelengkap.push(escText(nomorPelengkap));
-    }
-    if (tglPelengkapIndo && tglPelengkapIndo !== '-') {
-      partsPelengkap.push(`tanggal ${tglPelengkapIndo}`);
-    }
-
+    const partsPelengkap: string[] = [];
+    if (nomorPelengkap) partsPelengkap.push(escText(nomorPelengkap));
+    if (tglPelengkapIndo && tglPelengkapIndo !== '-') partsPelengkap.push(`tanggal ${tglPelengkapIndo}`);
     nomorTglPelengkapDisplay = partsPelengkap.length > 0 ? partsPelengkap.join(' ') : '-';
   }
 
-  let rawModus = getVal('Modus_Operandi');
-  let modusVerb = formatModusVerb(rawModus);
-  let modusClean = modusVerb.endsWith(';') ? modusVerb.slice(0, -1) : modusVerb;
-  let tglSplitDisplay = formatDate('Tanggal_SPLIT') !== '-' ? formatDate('Tanggal_SPLIT') : formatDate('Tanggal_LP_LP_1');
+  const rawModus = getVal('Modus_Operandi');
+  const modusVerb = formatModusVerb(rawModus);
+  const modusClean = modusVerb.endsWith(';') ? modusVerb.slice(0, -1) : modusVerb;
+  const tglSplitDisplay = formatDate('Tanggal_SPLIT') !== '-' ? formatDate('Tanggal_SPLIT') : formatDate('Tanggal_LP_LP_1');
 
-  return baseReport('LEMBAR HASIL PENELITIAN (LHP)', getDocNum('LHP'), false) + 
-  `<!-- HEADER ATAS -->
+  return baseReport('LEMBAR HASIL PENELITIAN (LHP)', getDocNum('lhp'), false) + `
+  <!-- HEADER ATAS -->
   <table class="rtable" style="margin-bottom:12px; width:100%; border-collapse:collapse; font-family:Arial, sans-serif; font-size:10pt; line-height:1.35; table-layout:fixed;">
     <colgroup>
       <col style="width:105px;">
@@ -1266,7 +1038,7 @@ export function LHP(): string {
     <tr>
       <td style="vertical-align:top; white-space:nowrap;">Nomor LP/LP-1</td>
       <td style="text-align:center; vertical-align:top;">:</td>
-      <td style="vertical-align:top;">${getDocNum('LP')}</td>
+      <td style="vertical-align:top;">${getDocNum('lpp')}</td>
       <td style="vertical-align:top; white-space:nowrap;">Tgl LP</td>
       <td style="text-align:center; vertical-align:top;">:</td>
       <td style="vertical-align:top; white-space:nowrap;">${formatDate('Tanggal_LP_LP_1')}</td>
@@ -1274,7 +1046,7 @@ export function LHP(): string {
     <tr>
       <td style="vertical-align:top; white-space:nowrap;">Nomor SPLIT</td>
       <td style="text-align:center; vertical-align:top;">:</td>
-      <td style="vertical-align:top;">${getDocNum('SPLIT')}</td>
+      <td style="vertical-align:top;">${getDocNum('split')}</td>
       <td style="vertical-align:top; white-space:nowrap;">Tgl SPLIT</td>
       <td style="text-align:center; vertical-align:top;">:</td>
       <td style="vertical-align:top; white-space:nowrap;">${tglSplitDisplay}</td>
@@ -1548,7 +1320,7 @@ export function LHP(): string {
   <div style="page-break-inside: avoid !important; margin-top:10px; font-family:Arial, sans-serif; font-size:10pt;">
     <div style="margin-bottom:3px; font-weight:bold;"><b>B. MODUS PELANGGARAN</b></div>
     <div style="border:1px solid #000; padding:6px 8px; text-align:justify; line-height:1.35;">
-      Pada hari ${getVal('Hari_SBP')}, tanggal ${formatDate('Tanggal_SBP')} sekitar pukul ${jamFormatted} di ${escText(getVal('Lokasi_Penindakan'))} Petugas ${escText(getVal('Kantor'))} telah melakukan Penindakan Terhadap ${escText(getVal('Nama_Pelaku'))} yang diduga ${modusClean} sesuai dengan Surat Bukti Penindakan nomor ${getDocNum('SBP')} tanggal ${formatDate('Tanggal_SBP')}, hal tersebut Diduga Melanggar Ketentuan ${escText(getVal('Pasal_Pelanggaran'))}.
+      Pada hari ${getVal('Hari_SBP')}, tanggal ${formatDate('Tanggal_SBP')} sekitar pukul ${jamFormatted} di ${escText(getVal('Lokasi_Penindakan'))} Petugas ${escText(getVal('Kantor'))} telah melakukan Penindakan Terhadap ${escText(getVal('Nama_Pelaku'))} yang diduga ${modusClean} sesuai dengan Surat Bukti Penindakan nomor ${getDocNum('sbp')} tanggal ${formatDate('Tanggal_SBP')}, hal tersebut Diduga Melanggar Ketentuan ${escText(getVal('Pasal_Pelanggaran'))}.
     </div>
   </div>
 
@@ -1589,6 +1361,7 @@ export function LHP(): string {
 
   <p style="margin-top:16px; margin-bottom:0; text-align:justify; font-family:Arial, sans-serif; font-size:10pt;">Demikian lembar hasil penelitian ini dibuat dengan kekuatan sumpah jabatan.</p>
   
+  <!-- BLOK TANDA TANGAN LHP -->
   <div style="page-break-inside: avoid !important; margin-top:20px; font-family:Arial, sans-serif; font-size:10pt;">
     <div style="display:flex; justify-content:flex-end;">
       <div style="width:40%; text-align:left;">
@@ -1620,26 +1393,12 @@ export function LHP(): string {
   </div></div>`;
 }
 
-(window as any).generateKopSurat = generateKopSurat;
-(window as any).getDocNum = getDocNum;
-
-// Alias fungsi format penomoran lama agar tetap kompatibel jika dipanggil di modul lain
-(window as any).fmtLP = (type?: string, custom?: string) => getDocNum('LP', custom);
-(window as any).fmtLPF = (type?: string, custom?: string) => getDocNum('LPF', custom);
-(window as any).fmtSBP = (type?: string, custom?: string) => getDocNum('SBP', custom);
-(window as any).fmtSprinIndak = (type?: string, custom?: string) => getDocNum('SPRIN_INDAK', custom);
-(window as any).fmtPrintCacah = (type?: string, custom?: string) => getDocNum('SPRIN_CACAH', custom);
-(window as any).fmtSplit = (type?: string, custom?: string) => getDocNum('SPLIT', custom);
-(window as any).fmtBA = (type?: string, custom?: string) => getDocNum('BA_CACAH', custom);
-(window as any).fmtLHP = (type?: string, custom?: string) => getDocNum('LHP', custom);
-
-(window as any).syncLPToDocs = syncLPToDocs;
-(window as any).baseReport = baseReport;
-(window as any).buildTableKv = buildTableKv;
-(window as any).handleSingleValidation = handleSingleValidation;
-(window as any).LPP = LPP;
-(window as any).LPF = LPF;
-(window as any).SPLIT = SPLIT;
-(window as any).SPRIN_CACAH = SPRIN_CACAH;
-(window as any).BA = BA;
-(window as any).LHP = LHP;
+// Window Global Binding
+if (typeof window !== 'undefined') {
+  (window as any).LPP = LPP;
+  (window as any).LPF = LPF;
+  (window as any).SPLIT = SPLIT;
+  (window as any).SPRIN_CACAH = SPRIN_CACAH;
+  (window as any).BA = BA;
+  (window as any).LHP = LHP;
+}

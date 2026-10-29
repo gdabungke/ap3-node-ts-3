@@ -61,4 +61,3 @@ export function loadPerkaraFromStorage() {
     catch (err) { }
     return store.databasePerkara;
 }
-//# sourceMappingURL=store.js.map

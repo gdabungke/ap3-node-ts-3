@@ -1,3 +1,13 @@
+/**
+ * ============================================================================
+ * MODUL         : EDITOR.TS
+ * DESKRIPSI     : Editor Interaktif, Dynamic Form Modals, Live Preview Render,
+ *                 dan Sinkronisasi Status Dokumen Laporan & Tindak Lanjut (AP3)
+ * AUTHOR/OWNER  : AP3 Development Team
+ * LAST UPDATED  : 2026
+ * ============================================================================
+ */
+
 import { store, savePerkaraToStorage } from '../state/store.js';
 import { 
   escText, 
@@ -7,7 +17,12 @@ import {
   autoGenerateTeksTanggalBA,
   terbilangHuruf
 } from '../utils/formatters.js';
-import { generateNextBookingNumber } from '../utils/generators.js';
+import { 
+  generateNextBookingNumber,
+  generateUraianBarangTeks,
+  generateKemasanTeks,
+  generateTeksDokumenEksPabean
+} from '../utils/generators.js';
 import { 
   autoPaginateReports, 
   applyPageNumbers, 
@@ -15,8 +30,9 @@ import {
   updatePreviewHeaderUI, 
   updateTLPreviewHeaderUI, 
   renderPageSelector 
-} from './ui.js';
-import { getDocNum, LPP, LPF, SPLIT, SPRIN_CACAH, BA, LHP } from '../templates/laporan.js';
+} from '../utils/ui.js';
+import { LPP, LPF, SPLIT, SPRIN_CACAH, BA, LHP } from '../templates/laporan.js';
+import { getDocNum } from '../templates/components.js';
 import { getTLNumFormat, BAST_PEMILIK, BA_SEGEL, KEP_BDN, SPSA, BAST_LIMPAH } from '../templates/tindaklanjut.js';
 import {
   MASTER_SATUAN_KOLI,
@@ -26,10 +42,19 @@ import {
   MASTER_GOLONGAN_PANGKAT,
   MASTER_JABATAN_DINAS,
   MASTER_JABATAN_TIM_PENELITI,
+  MASTER_JENIS_DOKUMEN_PABEAN,
   renderMasterOptions,
   populateSelectElement
 } from '../config/constants.js';
 
+/* ============================================================================
+ * [BAGIAN A] KONTROLLER & FORM EDITOR: MENU LAPORAN (BERKAS INTI)
+ * ----------------------------------------------------------------------------
+ * Pengelolaan state, tabel status dokumen, form modal dinamis, dan render preview
+ * Dokumen: LPP, LPF, SPLIT, SPRIN_CACAH, BA (Pencacahan), LHP
+ * ============================================================================ */
+
+// 1. Menyimpan nilai parameter dinamis form laporan ke state perkara aktif
 export function saveDynamicVal(id: string, val: string): void {
   let el = document.getElementById(id) as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
   if (el) el.value = val;
@@ -40,14 +65,7 @@ export function saveDynamicVal(id: string, val: string): void {
   updateReportLive();
 }
 
-export function saveDynamicValTL(key: string, val: string): void {
-  if (store.activeRecordIndex >= 0 && store.databasePerkara[store.activeRecordIndex]) {
-    store.databasePerkara[store.activeRecordIndex][key] = val;
-    savePerkaraToStorage();
-    refreshTLTableUI();
-  }
-}
-
+// 2. Memperbarui nomor, tanggal, dan status kelengkapan pada tabel menu Laporan
 export function refreshReportTableUI(): void {
   let elNumLPP = document.getElementById('table_num_LPP');
   if (elNumLPP) elNumLPP.textContent = getDocNum('LPP');
@@ -78,6 +96,7 @@ export function refreshReportTableUI(): void {
   updateDocumentStatuses();
 }
 
+// 3. Menghitung kelengkapan data dokumen Laporan (Badge: SIAP CETAK / BELUM LENGKAP)
 export function updateDocumentStatuses(): void {
   let docs = [
     { type: 'LPP', num: getDocNum('No_LPP'), date: getVal('Tanggal_LPP'), extra: getVal('Catatan_LPP') },
@@ -103,92 +122,7 @@ export function updateDocumentStatuses(): void {
   });
 }
 
-export function refreshTLTableUI(): void {
-  if (store.activeRecordIndex < 0) return;
-  let rec = store.databasePerkara[store.activeRecordIndex];
-  
-  let b1 = document.getElementById('tl_table_num_BAST_PEMILIK');
-  if (b1) b1.textContent = getTLNumFormat('BAST_PEMILIK');
-  let bd1 = document.getElementById('tl_table_date_BAST_PEMILIK');
-  if (bd1) bd1.textContent = formatDateIndo(rec.TL_Tanggal_Surat || rec.Tanggal_LP_LP_1);
-
-  let b2 = document.getElementById('tl_table_num_BA_SEGEL');
-  if (b2) b2.textContent = getTLNumFormat('BA_SEGEL');
-  let bd2 = document.getElementById('tl_table_date_BA_SEGEL');
-  if (bd2) bd2.textContent = formatDateIndo(rec.TL_Tanggal_Surat || rec.Tanggal_LP_LP_1);
-
-  let b3 = document.getElementById('tl_table_num_KEP_BDN');
-  if (b3) b3.textContent = getTLNumFormat('KEP_BDN');
-  let bd3 = document.getElementById('tl_table_date_KEP_BDN');
-  if (bd3) bd3.textContent = formatDateIndo(rec.KEP_Tanggal_ND || rec.Tanggal_LP_LP_1);
-
-  let b4 = document.getElementById('tl_table_num_SPSA');
-  if (b4) b4.textContent = getTLNumFormat('SPSA');
-  let bd4 = document.getElementById('tl_table_date_SPSA');
-  if (bd4) bd4.textContent = formatDateIndo(rec.SPSA_Tanggal || rec.Tanggal_LP_LP_1);
-
-  let b5 = document.getElementById('tl_table_num_BAST_LIMPAH');
-  if (b5) b5.textContent = getTLNumFormat('BAST_LIMPAH');
-  let bd5 = document.getElementById('tl_table_date_BAST_LIMPAH');
-  if (bd5) bd5.textContent = formatDateIndo(rec.Limpah_Tanggal || rec.Tanggal_LP_LP_1);
-
-  updateTLDocumentStatuses();
-  renderTLFormSection(store.currentTLDoc);
-  showTLReportView(store.currentTLDoc);
-}
-
-export function updateTLDocumentStatuses(): void {
-  if (store.activeRecordIndex < 0 || !store.databasePerkara[store.activeRecordIndex]) return;
-  let rec = store.databasePerkara[store.activeRecordIndex];
-
-  let docsTL = [
-    {
-      type: 'BAST_PEMILIK',
-      num: getTLNumFormat('BAST_PEMILIK'),
-      date: rec.TL_Tanggal_Surat || rec.Tanggal_LP_LP_1,
-      extra: rec.TL_Hari_BAST && rec.TL_Tgl_Huruf_BAST
-    },
-    {
-      type: 'BA_SEGEL',
-      num: getTLNumFormat('BA_SEGEL'),
-      date: rec.TL_Tanggal_Surat || rec.Tanggal_LP_LP_1,
-      extra: rec.TL_Segel_No_SPLI && rec.TL_Segel_Hari
-    },
-    {
-      type: 'KEP_BDN',
-      num: getTLNumFormat('KEP_BDN'),
-      date: rec.KEP_Tanggal_ND || rec.Tanggal_LP_LP_1,
-      extra: rec.KEP_Nomor_ND && rec.Kepala_Kantor
-    },
-    {
-      type: 'SPSA',
-      num: getTLNumFormat('SPSA'),
-      date: rec.SPSA_Tanggal || rec.Tanggal_LP_LP_1,
-      extra: rec.SPSA_Denda && rec.SPSA_Pasal_Pelanggaran
-    },
-    {
-      type: 'BAST_LIMPAH',
-      num: getTLNumFormat('BAST_LIMPAH'),
-      date: rec.Limpah_Tanggal || rec.Tanggal_LP_LP_1,
-      extra: rec.Instansi_Penerima && rec.Limpah_Pejabat_Penerima
-    }
-  ];
-
-  docsTL.forEach(d => {
-    let el = document.getElementById(`badge_status_${d.type}`);
-    if (!el) return;
-
-    let isComplete = d.num && d.num !== '-' && d.date && d.date !== '-' && d.extra && d.extra !== '-';
-    if (isComplete) {
-      el.className = 'badge-status badge-ready';
-      el.textContent = 'SIAP CETAK';
-    } else {
-      el.className = 'badge-status badge-warning';
-      el.textContent = 'BELUM LENGKAP';
-    }
-  });
-}
-
+// 4. Berpindah tab filter/tampilan dokumen Laporan
 export function switchDocTab(type: string): void {
   store.currentDoc = type;
   let sel = document.getElementById('docFilterSelect') as HTMLSelectElement;
@@ -202,19 +136,7 @@ export function switchDocTab(type: string): void {
   refreshReportTableUI();
 }
 
-export function switchTLDocTab(type: string): void {
-  store.currentTLDoc = type;
-  let sel = document.getElementById('tlDocFilterSelect') as HTMLSelectElement;
-  if (sel) sel.value = type;
-
-  let repContainer = document.getElementById('reports');
-  if (repContainer) repContainer.innerHTML = '';
-
-  updateTLPreviewHeaderUI(type);
-  renderTLFormSection(type);
-  showTLReportView(type);
-}
-
+// 5. Trigger live update tampilan pratinjau dokumen Laporan saat form diedit
 export function updateReportLive(): void {
   let sel = document.getElementById('docFilterSelect') as HTMLSelectElement;
   let activeType = sel ? sel.value : (store.currentDoc || 'LPP');
@@ -222,6 +144,7 @@ export function updateReportLive(): void {
   showReportView(activeType);
 }
 
+// 6. Merender HTML lembar cetak dokumen Laporan ke dalam container preview
 export function showReportView(type: string): void {
   let el = document.getElementById('reports');
   if (!el) return;
@@ -256,39 +179,7 @@ export function showReportView(type: string): void {
   navigatePreviewPage(0, 'reports');
 }
 
-export function showTLReportView(type: string): void {
-  let el = document.getElementById('tl_reports');
-  if (!el) return;
-
-  if (typeof updateTLPreviewHeaderUI === 'function') updateTLPreviewHeaderUI(type);
-
-  if (store.activeRecordIndex < 0) {
-    el.innerHTML = `<div class="report"><p>Silakan validasi SBP & LP untuk mencetak Dokumen Tindak Lanjut.</p></div>`;
-    renderPageSelector(0, 'tlPageSelectorContainer', 'tl_reports');
-    return;
-  }
-
-  if (type === 'ALL') {
-    let docsTL = [
-      { fn: BAST_PEMILIK, type: 'BAST_PEMILIK' },
-      { fn: BA_SEGEL, type: 'BA_SEGEL' },
-      { fn: KEP_BDN, type: 'KEP_BDN' },
-      { fn: SPSA, type: 'SPSA' },
-      { fn: BAST_LIMPAH, type: 'BAST_LIMPAH' }
-    ];
-    el.innerHTML = docsTL.map(d => d.fn()).join('<div class="pagebreak"></div>');
-  } else {
-    let f = ({ BAST_PEMILIK, BA_SEGEL, KEP_BDN, SPSA, BAST_LIMPAH } as any)[type];
-    if (f) {
-      el.innerHTML = f();
-    }
-  }
-
-  autoPaginateReports('tl_reports');
-  applyPageNumbers('tl_reports');
-  navigatePreviewPage(0, 'tl_reports');
-}
-
+// 7. Merender form input modal dinamis khusus dokumen Laporan
 export function renderDynamicInputs(type: string): void {
   let container = document.getElementById('modalDynamicInputBody');
   if (!container) return;
@@ -413,7 +304,6 @@ export function renderDynamicInputs(type: string): void {
     `;
     renderSplitPegawaiList();
   } else if (type === 'SPRIN_CACAH') {
-    let activeRec = store.databasePerkara[store.activeRecordIndex] || {};
     let nomorSprinCacahVal = activeRec.No_SPRIN_CACAH || '';
     let tanggalSprinCacahVal = activeRec.Tanggal_Sprin_Cacah && activeRec.Tanggal_Sprin_Cacah !== '-' ? activeRec.Tanggal_Sprin_Cacah : ((document.getElementById('Tanggal_SBP') as HTMLInputElement)?.value || '');
 
@@ -436,7 +326,6 @@ export function renderDynamicInputs(type: string): void {
     `;
     renderSprinPegawaiList();
   } else if (type === 'BA') {
-    let activeRec = store.databasePerkara[store.activeRecordIndex] || {};
     let nomorBaVal = activeRec.Nomor_BA || '';
     let tanggalBaVal = activeRec.Tanggal_BA && activeRec.Tanggal_BA !== '-' ? activeRec.Tanggal_BA : ((document.getElementById('Tanggal_SBP') as HTMLInputElement)?.value || '');
     
@@ -480,7 +369,6 @@ export function renderDynamicInputs(type: string): void {
     `;
     renderItems(items);
   } else if (type === 'LHP') {
-    let activeRec = store.databasePerkara[store.activeRecordIndex] || {};
     let nomorLhpVal = activeRec.Nomor_LHP || '';
     let tanggalLhpVal = activeRec.Tanggal_LHP && activeRec.Tanggal_LHP !== '-' ? activeRec.Tanggal_LHP : ((document.getElementById('Tanggal_LP_LP_1') as HTMLInputElement)?.value || '');
     let penyelesaianVal = activeRec.Penyelesaian_Perkara || activeRec.Alternatif_Penyelesaian_Perkara || '';
@@ -558,6 +446,7 @@ export function renderDynamicInputs(type: string): void {
   }
 }
 
+// 8. Logika otomatis narasi Alternatif Penyelesaian Perkara pada Dokumen LHP
 export function syncUraianKombinasiLHP(): void {
   const active: any = {};
   document.querySelectorAll('.chk-lhp-opsi:checked').forEach((c: any) => {
@@ -621,6 +510,7 @@ export function syncUraianKombinasiLHP(): void {
   }
 }
 
+// 9. Sub-item Barang pada Berita Acara Pencacahan (BA)
 export function renderItems(items: any[]): void {
   let c = document.getElementById('items');
   if (!c) return;
@@ -674,6 +564,7 @@ export function delItem(i: number): void {
   }
 }
 
+// 10. Daftar Pegawai Khusus Surat Perintah Penelitian (SPLIT)
 export function addSplitPegawai(): void {
   if (store.activeRecordIndex < 0) return;
   let rec = store.databasePerkara[store.activeRecordIndex];
@@ -751,6 +642,7 @@ export function delSplitPegawai(i: number): void {
   }
 }
 
+// 11. Daftar Petugas Pelaksana Pencacahan (SPRIN CACAH)
 export function addSprinPegawai(): void {
   if (store.activeRecordIndex < 0) return;
   let rec = store.databasePerkara[store.activeRecordIndex];
@@ -838,6 +730,160 @@ export function delSprinPegawai(i: number): void {
   }
 }
 
+
+/* ============================================================================
+ * [BAGIAN B] KONTROLLER & FORM EDITOR: MENU TINDAK LANJUT (EKSEKUSI LHP)
+ * ----------------------------------------------------------------------------
+ * Pengelolaan state, tabel status dokumen, form modal dinamis, dan render preview
+ * Dokumen: BAST_PEMILIK, BA_SEGEL, KEP_BDN, SPSA, BAST_LIMPAH
+ * ============================================================================ */
+
+// 1. Menyimpan nilai parameter dinamis form tindak lanjut ke state perkara aktif
+export function saveDynamicValTL(key: string, val: string): void {
+  if (store.activeRecordIndex >= 0 && store.databasePerkara[store.activeRecordIndex]) {
+    store.databasePerkara[store.activeRecordIndex][key] = val;
+    savePerkaraToStorage();
+    refreshTLTableUI();
+  }
+}
+
+// 2. Memperbarui nomor, tanggal, dan status kelengkapan pada tabel menu Tindak Lanjut
+export function refreshTLTableUI(): void {
+  if (store.activeRecordIndex < 0) return;
+  let rec = store.databasePerkara[store.activeRecordIndex];
+  
+  let b1 = document.getElementById('tl_table_num_BAST_PEMILIK');
+  if (b1) b1.textContent = getTLNumFormat('BAST_PEMILIK');
+  let bd1 = document.getElementById('tl_table_date_BAST_PEMILIK');
+  if (bd1) bd1.textContent = formatDateIndo(rec.TL_Tanggal_Surat || rec.Tanggal_LP_LP_1);
+
+  let b2 = document.getElementById('tl_table_num_BA_SEGEL');
+  if (b2) b2.textContent = getTLNumFormat('BA_SEGEL');
+  let bd2 = document.getElementById('tl_table_date_BA_SEGEL');
+  if (bd2) bd2.textContent = formatDateIndo(rec.TL_Tanggal_Surat || rec.Tanggal_LP_LP_1);
+
+  let b3 = document.getElementById('tl_table_num_KEP_BDN');
+  if (b3) b3.textContent = getTLNumFormat('KEP_BDN');
+  let bd3 = document.getElementById('tl_table_date_KEP_BDN');
+  if (bd3) bd3.textContent = formatDateIndo(rec.KEP_Tanggal_ND || rec.Tanggal_LP_LP_1);
+
+  let b4 = document.getElementById('tl_table_num_SPSA');
+  if (b4) b4.textContent = getTLNumFormat('SPSA');
+  let bd4 = document.getElementById('tl_table_date_SPSA');
+  if (bd4) bd4.textContent = formatDateIndo(rec.SPSA_Tanggal || rec.Tanggal_LP_LP_1);
+
+  let b5 = document.getElementById('tl_table_num_BAST_LIMPAH');
+  if (b5) b5.textContent = getTLNumFormat('BAST_LIMPAH');
+  let bd5 = document.getElementById('tl_table_date_BAST_LIMPAH');
+  if (bd5) bd5.textContent = formatDateIndo(rec.Limpah_Tanggal || rec.Tanggal_LP_LP_1);
+
+  updateTLDocumentStatuses();
+  renderTLFormSection(store.currentTLDoc);
+  showTLReportView(store.currentTLDoc);
+}
+
+// 3. Menghitung kelengkapan data dokumen Tindak Lanjut (Badge: SIAP CETAK / BELUM LENGKAP)
+export function updateTLDocumentStatuses(): void {
+  if (store.activeRecordIndex < 0 || !store.databasePerkara[store.activeRecordIndex]) return;
+  let rec = store.databasePerkara[store.activeRecordIndex];
+
+  let docsTL = [
+    {
+      type: 'BAST_PEMILIK',
+      num: getTLNumFormat('BAST_PEMILIK'),
+      date: rec.TL_Tanggal_Surat || rec.Tanggal_LP_LP_1,
+      extra: rec.TL_Hari_BAST && rec.TL_Tgl_Huruf_BAST
+    },
+    {
+      type: 'BA_SEGEL',
+      num: getTLNumFormat('BA_SEGEL'),
+      date: rec.TL_Tanggal_Surat || rec.Tanggal_LP_LP_1,
+      extra: rec.TL_Segel_No_SPLI && rec.TL_Segel_Hari
+    },
+    {
+      type: 'KEP_BDN',
+      num: getTLNumFormat('KEP_BDN'),
+      date: rec.KEP_Tanggal_ND || rec.Tanggal_LP_LP_1,
+      extra: rec.KEP_Nomor_ND && rec.Kepala_Kantor
+    },
+    {
+      type: 'SPSA',
+      num: getTLNumFormat('SPSA'),
+      date: rec.SPSA_Tanggal || rec.Tanggal_LP_LP_1,
+      extra: rec.SPSA_Denda && rec.SPSA_Pasal_Pelanggaran
+    },
+    {
+      type: 'BAST_LIMPAH',
+      num: getTLNumFormat('BAST_LIMPAH'),
+      date: rec.Limpah_Tanggal || rec.Tanggal_LP_LP_1,
+      extra: rec.Instansi_Penerima && rec.Limpah_Pejabat_Penerima
+    }
+  ];
+
+  docsTL.forEach(d => {
+    let el = document.getElementById(`badge_status_${d.type}`);
+    if (!el) return;
+
+    let isComplete = d.num && d.num !== '-' && d.date && d.date !== '-' && d.extra && d.extra !== '-';
+    if (isComplete) {
+      el.className = 'badge-status badge-ready';
+      el.textContent = 'SIAP CETAK';
+    } else {
+      el.className = 'badge-status badge-warning';
+      el.textContent = 'BELUM LENGKAP';
+    }
+  });
+}
+
+// 4. Berpindah tab filter/tampilan dokumen Tindak Lanjut
+export function switchTLDocTab(type: string): void {
+  store.currentTLDoc = type;
+  let sel = document.getElementById('tlDocFilterSelect') as HTMLSelectElement;
+  if (sel) sel.value = type;
+
+  let repContainer = document.getElementById('reports');
+  if (repContainer) repContainer.innerHTML = '';
+
+  updateTLPreviewHeaderUI(type);
+  renderTLFormSection(type);
+  showTLReportView(type);
+}
+
+// 5. Merender HTML lembar cetak dokumen Tindak Lanjut ke container preview
+export function showTLReportView(type: string): void {
+  let el = document.getElementById('tl_reports');
+  if (!el) return;
+
+  if (typeof updateTLPreviewHeaderUI === 'function') updateTLPreviewHeaderUI(type);
+
+  if (store.activeRecordIndex < 0) {
+    el.innerHTML = `<div class="report"><p>Silakan validasi SBP & LP untuk mencetak Dokumen Tindak Lanjut.</p></div>`;
+    renderPageSelector(0, 'tlPageSelectorContainer', 'tl_reports');
+    return;
+  }
+
+  if (type === 'ALL') {
+    let docsTL = [
+      { fn: BAST_PEMILIK, type: 'BAST_PEMILIK' },
+      { fn: BA_SEGEL, type: 'BA_SEGEL' },
+      { fn: KEP_BDN, type: 'KEP_BDN' },
+      { fn: SPSA, type: 'SPSA' },
+      { fn: BAST_LIMPAH, type: 'BAST_LIMPAH' }
+    ];
+    el.innerHTML = docsTL.map(d => d.fn()).join('<div class="pagebreak"></div>');
+  } else {
+    let f = ({ BAST_PEMILIK, BA_SEGEL, KEP_BDN, SPSA, BAST_LIMPAH } as any)[type];
+    if (f) {
+      el.innerHTML = f();
+    }
+  }
+
+  autoPaginateReports('tl_reports');
+  applyPageNumbers('tl_reports');
+  navigatePreviewPage(0, 'tl_reports');
+}
+
+// 6. Merender form input modal dinamis khusus dokumen Tindak Lanjut
 export function renderTLFormSection(type: string): void {
   let container = document.getElementById('modalDynamicInputBodyTL');
   if (!container) return;
@@ -851,36 +897,72 @@ export function renderTLFormSection(type: string): void {
     if (!rec.TL_BAST_SarkutList) {
       rec.TL_BAST_SarkutList = [{ jenis: rec.TL_Nama_Sarkut || rec.Pengangkut || '-', nopol: rec.TL_No_Reg_Sarkut || '-' }];
     }
+    
+    // Inisialisasi Barang Terpusat
     if (!rec.TL_BAST_BarangList) {
       let jmlKoli = rec.Jumlah_Koli || '1';
-      let teksJml = terbilangHuruf(jmlKoli);
       let jenisKoli = rec.Jenis_Koli || 'koli';
       let komoditi = rec.Komoditi || rec.Uraian_Barang || 'Barang Bukti';
-      
-      let defKemasan = (rec.No_Kontainer && rec.No_Kontainer !== '-') ? `${rec.No_Kontainer} / ${rec.Ukuran_Kontainer || ''}` : `${jmlKoli} ${jenisKoli}`;
-      let defBarang = `${jmlKoli} (${teksJml}) ${jenisKoli} ${komoditi}`;
+      let isFcl = !!(rec.No_Kontainer && rec.No_Kontainer !== '-');
+      let jnsKemasan = isFcl ? 'FCL' : (rec.Jenis_Kemasan || 'LCL');
+
+      let defKemasan = generateKemasanTeks({
+        jumlahKemasan: jmlKoli,
+        jenisKemasan: jnsKemasan,
+        nomorKontainer: isFcl ? `${rec.No_Kontainer}${rec.Ukuran_Kontainer ? ' / ' + rec.Ukuran_Kontainer : ''}` : ''
+      });
+
+      let defBarang = generateUraianBarangTeks({
+        jumlah: jmlKoli,
+        satuan: jenisKoli,
+        namaBarang: komoditi,
+        akhiranTipe: ''
+      });
+
       rec.TL_BAST_BarangList = [{ 
         jumlahKemasan: jmlKoli,
-        jenisKemasan: (rec.No_Kontainer && rec.No_Kontainer !== '-') ? 'FCL' : 'LCL',
+        jenisKemasan: jnsKemasan,
         nomorKontainer: rec.No_Kontainer || '',
         kemasan: defKemasan,
         jumlahBarang: jmlKoli,
         satuanBarang: jenisKoli,
         namaBarang: komoditi,
-        pakaiOpsiDll: false,
         tambahanAkhiran: '',
         uraian: defBarang 
       }];
     }
+
+    // Inisialisasi Dokumen Terpusat
     if (!rec.TL_BAST_DokumenList) {
       let jns = rec.Dokumen_Pemberitahuan || 'BC 2.0';
       let no = rec.Nomor_Dok_Pemberitahuan || '-';
-      let tgl = rec.Tanggal_Dokumen_Pemberitahuan ? formatDateIndo(rec.Tanggal_Dokumen_Pemberitahuan) : '-';
-      rec.TL_BAST_DokumenList = [{ uraian: `Eks. ${jns} nomor ${no} tanggal ${tgl}` }];
+      let tglRaw = rec.Tanggal_Dokumen_Pemberitahuan || '';
+      
+      rec.TL_BAST_DokumenList = [{
+        jenisDok: jns,
+        nomorDok: no,
+        tanggalDok: tglRaw,
+        uraian: generateTeksDokumenEksPabean(jns, no, tglRaw)
+      }];
     }
+
     if (!rec.TL_BAST_OrangList) {
       rec.TL_BAST_OrangList = [{ nama: '-', identitas: '-' }];
     }
+
+    (window as any).updateBastDokumenOtomatis = function(idx: number) {
+      let d = rec.TL_BAST_DokumenList[idx];
+      if (!d) return;
+
+      d.uraian = generateTeksDokumenEksPabean(
+        d.jenisDok || 'BC 2.0',
+        d.nomorDok || '-',
+        d.tanggalDok || ''
+      );
+
+      savePerkaraToStorage();
+      showTLReportView('BAST_PEMILIK');
+    };
 
     let selectedRangka = rec.TL_Rangka_Penyerahan || MASTER_RANGKA_PENYERAHAN[0];
     let isManualRangka = !MASTER_RANGKA_PENYERAHAN.includes(selectedRangka as any);
@@ -900,8 +982,8 @@ export function renderTLFormSection(type: string): void {
 
     (window as any).addBastItem = function(category: string) {
       if (category === 'sarkut') rec.TL_BAST_SarkutList.push({ jenis: '', nopol: '' });
-      if (category === 'barang') rec.TL_BAST_BarangList.push({ kemasan: '', uraian: '', jumlahKemasan: '', jenisKemasan: 'LCL', jumlahBarang: '', satuanBarang: 'koli', namaBarang: '' });
-      if (category === 'dokumen') rec.TL_BAST_DokumenList.push({ uraian: '' });
+      if (category === 'barang') rec.TL_BAST_BarangList.push({ kemasan: '', uraian: '', jumlahKemasan: '', jenisKemasan: 'LCL', nomorKontainer: '', jumlahBarang: '', satuanBarang: 'koli', namaBarang: '', tambahanAkhiran: '' });
+      if (category === 'dokumen') rec.TL_BAST_DokumenList.push({ jenisDok: 'BC 2.0', nomorDok: '', tanggalDok: '', uraian: '' });
       if (category === 'orang') rec.TL_BAST_OrangList.push({ nama: '', identitas: '' });
       savePerkaraToStorage();
       renderTLFormSection('BAST_PEMILIK');
@@ -918,39 +1000,32 @@ export function renderTLFormSection(type: string): void {
       showTLReportView('BAST_PEMILIK');
     };
 
-    // Fungsi otomatis penghasil teks uraian barang BAST
+    // Fungsi otomatis generator teks kemasan dan uraian barang BAST
     (window as any).updateBastBarangOtomatis = function(idx: number) {
       let b = rec.TL_BAST_BarangList[idx];
       if (!b) return;
 
-      // 1. Teks Kemasan
-      if (b.jenisKemasan === 'FCL' && b.nomorKontainer) {
-        b.kemasan = `${b.nomorKontainer}`;
-      } else if (b.jumlahKemasan && b.jenisKemasan) {
-        b.kemasan = `${b.jumlahKemasan} ${b.jenisKemasan}`;
-      }
+      b.kemasan = generateKemasanTeks({
+        jumlahKemasan: b.jumlahKemasan,
+        jenisKemasan: b.jenisKemasan,
+        nomorKontainer: b.nomorKontainer
+      });
 
-      // 2. Teks Uraian Barang
-      let jml = String(b.jumlahBarang || '').trim();
-      let satuan = b.satuanBarang || '';
-      let nama = (b.namaBarang || '').trim();
-
-      if (jml || nama) {
-        let tHuruf = jml ? ` (${terbilangHuruf(jml)})` : '';
-        let base = `${jml}${tHuruf} ${satuan} ${nama}`.replace(/\s+/g, ' ').trim();
-        if (b.pakaiOpsiDll) base += ', dll.';
-        if (b.tambahanAkhiran) base += b.tambahanAkhiran;
-        b.uraian = base;
-      }
+      b.uraian = generateUraianBarangTeks({
+        jumlah: b.jumlahBarang,
+        satuan: b.satuanBarang,
+        namaBarang: b.namaBarang,
+        akhiranTipe: b.tambahanAkhiran
+      });
 
       savePerkaraToStorage();
-      renderTLFormSection('BAST_PEMILIK');
       showTLReportView('BAST_PEMILIK');
     };
 
     const toLetter = (i: number) => String.fromCharCode(97 + i) + '.';
 
     container.innerHTML = `
+      <!-- 2. BARANG -->
       <div style="border:1px solid var(--border-color); padding:10px; border-radius:6px; margin-bottom:10px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
           <span style="font-size:11px; font-weight:700; color:#cbd5e1;">2. BARANG</span>
@@ -962,7 +1037,7 @@ export function renderTLFormSection(type: string): void {
           return `
             <div style="background:#1e293b; padding:10px; border-radius:6px; margin-bottom:8px; border:1px solid #334155;">
               <div style="font-weight:bold; font-size:11px; margin-bottom:6px; color:var(--primary); display:flex; justify-content:space-between;">
-                <span>${toLetter(idx)} Barang #${idx+1}</span>
+                <span>${toLetter(idx)} Barang #${idx+1}</span>${rec.TL_BAST_BarangList.length > 1 ? `<button type="button" class="btn danger" onclick="delBastItem('barang', ${idx})" style="padding:2px 8px; font-size:10px;">Hapus Barang Ini</button>` : ''}
               </div>
 
               <!-- Jml/Kemasan -->
@@ -975,7 +1050,7 @@ export function renderTLFormSection(type: string): void {
                   </div>
                   <div>
                     <label style="font-size:10px; color:#94a3b8;">Jenis Kemasan</label>
-                    <select onchange="rec.TL_BAST_BarangList[${idx}].jenisKemasan = this.value; updateBastBarangOtomatis(${idx});" style="width:100%; padding:6px; background:#0f172a; color:#fff; border:1px solid #475569; border-radius:4px; font-size:11px;">
+                    <select onchange="rec.TL_BAST_BarangList[${idx}].jenisKemasan = this.value; renderTLFormSection('BAST_PEMILIK'); updateBastBarangOtomatis(${idx});" style="width:100%; padding:6px; background:#0f172a; color:#fff; border:1px solid #475569; border-radius:4px; font-size:11px;">
                       ${renderMasterOptions(MASTER_JENIS_KEMASAN, b.jenisKemasan || '', '- Pilih Kemasan -')}
                     </select>
                   </div>
@@ -1011,51 +1086,70 @@ export function renderTLFormSection(type: string): void {
                 </div>
 
                 <div style="margin-bottom:6px;">
-                  <label style="font-size:10px; color:#94a3b8;">Nama Barang</label>
-                  <div style="display:flex; gap:8px; align-items:center;">
-                    <input value="${escText(b.namaBarang || '')}" placeholder="Contoh: Sepatu / Pakaian" oninput="rec.TL_BAST_BarangList[${idx}].namaBarang = this.value; updateBastBarangOtomatis(${idx});" style="flex:1; padding:6px; background:#0f172a; color:#fff; border:1px solid #475569; border-radius:4px; font-size:11px;">
-                    <label style="display:inline-flex; align-items:center; gap:4px; font-size:10px; cursor:pointer; color:#cbd5e1; white-space:nowrap; margin:0;">
-                      <input type="checkbox" ${b.pakaiOpsiDll ? 'checked' : ''} onchange="rec.TL_BAST_BarangList[${idx}].pakaiOpsiDll = this.checked; updateBastBarangOtomatis(${idx});">
-                      <span>...dll.</span>
-                    </label>
-                  </div>
+                  <label style="font-size:10px; color:#94a3b8;">Nama / Komoditi Barang</label>
+                  <input value="${escText(b.namaBarang || '')}" placeholder="Contoh: Sepatu Olahraga Pria" oninput="rec.TL_BAST_BarangList[${idx}].namaBarang = this.value; updateBastBarangOtomatis(${idx});" style="width:100%; padding:6px; background:#0f172a; color:#fff; border:1px solid #475569; border-radius:4px; font-size:11px;">
                 </div>
 
                 <div style="margin-bottom:6px;">
-                  <label style="font-size:10px; color:#cbd5e1;">Pilihan Tambahan Akhiran (Opsional)</label>
+                  <label style="font-size:10px; color:#cbd5e1;">Pilihan Tambahan Akhiran</label>
                   <select onchange="rec.TL_BAST_BarangList[${idx}].tambahanAkhiran = this.value; updateBastBarangOtomatis(${idx});" style="width:100%; padding:6px; background:#0f172a; color:#fff; border:1px solid #475569; border-radius:4px; font-size:11px;">
                     <option value="" ${!b.tambahanAkhiran ? 'selected' : ''}>- Tanpa Tambahan Akhiran -</option>
-                    <option value=" / Kain / Garmen" ${b.tambahanAkhiran === ' / Kain / Garmen' ? 'selected' : ''}> / Kain / Garmen</option>
-                    <option value=" / Barang Campuran" ${b.tambahanAkhiran === ' / Barang Campuran' ? 'selected' : ''}> / Barang Campuran</option>
+                    ${MASTER_AKHIRAN_BARANG.map(a => `<option value="${a.value}" ${b.tambahanAkhiran === a.value ? 'selected' : ''}>${a.label}</option>`).join('')}
                   </select>
                 </div>
 
                 <div style="margin-bottom:6px;">
-                  <label style="font-size:10px; color:#34d399;">Uraian Barang</label>
+                  <label style="font-size:10px; color:#34d399;">Uraian Barang (Otomatis)</label>
                   <input value="${escText(b.uraian || '')}" placeholder="Ketik atau sesuaikan uraian barang..." oninput="rec.TL_BAST_BarangList[${idx}].uraian = this.value; savePerkaraToStorage(); showTLReportView('BAST_PEMILIK');" style="width:100%; padding:6px; background:#0f172a; color:#34d399; border:1px solid #34d399; border-radius:4px; font-size:11px;">
                 </div>
               </div>
-
-              ${rec.TL_BAST_BarangList.length > 1 ? `<button type="button" class="btn danger" onclick="delBastItem('barang', ${idx})" style="padding:2px 8px; font-size:10px;">Hapus Barang Ini</button>` : ''}
             </div>
           `;
         }).join('')}
       </div>
 
+      <!-- 3. DOKUMEN -->
       <div style="border:1px solid var(--border-color); padding:10px; border-radius:6px; margin-bottom:10px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
           <span style="font-size:11px; font-weight:700; color:#cbd5e1;">3. DOKUMEN</span>
           <button type="button" class="btn primary" onclick="addBastItem('dokumen')" style="padding:2px 8px; font-size:11px;">+ Tambah Dokumen</button>
         </div>
         ${rec.TL_BAST_DokumenList.map((d: any, idx: number) => `
-          <div style="background:#1e293b; padding:8px; border-radius:4px; margin-bottom:6px;">
-            <div style="font-weight:bold; font-size:11px; margin-bottom:4px; color:var(--primary);">${toLetter(idx)} Dokumen #${idx+1}</div>
-            <input value="${escText(d.uraian)}" oninput="rec.TL_BAST_DokumenList[${idx}].uraian = this.value; savePerkaraToStorage(); showTLReportView('BAST_PEMILIK');">
-            ${rec.TL_BAST_DokumenList.length > 1 ? `<button type="button" class="btn danger" onclick="delBastItem('dokumen', ${idx})" style="margin-top:6px; padding:2px 8px; font-size:11px;">Hapus</button>` : ''}
+          <div style="background:#1e293b; padding:10px; border-radius:6px; margin-bottom:8px; border:1px solid #334155;">
+            <div style="font-weight:bold; font-size:11px; margin-bottom:6px; color:var(--primary);">${toLetter(idx)} Dokumen #${idx + 1}</div>
+            
+            <div class="grid3" style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px; margin-bottom:6px;">
+              <div>
+                <label style="font-size:10px; color:#94a3b8;">Jenis Dokumen</label>
+                <select onchange="rec.TL_BAST_DokumenList[${idx}].jenisDok = this.value; updateBastDokumenOtomatis(${idx});" style="width:100%; padding:6px; background:#0f172a; color:#fff; border:1px solid #475569; border-radius:4px; font-size:11px;">
+                  ${renderMasterOptions(MASTER_JENIS_DOKUMEN_PABEAN, d.jenisDok || 'BC 2.0', '- Pilih Jenis Dokumen -')}
+                </select>
+              </div>
+              <div>
+                <label style="font-size:10px; color:#94a3b8;">Nomor Dokumen</label>
+                <input value="${escText(d.nomorDok || '')}" placeholder="Contoh: 001234" oninput="rec.TL_BAST_DokumenList[${idx}].nomorDok = this.value; updateBastDokumenOtomatis(${idx});" style="width:100%; padding:6px; background:#0f172a; color:#fff; border:1px solid #475569; border-radius:4px; font-size:11px;">
+              </div>
+              <div>
+                <label style="font-size:10px; color:#94a3b8;">Tanggal Dokumen</label>
+                <input type="date" value="${escText(d.tanggalDok || '')}" onchange="rec.TL_BAST_DokumenList[${idx}].tanggalDok = this.value; updateBastDokumenOtomatis(${idx});" style="width:100%; padding:6px; background:#0f172a; color:#fff; border:1px solid #475569; border-radius:4px; font-size:11px;">
+              </div>
+            </div>
+
+            <div>
+              <label style="font-size:10px; color:#38bdf8;">Preview Uraian Dokumen</label>
+              <input value="${escText(d.uraian || '')}" oninput="rec.TL_BAST_DokumenList[${idx}].uraian = this.value; savePerkaraToStorage(); showTLReportView('BAST_PEMILIK');" style="width:100%; padding:6px; background:#0f172a; color:#38bdf8; border:1px solid #0284c7; border-radius:4px; font-size:11px;">
+            </div>
+
+            ${rec.TL_BAST_DokumenList.length > 1 ? `
+              <button type="button" class="btn danger" onclick="delBastItem('dokumen', ${idx})" style="margin-top:6px; padding:2px 8px; font-size:10px;">
+                <i class="fi fi-rr-trash"></i> Hapus Dokumen
+              </button>
+            ` : ''}
           </div>
         `).join('')}
       </div>
 
+      <!-- 4. ORANG -->
       <div style="border:1px solid var(--border-color); padding:10px; border-radius:6px; margin-bottom:10px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
           <span style="font-size:11px; font-weight:700; color:#cbd5e1;">4. ORANG</span>
@@ -1073,6 +1167,7 @@ export function renderTLFormSection(type: string): void {
         `).join('')}
       </div>
 
+      <!-- PENERIMA & RANGKA PENYERAHAN -->
       <div style="border:1px solid var(--border-color); padding:10px; border-radius:6px; margin-bottom:12px;">
         <span style="font-size:11px; font-weight:700; color:#cbd5e1;">PENERIMA & RANGKA PENYERAHAN</span>
         <div class="grid">
@@ -1106,6 +1201,7 @@ export function renderTLFormSection(type: string): void {
         </div>
       </div>
 
+      <!-- PETUGAS PENYERAH & SAKSI -->
       <div style="border:1px solid var(--border-color); padding:10px; border-radius:6px;">
         <span style="font-size:11px; font-weight:700; color:#cbd5e1;">PETUGAS PENYERAH & SAKSI</span>
         <div class="grid" style="margin-top:8px;">
@@ -1436,14 +1532,18 @@ export function renderTLFormSection(type: string): void {
   }
 }
 
+
+/* ============================================================================
+ * [BAGIAN C] GLOBAL WINDOW EXPOSURE
+ * ----------------------------------------------------------------------------
+ * Binding ke window object agar dapat dipanggil dari onclick / oninput atribut HTML.
+ * ============================================================================ */
+
+// Binding Menu Laporan
 (window as any).saveDynamicVal = saveDynamicVal;
-(window as any).saveDynamicValTL = saveDynamicValTL;
 (window as any).showReportView = showReportView;
-(window as any).showTLReportView = showTLReportView;
 (window as any).renderDynamicInputs = renderDynamicInputs;
-(window as any).renderTLFormSection = renderTLFormSection;
 (window as any).switchDocTab = switchDocTab;
-(window as any).switchTLDocTab = switchTLDocTab;
 (window as any).addItem = addItem;
 (window as any).delItem = delItem;
 (window as any).addSplitPegawai = addSplitPegawai;
@@ -1451,3 +1551,9 @@ export function renderTLFormSection(type: string): void {
 (window as any).addSprinPegawai = addSprinPegawai;
 (window as any).delSprinPegawai = delSprinPegawai;
 (window as any).syncUraianKombinasiLHP = syncUraianKombinasiLHP;
+
+// Binding Menu Tindak Lanjut
+(window as any).saveDynamicValTL = saveDynamicValTL;
+(window as any).showTLReportView = showTLReportView;
+(window as any).renderTLFormSection = renderTLFormSection;
+(window as any).switchTLDocTab = switchTLDocTab;

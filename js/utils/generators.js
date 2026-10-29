@@ -15,7 +15,7 @@
  *    pasal pelanggaran, serta rujukan dokumen pabean pada formulir BAST.
  * ============================================================================
  */
-import { terbilangHuruf, formatDate, formatDateIndo, formatModusVerb } from './formatters.js';
+import { terbilangHuruf, formatDate, formatDateIndo, formatModusVerb, formatProperCase } from './formatters.js';
 import { getAllGlobalRecords, extractDocSequenceNumber } from './validators.js';
 // ========================================================
 // 1. AUTO-BOOKING NOMOR SEKUANSIAL DOKUMEN
@@ -112,10 +112,29 @@ export function generateKemasanTeks(params) {
 export function generateKronologisTeks(params) {
     const { hari, tanggalRaw, jamKejadian = '', lokasi, pelaku, modusOperandi, kantor = 'Kantor Pelayanan Utama Bea dan Cukai Tipe B Batam' } = params;
     const tglIndo = formatDate(tanggalRaw);
-    const rawJam = jamKejadian.trim();
-    const jamFormatted = rawJam ? `${rawJam.replace(':', '.')} WIB` : '-';
-    const cleanModus = formatModusVerb(modusOperandi).replace(/[;:]+$/, '').trim();
-    return `Pada hari ${hari || '-'}, tanggal ${tglIndo} sekira pukul ${jamFormatted} di ${lokasi || '-'} telah dilakukan penindakan oleh Petugas ${kantor} terhadap ${pelaku || '-'} yang ${cleanModus}.`;
+    // Format waktu kejadian
+    const rawJam = (jamKejadian || '').trim();
+    let jamStr = '';
+    if (rawJam && rawJam !== '-') {
+        const jamClean = rawJam.replace(':', '.').replace(/wib/gi, '').trim();
+        jamStr = `sekira pukul ${jamClean} WIB `;
+    }
+    // Format entitas menggunakan formatProperCase
+    const hariFmt = formatProperCase(hari || '-');
+    const lokasiFmt = formatProperCase(lokasi || '-');
+    const kantorFmt = formatProperCase(kantor);
+    const pelakuFmt = formatProperCase(pelaku || '-');
+    // 1. Eksekusi formatModusVerb (hanya ubah kata kerja depan)
+    let cleanModus = formatModusVerb(modusOperandi).replace(/[;:]+$/, '').trim();
+    // 2. Hilangkan kata "yang" ganda jika dari input modus sudah membawa kata "yang"
+    if (cleanModus.toLowerCase().startsWith('yang ')) {
+        cleanModus = cleanModus.slice(5).trim();
+    }
+    // 3. Rapikan teks sisa modus yang masih all-caps seperti TANPA/SALAH atau DAN/ATAU
+    cleanModus = cleanModus
+        .replace(/\bTANPA\/SALAH\b/gi, 'tanpa/salah')
+        .replace(/\bDAN\/ATAU\b/gi, 'dan/atau');
+    return `Pada hari ${hariFmt}, tanggal ${tglIndo} ${jamStr}di ${lokasiFmt} telah dilakukan penindakan oleh Petugas ${kantorFmt} terhadap ${pelakuFmt} yang ${cleanModus}.`;
 }
 // ========================================================
 // 5. GENERATOR KESIMPULAN DUGAAN PELANGGARAN PASAL
