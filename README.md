@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="assets/logo.png" alt="Logo Aplikasi" width="120" height="auto" />
+  <img src="assets/logo.svg" alt="Logo AP3" width="140" height="auto" />
   
   # AP3 (Aplikasi Pelaporan & Penanganan Perkara)
   
@@ -12,7 +12,7 @@
     <img src="https://img.shields.io/badge/Node.js-339933?style=flat-square&logo=nodedotjs&logoColor=white" alt="Node.js" />
     <img src="https://img.shields.io/badge/HTML5-E34F26?style=flat-square&logo=html5&logoColor=white" alt="HTML5" />
     <img src="https://img.shields.io/badge/CSS3-1572B6?style=flat-square&logo=css3&logoColor=white" alt="CSS3" />
-    <img src="https://img.shields.io/badge/Status-Active%20Development-blue?style=flat-square" alt="Status" />
+    <img src="https://img.shields.io/badge/License-Proprietary%20Internal-amber?style=flat-square" alt="License" />
   </p>
 </div>
 
@@ -20,7 +20,7 @@
 
 ## 📌 Tentang Aplikasi
 
-**AP3 (Aplikasi Pelaporan & Penanganan Perkara)** dirancang untuk mempermudah, mengotomatisasi, serta menstandardisasi alur penatausahaan administrasi penindakan dan penyidikan. Aplikasi ini menangani pencatatan surat penindakan, disposisi berkas, verifikasi alur operasional, hingga pencetakan laporan resmi dengan format kode surat instansi yang konsisten dan akurat.
+**AP3 (Aplikasi Pelaporan & Penanganan Perkara)** dirancang untuk mempermudah, mengotomatisasi, serta menstandardisasi alur penatausahaan administrasi penindakan dan penyidikan. Aplikasi ini menangani pencatatan surat penindakan, disposisi berkas perkara, verifikasi alur operasional, hingga pembuatan laporan resmi dengan format penomoran surat instansi yang konsisten dan akurat.
 
 ---
 
@@ -28,17 +28,17 @@
 
 - **Pencatatan & Otomasi Penomoran Dokumen**
   - Konversi otomatis input angka menjadi format baku instansi untuk dokumen **LP**, **SBP**, dan **SPRIN**.
-  - Deteksi otomatis status penangkapan (Mandiri / Limpahan) pada struktur nomor surat.
-  - Skema *focus-to-edit* dan *blur-to-format* untuk kemudahan pengisian data.
+  - Deteksi otomatis status penangkapan (*Mandiri* / *Limpahan*) pada struktur nomor surat.
+  - Skema *focus-to-edit* dan *blur-to-format* langsung pada kotak isian tanpa teks pratinjau ganda.
 
 - **Alur Kerja & Disposisi Berkas (Workflow)**
   - Pengusulan berkas dari unit operasional/penindakan ke seksi penyidikan.
   - Mekanisme telaah, persetujuan (*Terima*), atau penolakan (*Tolak*) disposisi oleh ketua tim peneliti / penyidik.
-  - Notifikasi dan riwayat disposisi berkas secara terpusat.
+  - Notifikasi dan riwayat disposisi berkas terintegrasi.
 
 - **Auto-Booking Administrasi Lanjutan**
   - Penomoran otomatis berurutan (*auto-booking*) untuk dokumen awal: **LPP**, **LPF**, dan **SPLIT**.
-  - Penyesuaian fleksibel untuk administrasi situasional seperti pencacahan (**SPRIN Cacah**, **BA**, **LHP**).
+  - Penyesuaian fleksibel untuk administrasi situasional pencacahan (**SPRIN Cacah**, **BA**, **LHP**).
 
 - **Sinkronisasi Otomatis Data Penindakan**
   - Kalkulasi otomatis hari kejadian berdasarkan input tanggal penindakan.
@@ -53,10 +53,10 @@
 
 ## 🛠️ Arsitektur & Teknologi
 
-- **Bahasa Pemrograman:** [TypeScript](https://www.typescriptlang.org/) (ESNext / Strict Type Checking)
+- **Bahasa Pemrograman:** [TypeScript](https://www.typescriptlang.org/) (ESNext / Strict Mode)
 - **Runtime & Modul:** Node.js, Native ES Modules (`.js` output)
 - **Penyimpanan State:** Local Client State & REST API Backend
-- **Tampilan:** Vanilla HTML5 / Modern CSS (Custom Design System dengan skema warna gelap & aksen keemasan)
+- **Tampilan:** Vanilla HTML5 / Modern CSS (Custom Dark UI Theme dengan aksen warna keemasan `#f59e0b`)
 
 ---
 
@@ -64,7 +64,7 @@
 
 ```text
 ├── assets/
-│   └── logo.png                  # Aset logo resmi aplikasi
+│   └── logo.svg                  # Berkas logo vektor resmi aplikasi
 ├── src/
 │   ├── client/
 │   │   ├── config/
@@ -83,6 +83,7 @@
 │   │       ├── generators.ts     # Generator nomor booking berkas
 │   │       ├── ui.ts             # Notifikasi toast dan dialog konfirmasi
 │   │       └── validators.ts     # Validasi konsistensi dokumen operasional
-│   └── server/                   # Endpoint API dan persistensi konfigurasi
+│   └── server/                   # Endpoint API dan persistensi data
 ├── tsconfig.json                 # Konfigurasi TypeScript compiler
-└── package.json                  # Dependensi dan skrip proyek
+├── package.json                  # Dependensi dan skrip proyek
+└── LICENSE                       # Lisensi hak cipta internal
