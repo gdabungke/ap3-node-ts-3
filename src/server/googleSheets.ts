@@ -1,18 +1,34 @@
 import { google } from 'googleapis';
 import path from 'path';
+import fs from 'fs';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-const keyFilePath = path.resolve(process.env.GOOGLE_APPLICATION_CREDENTIALS || './google-service-account.json');
+const keyFilePath = path.resolve(
+  process.env.GOOGLE_APPLICATION_CREDENTIALS || './google-service-account.json'
+);
 const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID || '';
 
-const auth = new google.auth.GoogleAuth({
-  keyFile: keyFilePath,
-  scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-});
+// 1. Periksa ketersediaan konfigurasi untuk mode lokal vs cloud
+const isConfigured = Boolean(spreadsheetId && fs.existsSync(keyFilePath));
 
-const sheets = google.sheets({ version: 'v4', auth });
+let sheets: ReturnType<typeof google.sheets> | null = null;
+
+if (isConfigured) {
+  try {
+    const auth = new google.auth.GoogleAuth({
+      keyFile: keyFilePath,
+      scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+    });
+    sheets = google.sheets({ version: 'v4', auth });
+    console.log('[Sheets] Integrasi Google Sheets aktif.');
+  } catch (err) {
+    console.warn('[Sheets] Gagal inisialisasi Google Sheets, beralih ke mode offline.');
+  }
+} else {
+  console.log('[Sheets] Mode Offline/Lokal aktif (file kredensial atau Spreadsheet ID belum diatur).');
+}
 
 export interface PerkaraData {
   NoLP: string;
@@ -32,12 +48,16 @@ export interface PerkaraData {
  * Menyimpan 1 baris data perkara ke Google Sheets
  */
 export async function appendPerkaraToSheet(data: PerkaraData) {
-  if (!spreadsheetId) {
-    throw new Error('GOOGLE_SPREADSHEET_ID belum dikonfigurasi di file .env');
+  if (!isConfigured || !sheets) {
+    return {
+      simulated: true,
+      message: 'Mode lokal: Sinkronisasi Google Sheets dilewati (data tersimpan di database lokal).',
+      payload: data
+    };
   }
 
   const rowValues = [
-    new Date().toISOString(), // Timestamp pengujian
+    new Date().toISOString(),
     data.NoLP || '-',
     data.Nomor_SBP || '-',
     data.No_SPRIN_Indak || '-',
@@ -68,8 +88,8 @@ export async function appendPerkaraToSheet(data: PerkaraData) {
  * Mengambil seluruh data perkara dari Google Sheets
  */
 export async function getPerkaraFromSheet() {
-  if (!spreadsheetId) {
-    throw new Error('GOOGLE_SPREADSHEET_ID belum dikonfigurasi di file .env');
+  if (!isConfigured || !sheets) {
+    return [];
   }
 
   const response = await sheets.spreadsheets.values.get({

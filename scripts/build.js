@@ -6,11 +6,15 @@ const PUBLIC_DIR = path.resolve('public');
 const SRC_CLIENT = path.resolve('src/client/app.ts');
 const INDEX_HTML_SRC = path.resolve('index.html');
 const INDEX_HTML_DIST = path.resolve('public/index.html');
-const CSS_DIR = path.resolve('public/css');
 
-console.log('📦 Memulai bundling, minifikasi, dan pengacakan aset...');
+// 1. Jalur Sumber CSS dan Assets
+const CSS_DIR = path.resolve('src/client/css');
+const ASSETS_SRC = path.resolve('src/client/assets');
+const ASSETS_DIST = path.resolve('public/assets');
 
-// 1. Bersihkan sisa JS/CSS bundle acak dari build sebelumnya
+console.log('📦 Memulai proses ultra-build frontend...');
+
+// 2. Bersihkan sisa JS/CSS bundle dari build sebelumnya di folder public
 if (fs.existsSync(PUBLIC_DIR)) {
   const files = fs.readdirSync(PUBLIC_DIR);
   for (const file of files) {
@@ -25,11 +29,20 @@ if (fs.existsSync(PUBLIC_DIR)) {
   fs.mkdirSync(PUBLIC_DIR, { recursive: true });
 }
 
-// 2. Bundel JavaScript ke format acak tunggal
+// 3. Salin folder assets ke public
+if (fs.existsSync(ASSETS_SRC)) {
+  fs.cpSync(ASSETS_SRC, ASSETS_DIST, { recursive: true, force: true });
+}
+
+// 4. Bundel & Optimasi JavaScript
 const jsResult = await esbuild.build({
   entryPoints: [SRC_CLIENT],
   bundle: true,
   minify: true,
+  treeShaking: true,
+  legalComments: 'none',
+  drop: ['console', 'debugger'],
+  target: ['es2020'],
   metafile: true,
   entryNames: '[name].[hash]',
   outdir: 'public',
@@ -39,22 +52,26 @@ const jsResult = await esbuild.build({
 
 const jsOutputs = Object.keys(jsResult.metafile.outputs);
 const jsOutputFile = jsOutputs.find(f => f.endsWith('.js'));
+const jsPublicPath = path.resolve(jsOutputFile);
 const randomJsName = '/' + path.basename(jsOutputFile);
 
-// 3. Baca dan gabungkan seluruh isi CSS sebelum foldernya dihapus
+// Hapus komentar HTML HANYA dari file bundel JS di folder public (file sumber ts tidak disentuh)
+if (fs.existsSync(jsPublicPath)) {
+  let bundledJs = fs.readFileSync(jsPublicPath, 'utf8');
+  bundledJs = bundledJs.replace(/<!--[\s\S]*?-->/g, '');
+  fs.writeFileSync(jsPublicPath, bundledJs, 'utf8');
+}
+
+// 5. Gabungkan dan Kompres Maksimal CSS ke public
 let combinedCss = '';
 if (fs.existsSync(CSS_DIR)) {
   const cssOrder = ['main.css', 'layout.css', 'components.css', 'print.css'];
-  
-  // Baca file CSS sesuai urutan hierarki
   for (const file of cssOrder) {
     const fullPath = path.join(CSS_DIR, file);
     if (fs.existsSync(fullPath)) {
       combinedCss += fs.readFileSync(fullPath, 'utf8') + '\n';
     }
   }
-
-  // Jika ada file CSS lain di folder tersebut yang belum terbaca
   const allCss = fs.readdirSync(CSS_DIR).filter(f => f.endsWith('.css'));
   for (const file of allCss) {
     if (!cssOrder.includes(file)) {
@@ -63,47 +80,45 @@ if (fs.existsSync(CSS_DIR)) {
   }
 }
 
-// 4. Minifikasi CSS gabungan & simpan dengan nama acak
-const cssMinified = await esbuild.transform(combinedCss, { loader: 'css', minify: true });
+const cssMinified = await esbuild.transform(combinedCss, {
+  loader: 'css',
+  minify: true,
+  legalComments: 'none'
+});
+
 const cssHash = Math.random().toString(36).substring(2, 10).toUpperCase();
 const randomCssName = `/style.${cssHash}.css`;
 fs.writeFileSync(path.join(PUBLIC_DIR, `style.${cssHash}.css`), cssMinified.code, 'utf8');
 
-// 5. Hapus folder public/css dan public/js (Folder assets/img tetap dipertahankan)
-if (fs.existsSync(CSS_DIR)) {
-  fs.rmSync(CSS_DIR, { recursive: true, force: true });
-}
-const JS_DIR = path.join(PUBLIC_DIR, 'js');
-if (fs.existsSync(JS_DIR)) {
-  fs.rmSync(JS_DIR, { recursive: true, force: true });
-}
+console.log(`✅ JS terkompresi : ${randomJsName}`);
+console.log(`✅ CSS terkompresi: ${randomCssName}`);
 
-console.log(`✅ JS teracak dibuat  : ${randomJsName}`);
-console.log(`✅ CSS teracak dibuat : ${randomCssName}`);
-console.log('🧹 Folder css/ dan js/ berhasil dibersihkan.');
-
-// 6. Sinkronkan public/index.html dengan aset teracak baru
+// 6. Sinkronkan & Minifikasi public/index.html saja
 let htmlContent = fs.readFileSync(INDEX_HTML_SRC, 'utf8');
 
-// Bersihkan link CSS dan tag script JS lama
 htmlContent = htmlContent.replace(/<link\s+rel="stylesheet"[^>]*css\/[^>]*>/gi, '');
 htmlContent = htmlContent.replace(/<script\b[^>]*src="[^"]*"[^>]*><\/script>/gi, '');
 
-// Sisipkan CSS acak di dalam <head>
 htmlContent = htmlContent.replace(
   '</head>',
-  `  <link rel="stylesheet" href="${randomCssName}">\n</head>`
+  `<link rel="stylesheet" href="${randomCssName}"></head>`
 );
 
-// Sisipkan JS acak sebelum penutup </body>
 if (htmlContent.includes('</body>')) {
   htmlContent = htmlContent.replace(
     '</body>',
-    `  <script type="module" src="${randomJsName}"></script>\n</body>`
+    `<script type="module" src="${randomJsName}"></script></body>`
   );
 } else {
-  htmlContent += `\n<script type="module" src="${randomJsName}"></script>`;
+  htmlContent += `<script type="module" src="${randomJsName}"></script>`;
 }
 
+// Bersihkan komentar HTML dan spasi berlebih hanya untuk public/index.html
+htmlContent = htmlContent
+  .replace(/<!--[\s\S]*?-->/g, '')
+  .replace(/>\s+</g, '><')
+  .trim();
+
 fs.writeFileSync(INDEX_HTML_DIST, htmlContent, 'utf8');
-console.log('🚀 public/index.html selesai dirakit!');
+
+console.log('🚀 Build client selesai! File asli tetap utuh, file public bersih.');

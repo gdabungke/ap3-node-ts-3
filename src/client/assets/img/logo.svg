@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Gradasi Latar Belakang Perisai Gelap -->
+    <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b" />
+      <stop offset="100%" stop-color="#0f172a" />
+    </linearGradient>
+
+    <!-- Gradasi Emas (Sesuai Tombol Simpan Perkara #f59e0b) -->
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24" />
+      <stop offset="50%" stop-color="#f59e0b" />
+      <stop offset="100%" stop-color="#d97706" />
+    </linearGradient>
+
+    <!-- Gradasi Biru Logika Operasional -->
+    <linearGradient id="blueGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#0284c7" />
+    </linearGradient>
+
+    <!-- Efek Bayangan Lembut -->
+    <filter id="dropShadow" x="-10%" y="-10%" width="125%" height="125%">
+      <feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#000000" flood-opacity="0.5" />
+    </filter>
+  </defs>
+
+  <!-- 1. Perisai Pelindung Utama (Penindakan & Pengawasan) -->
+  <path d="M 256,32 
+           C 370,32 432,80 432,80 
+           C 432,240 376,384 256,464 
+           C 136,384 80,240 80,80 
+           C 80,80 142,32 256,32 Z" fill="url(#shieldGrad)" stroke="url(#goldGrad)" stroke-width="14" stroke-linejoin="round" filter="url(#dropShadow)" />
+
+  <!-- 2. Lis Perisai Dalam -->
+  <path d="M 256,54 
+           C 352,54 406,94 406,94 
+           C 406,230 358,358 256,432 
+           C 154,358 106,230 106,94 
+           C 106,94 160,54 256,54 Z" fill="none" stroke="#334155" stroke-width="3" stroke-dasharray="8 6" />
+
+  <!-- 3. Ikon Dokumen Berkas Perkara (LP/SBP/SPRIN) -->
+  <g transform="translate(186, 120)" filter="url(#dropShadow)">
+    <!-- Kertas Utama -->
+    <path d="M 0,16 C 0,7 7,0 16,0 L 96,0 L 140,44 L 140,184 C 140,193 133,200 124,200 L 16,200 C 7,200 0,193 0,184 Z" fill="#0b1329" stroke="url(#blueGrad)" stroke-width="7" />
+    <!-- Lipatan Kertas Sudut Kanan Atas -->
+    <path d="M 96,0 L 96,44 L 140,44 Z" fill="url(#blueGrad)" />
+    <!-- Garis Baris Berkas -->
+    <line x1="26" y1="74" x2="114" y2="74" stroke="#475569" stroke-width="6" stroke-linecap="round" />
+    <line x1="26" y1="104" x2="114" y2="104" stroke="#475569" stroke-width="6" stroke-linecap="round" />
+    <line x1="26" y1="134" x2="80" y2="134" stroke="#475569" stroke-width="6" stroke-linecap="round" />
+  </g>
+
+  <!-- 4. Timbangan Keadilan / Penyidikan (Warna Emas) -->
+  <g transform="translate(256, 210)" stroke="url(#goldGrad)" stroke-linecap="round" stroke-linejoin="round" filter="url(#dropShadow)">
+    <!-- Tiang Utama & Balok Horizontal -->
+    <line x1="0" y1="0" x2="0" y2="175" stroke-width="8" />
+    <line x1="-95" y1="36" x2="95" y2="36" stroke-width="8" />
+    
+    <!-- Dudukan / Ornamen Tiang -->
+    <circle cx="0" cy="0" r="10" fill="#f59e0b" stroke="none" />
+    <path d="M -35,175 L 35,175" stroke-width="10" />
+
+    <!-- Piringan Kiri -->
+    <line x1="-95" y1="36" x2="-130" y2="100" stroke-width="4" />
+    <line x1="-95" y1="36" x2="-60" y2="100" stroke-width="4" />
+    <path d="M -145,100 C -145,128 -45,128 -45,100 Z" fill="url(#goldGrad)" stroke="none" />
+
+    <!-- Piringan Kanan -->
+    <line x1="95" y1="36" x2="60" y2="100" stroke-width="4" />
+    <line x1="95" y1="36" x2="130" y2="100" stroke-width="4" />
+    <path d="M 45,100 C 45,128 145,128 145,100 Z" fill="url(#goldGrad)" stroke="none" />
+  </g>
+
+  <!-- 5. Teks Singkatan "AP3" Di Pita Bawah -->
+  <g transform="translate(256, 430)">
+    <rect x="-85" y="-22" width="170" height="40" rx="8" fill="#0f172a" stroke="url(#goldGrad)" stroke-width="4" />
+    <text x="0" y="7" font-family="system-ui, -apple-system, &#39;Segoe UI&#39;, Roboto, sans-serif" font-size="24" font-weight="900" letter-spacing="4" fill="#f59e0b" text-anchor="middle">AP3</text>
+  </g>
+</svg>

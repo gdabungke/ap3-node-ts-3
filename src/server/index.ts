@@ -4,25 +4,20 @@ import path from 'path';
 import fs from 'fs';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
-
 import authRouter from './routes/auth.js';
 import perkaraRouter from './routes/perkara.js';
 import disposisiRouter from './routes/disposisi.js';
 import { appendPerkaraToSheet, getPerkaraFromSheet, PerkaraData } from './googleSheets.js';
+import compression from 'compression';
 
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Resolusi jalur direktori utama secara absolut
+// Resolusi jalur direktori
 const ROOT_DIR: string = path.resolve(__dirname, '../../');
-const PUBLIC_DIR: string = fs.existsSync(path.join(ROOT_DIR, 'public')) ? path.join(ROOT_DIR, 'public') : ROOT_DIR;
-const HTML_DIR: string = path.join(ROOT_DIR, 'html');
-const VIEWS_DIR: string = path.join(ROOT_DIR, 'views');
-const CSS_DIR: string = path.join(ROOT_DIR, 'css');
-const JS_DIR: string = path.join(ROOT_DIR, 'js');
-const ASSETS_DIR: string = path.join(ROOT_DIR, 'assets');
+const PUBLIC_DIR: string = path.join(ROOT_DIR, 'public');
 
 const app = express();
 const PORT: number | string = process.env.PORT || 3000;
@@ -30,54 +25,17 @@ const PORT: number | string = process.env.PORT || 3000;
 // =========================================================================
 // 1. MIDDLEWARES WAJIB
 // =========================================================================
+app.use(compression());
 app.use(cors());
-
-// Parsing body bertipe application/x-www-form-urlencoded (HTML Form Submit)
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
-
-// Parsing body bertipe application/json (REST API Client / Fetch)
 app.use(express.json({ limit: '50mb' }));
 
 // =========================================================================
-// 2. PELACAKAN FOLDER STATIK & HTML MODULAR
+// 2. PENYAJIAN BERKAS STATIK DARI PUBLIC (PRIORITAS UTAMA)
 // =========================================================================
-app.use(express.static(ROOT_DIR));
+// Melayani hasil build acak: app.[hash].js, style.[hash].css, assets/img, dll.
 if (fs.existsSync(PUBLIC_DIR)) {
   app.use(express.static(PUBLIC_DIR));
-}
-if (fs.existsSync(HTML_DIR)) {
-  app.use('/html', express.static(HTML_DIR));
-}
-if (fs.existsSync(VIEWS_DIR)) {
-  app.use('/views', express.static(VIEWS_DIR));
-}
-if (fs.existsSync(CSS_DIR)) {
-  app.use('/css', express.static(CSS_DIR));
-}
-if (fs.existsSync(JS_DIR)) {
-  app.use('/js', express.static(JS_DIR));
-}
-if (fs.existsSync(ASSETS_DIR)) {
-  app.use('/assets', express.static(ASSETS_DIR));
-}
-
-/**
- * Fungsi pembantu untuk melacak keberadaan berkas HTML di berbagai kemungkinan folder
- */
-function resolveHtmlFile(filename: string): string | null {
-  const candidateDirs: string[] = [
-    ROOT_DIR,
-    PUBLIC_DIR,
-    HTML_DIR,
-    VIEWS_DIR
-  ];
-  for (const dir of candidateDirs) {
-    const fullPath: string = path.join(dir, filename);
-    if (fs.existsSync(fullPath) && fs.statSync(fullPath).isFile()) {
-      return fullPath;
-    }
-  }
-  return null;
 }
 
 // =========================================================================
@@ -98,9 +56,7 @@ app.get('/api/health', (_req: Request, res: Response) => {
   });
 });
 
-// -------------------------------------------------------------------------
-// Google Sheets Integration (Khusus Jalur Pengujian / Verifikasi Eksternal)
-// -------------------------------------------------------------------------
+// Google Sheets Integration (Pengujian Eksternal)
 app.post('/api/google-test/perkara', async (req: Request, res: Response) => {
   try {
     const data: PerkaraData = req.body;
@@ -113,56 +69,50 @@ app.post('/api/google-test/perkara', async (req: Request, res: Response) => {
   } catch (err: unknown) {
     const errorMsg = err instanceof Error ? err.message : String(err);
     console.error('[Google Sheets Append Error]:', errorMsg);
-    return res.status(500).json({
-      success: false,
-      error: errorMsg
-    });
+    return res.status(500).json({ success: false, error: errorMsg });
   }
 });
 
 app.get('/api/google-test/perkara', async (_req: Request, res: Response) => {
   try {
     const records = await getPerkaraFromSheet();
-    return res.status(200).json({
-      success: true,
-      data: records
-    });
+    return res.status(200).json({ success: true, data: records });
   } catch (err: unknown) {
     const errorMsg = err instanceof Error ? err.message : String(err);
     console.error('[Google Sheets Fetch Error]:', errorMsg);
-    return res.status(500).json({
-      success: false,
-      error: errorMsg
-    });
+    return res.status(500).json({ success: false, error: errorMsg });
   }
 });
 
 // =========================================================================
-// 4. PENANGANAN RUTE BERKAS HTML (MODULAR & ROOT)
+// 4. PENANGANAN RUTE BERKAS HTML (PUBLIC FIRST)
 // =========================================================================
+function getPublicIndex(): string | null {
+  const publicIndexPath = path.join(PUBLIC_DIR, 'index.html');
+  if (fs.existsSync(publicIndexPath)) {
+    return publicIndexPath;
+  }
+  const rootIndexPath = path.join(ROOT_DIR, 'index.html');
+  if (fs.existsSync(rootIndexPath)) {
+    return rootIndexPath;
+  }
+  return null;
+}
+
 app.get('/', (_req: Request, res: Response) => {
-  const indexPath: string | null = resolveHtmlFile('index.html');
+  const indexPath = getPublicIndex();
   if (indexPath) {
     return res.sendFile(indexPath);
   }
-  return res.status(404).send('index.html tidak ditemukan');
+  return res.status(404).send('index.html tidak ditemukan. Jalankan npm run build:client.');
 });
 
-app.get('/:page.html', (req: Request, res: Response, next: NextFunction) => {
-  const pageFile: string = `${req.params.page}.html`;
-  const resolved: string | null = resolveHtmlFile(pageFile);
-  if (resolved) {
-    return res.sendFile(resolved);
-  }
-  next();
-});
-
-// SPA fallback handler untuk navigasi peramban
+// SPA fallback handler untuk navigasi halaman
 app.get('*', (req: Request, res: Response, next: NextFunction) => {
   if (req.path.startsWith('/api/') || path.extname(req.path)) {
     return next();
   }
-  const indexPath: string | null = resolveHtmlFile('index.html');
+  const indexPath = getPublicIndex();
   if (indexPath) {
     return res.sendFile(indexPath);
   }
@@ -178,14 +128,15 @@ app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
   res.status(500).json({ success: false, error: 'Internal Server Error: ' + message });
 });
 
-if (process.env.NODE_ENV !== 'test') {
-  app.listen(PORT, () => {
-    console.log(`=======================================================`);
-    console.log(`  AP3 Server (Express + TypeScript) Berjalan!`);
-    console.log(`  URL: http://localhost:${PORT}`);
-    console.log(`  Root Direktori: ${ROOT_DIR}`);
-    console.log(`=======================================================`);
-  });
-}
+// =========================================================================
+// 6. AKTIFKAN SERVER PORT SECARA LANGSUNG
+// =========================================================================
+app.listen(PORT, () => {
+  console.log(`=======================================================`);
+  console.log(`  🚀 AP3 Server Berhasil Berjalan!`);
+  console.log(`  🌐 URL: http://localhost:${PORT}`);
+  console.log(`  📁 Direktori Public: ${PUBLIC_DIR}`);
+  console.log(`=======================================================`);
+});
 
 export default app;
