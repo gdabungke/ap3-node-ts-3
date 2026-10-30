@@ -2,10 +2,15 @@ import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import path from 'path';
 import fs from 'fs';
+import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
+
 import authRouter from './routes/auth.js';
 import perkaraRouter from './routes/perkara.js';
 import disposisiRouter from './routes/disposisi.js';
+import { appendPerkaraToSheet, getPerkaraFromSheet, PerkaraData } from './googleSheets.js';
+
+dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -23,7 +28,7 @@ const app = express();
 const PORT: number | string = process.env.PORT || 3000;
 
 // =========================================================================
-// 1. MIDDLEWARES WAJIB (Diaktifkan sebelum routing agar data form terbaca)
+// 1. MIDDLEWARES WAJIB
 // =========================================================================
 app.use(cors());
 
@@ -34,7 +39,7 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(express.json({ limit: '50mb' }));
 
 // =========================================================================
-// 2. PELACAKAN FOLDER STATIK & HTML MODULAR (Mencegah Express Gagal Melacak)
+// 2. PELACAKAN FOLDER STATIK & HTML MODULAR
 // =========================================================================
 app.use(express.static(ROOT_DIR));
 if (fs.existsSync(PUBLIC_DIR)) {
@@ -87,9 +92,49 @@ app.get('/api/health', (_req: Request, res: Response) => {
   res.json({
     status: 'ok',
     app: 'AP3 - Aplikasi Penyusunan Penelitian Perkara',
-    engine: 'Node.js Express + TypeScript + SQLite',
+    engine: 'Node.js Express + TypeScript + SQLite / Google Sheets',
+    mode: process.env.NODE_ENV || 'development',
     timestamp: new Date().toISOString()
   });
+});
+
+// -------------------------------------------------------------------------
+// Google Sheets Integration (Khusus Jalur Pengujian / Verifikasi Eksternal)
+// -------------------------------------------------------------------------
+app.post('/api/google-test/perkara', async (req: Request, res: Response) => {
+  try {
+    const data: PerkaraData = req.body;
+    const result = await appendPerkaraToSheet(data);
+    return res.status(200).json({
+      success: true,
+      message: 'Data perkara berhasil disinkronkan ke Google Sheets',
+      data: result
+    });
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    console.error('[Google Sheets Append Error]:', errorMsg);
+    return res.status(500).json({
+      success: false,
+      error: errorMsg
+    });
+  }
+});
+
+app.get('/api/google-test/perkara', async (_req: Request, res: Response) => {
+  try {
+    const records = await getPerkaraFromSheet();
+    return res.status(200).json({
+      success: true,
+      data: records
+    });
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    console.error('[Google Sheets Fetch Error]:', errorMsg);
+    return res.status(500).json({
+      success: false,
+      error: errorMsg
+    });
+  }
 });
 
 // =========================================================================
@@ -124,7 +169,9 @@ app.get('*', (req: Request, res: Response, next: NextFunction) => {
   return res.status(404).send('Halaman tidak ditemukan');
 });
 
-// Error handler middleware
+// =========================================================================
+// 5. ERROR HANDLING MIDDLEWARE
+// =========================================================================
 app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
   const message: string = err instanceof Error ? err.message : String(err);
   console.error('[Server Error]:', message);
@@ -134,7 +181,7 @@ app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
 if (process.env.NODE_ENV !== 'test') {
   app.listen(PORT, () => {
     console.log(`=======================================================`);
-    console.log(`  AP3 Server (Express + TypeScript + SQLite) Berjalan!`);
+    console.log(`  AP3 Server (Express + TypeScript) Berjalan!`);
     console.log(`  URL: http://localhost:${PORT}`);
     console.log(`  Root Direktori: ${ROOT_DIR}`);
     console.log(`=======================================================`);

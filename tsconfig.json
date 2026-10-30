@@ -3,15 +3,17 @@
     "target": "ES2022",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "sourceMap": false,
+    "declaration": false,
+    "removeComments": true,
     "strict": true,
     "noImplicitAny": true,
+    "esModuleInterop": true,
     "skipLibCheck": true,
-    "sourceMap": true,
-    "declaration": true,
-    "outDir": "./js",
-    "rootDir": "./src/client"
+    "forceConsistentCasingInFileNames": true
   },
-  "include": ["src/client/**/*"]
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "data", "public"]
 }
