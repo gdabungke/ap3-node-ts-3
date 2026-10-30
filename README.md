@@ -144,7 +144,7 @@ Format penomoran dirancang universal dan modular mengikuti parameter kode unit k
 > * `{num}`: Urutan angka yang diinput pengguna.
 > * `{pad2}`: Angka dengan pemenuhan 2 digit (misal `1` menjadi `01`).
 > * `{status}`: Deteksi klasifikasi penindakan otomatis (`MANDIRI` / `LIMPAH`).
-> * `[KODE_KANTOR]`: Variabel kode unit kerja sesuai instansi terkait (contoh: `KPU.2`, `KPU.206`, `KPPBC.xxx`).
+> * `[KODE_KANTOR]`: Variabel kode unit kerja sesuai instansi terkait (contoh: `KPU.`, `KPPBC.xxx`).
 > * `[TAHUN]`: Tahun aktif administrasi berjalan (contoh: `2026`).
 
 ## 🔒 Hak Akses & Peran Pengguna
