@@ -1,3 +1,11 @@
+// =========================================================================
+// 1. INJEKSI LAYOUT & TEMPLATE BODY (Wajib pertama kali sebelum modul membaca DOM)
+// =========================================================================
+import './utils/layout-loader.js';
+
+// =========================================================================
+// 2. IMPOR MODUL DAN STATE APLIKASI
+// =========================================================================
 import { store } from './state/store.js';
 import { initSettingPejabatDropdowns } from './modules/storage.js';
 import { updateDashboardStats } from './modules/dashboard.js'; 
@@ -12,9 +20,10 @@ import * as editor from './modules/editor.js';
 import * as laporan from './templates/laporan.js';
 import * as tindaklanjut from './templates/tindaklanjut.js';
 
+// Inisialisasi dropdown pengaturan pejabat
 initSettingPejabatDropdowns();
 
-// Expose all modules and functions to window for seamless inline event handlers
+// Expose semua modul dan fungsi ke window untuk mendukung inline event handlers (onclick, onchange)
 const allModules: any[] = [formatters, ui, auth, disposisi, perkara, editor, laporan, tindaklanjut];
 allModules.forEach(mod => {
   Object.keys(mod).forEach(key => {
@@ -22,7 +31,7 @@ allModules.forEach(mod => {
   });
 });
 
-// Also expose store properties if accessed directly
+// Expose state properties ke window
 (window as any).store = store;
 Object.defineProperty(window, 'databasePerkara', {
   get: () => store.databasePerkara,
@@ -53,11 +62,15 @@ Object.defineProperty(window, 'selectedPaperSize', {
   set: (val) => { store.selectedPaperSize = val; }
 });
 
+// =========================================================================
+// 3. EVENT LISTENER KETIKA DOM SIAP
+// =========================================================================
 document.addEventListener("DOMContentLoaded", function() {
   auth.initUserAccounts();
   auth.checkLoginSession();
   perkara.populateAgeDropdown();
 
+  // Tab Navigasi Utama
   const navButtons = document.querySelectorAll('.nav-btn');
   const tabPanes = document.querySelectorAll('.tab-pane');
 
@@ -68,24 +81,24 @@ document.addEventListener("DOMContentLoaded", function() {
       this.classList.add('active');
 
       const targetId = this.getAttribute('data-target');
-      if(!targetId) return;
+      if (!targetId) return;
 
       tabPanes.forEach(tab => tab.classList.remove('active'));
       const activeTab = document.getElementById(targetId);
-      if(activeTab) activeTab.classList.add('active');
+      if (activeTab) activeTab.classList.add('active');
 
-      if(targetId === 'disposisi') {
+      if (targetId === 'disposisi') {
         renderDisposisiTable();
         disposisi.checkDisposisiAccessByRole();
       }
 
-      if(targetId === 'dasbor') {
+      if (targetId === 'dasbor') {
         updateDashboardStats();
-      } else if(targetId === 'laporan') {
+      } else if (targetId === 'laporan') {
         let sel = document.getElementById('docFilterSelect') as HTMLSelectElement;
         let selectedType = sel ? sel.value : store.currentDoc;
         editor.switchDocTab(selectedType);
-      } else if(targetId === 'tindaklanjut') {
+      } else if (targetId === 'tindaklanjut') {
         let selTL = document.getElementById('tlDocFilterSelect') as HTMLSelectElement;
         let selectedTLType = selTL ? selTL.value : store.currentTLDoc;
         editor.switchTLDocTab(selectedTLType);
@@ -93,6 +106,7 @@ document.addEventListener("DOMContentLoaded", function() {
     });
   });
 
+  // Tab Pengaturan (Gemini Setting Nav)
   const geminiNavItems = document.querySelectorAll('.gemini-nav-item');
   const geminiSubPanes = document.querySelectorAll('.setting-subtab-pane');
 
@@ -105,18 +119,20 @@ document.addEventListener("DOMContentLoaded", function() {
       geminiSubPanes.forEach(pane => pane.classList.remove('active'));
       
       const activePane = document.getElementById(targetSub!);
-      if(activePane) activePane.classList.add('active');
+      if (activePane) activePane.classList.add('active');
     });
   });
 
+  // Tutup dropdown profil jika klik di luar elemen
   document.addEventListener('click', function(e: MouseEvent) {
     let profileWrapper = document.querySelector('.user-profile-wrapper');
     let dropdownMenu = document.getElementById('userDropdownMenu');
     if (profileWrapper && !profileWrapper.contains(e.target as Node)) {
-      if(dropdownMenu) dropdownMenu.classList.remove('show');
+      if (dropdownMenu) dropdownMenu.classList.remove('show');
     }
   });
 
+  // Muat data awal dan setelan pratinjau
   perkara.loadData();
   renderPerkaraTable();
   updateDashboardStats();
@@ -124,16 +140,26 @@ document.addEventListener("DOMContentLoaded", function() {
   editor.switchDocTab(store.currentDoc); 
   editor.switchTLDocTab(store.currentTLDoc);
   perkara.setPratinjauNomor();
+
+  // Hilangkan layar loading overlay setelah semua komponen siap
+  const loadingScreen = document.getElementById('app-loading-screen');
+  if (loadingScreen) {
+    loadingScreen.style.opacity = '0';
+    setTimeout(() => {
+      loadingScreen.style.display = 'none';
+    }, 300);
+  }
 });
 
-// Otomatis aktif saat tombol cetak ditekan atau Ctrl+P
+// =========================================================================
+// 4. PENANGANAN PRINTING / CETAK DOKUMEN
+// =========================================================================
 window.addEventListener('beforeprint', () => {
   document.querySelectorAll('#reports .report, #tl_reports .report').forEach((card: any) => {
     card.style.display = 'block';
   });
 });
 
-// Otomatis merapikan kembali ke halaman preview aktif setelah selesai cetak
 window.addEventListener('afterprint', () => {
   if (document.getElementById('reports')) {
     ui.navigatePreviewPage(store.currentActivePageIdx, 'reports');
@@ -143,6 +169,7 @@ window.addEventListener('afterprint', () => {
   }
 });
 
+// Event delegation untuk tombol respon disposisi
 document.addEventListener('click', function(e: MouseEvent) {
   let target = e.target as HTMLElement;
   let btnTerima = target.closest('.btn-terima-dsp');
@@ -157,4 +184,3 @@ document.addEventListener('click', function(e: MouseEvent) {
     if (id) disposisi.responDisposisi('tolak', id);
   }
 });
-
