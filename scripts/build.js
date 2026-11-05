@@ -99,14 +99,17 @@ console.log(`✅ CSS terkompresi: ${relativeCssName}`);
 // 6. Sinkronkan & Minifikasi docs/index.html saja
 let htmlContent = fs.readFileSync(INDEX_HTML_SRC, 'utf8');
 
-htmlContent = htmlContent.replace(/<link\s+rel="stylesheet"[^>]*css\/[^>]*>/gi, '');
-htmlContent = htmlContent.replace(/<script\b[^>]*src="[^"]*"[^>]*><\/script>/gi, '');
+// Bersihkan seluruh link CSS lokal dan script bundle lama
+htmlContent = htmlContent.replace(/<link\s+rel="stylesheet"[^>]*href="[^"]*(style|\.css)[^"]*"[^>]*>/gi, '');
+htmlContent = htmlContent.replace(/<script\b[^>]*src="[^"]*(bundle|app)[^"]*"[^>]*>\s*<\/script>/gi, '');
 
+// Sisipkan stylesheet bundel baru sebelum </head>
 htmlContent = htmlContent.replace(
   '</head>',
   `<link rel="stylesheet" href="${relativeCssName}"></head>`
 );
 
+// Sisipkan script module bundel baru sebelum </body>
 if (htmlContent.includes('</body>')) {
   htmlContent = htmlContent.replace(
     '</body>',
@@ -116,7 +119,7 @@ if (htmlContent.includes('</body>')) {
   htmlContent += `<script type="module" src="${relativeJsName}"></script>`;
 }
 
-// Minifikasi HTML: bersihkan komentar dan spasi berlebih untuk file docs/index.html saja
+// Minifikasi HTML: bersihkan komentar dan spasi berlebih
 htmlContent = htmlContent
   .replace(/<!--[\s\S]*?-->/g, '')
   .replace(/>\s+</g, '><')
