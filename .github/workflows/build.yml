@@ -1,32 +1,29 @@
-name: Deploy GitHub Pages
+name: Build and Deploy to GitHub Pages
 
 on:
   push:
-    branches: [main]
-
-permissions:
-  contents: read
-  pages: write
-  id-token: write
+    branches: [ main ]
 
 jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          path: 'public/'
+          node-version: '20'
 
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Run Build Client (Generate to docs)
+        run: npm run build:client
+
+      - name: Commit and Push Generated Docs
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "ci: auto-generated build files for docs"
+          file_pattern: "docs/*"
