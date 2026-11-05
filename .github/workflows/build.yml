@@ -5,8 +5,10 @@ on:
     branches: [ main ]
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -25,5 +27,5 @@ jobs:
       - name: Commit and Push Generated Docs
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "ci: auto-generated build files for docs"
+          commit_message: "ci: auto-generated client build in docs folder"
           file_pattern: "docs/*"
