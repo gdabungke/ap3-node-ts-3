@@ -4,7 +4,7 @@ import path from 'path';
 
 const PUBLIC_DIR = path.resolve('public');
 const SRC_CLIENT = path.resolve('src/client/app.ts');
-const INDEX_HTML_SRC = path.resolve('index.html');
+const INDEX_HTML_SRC = path.resolve('src/client/index.html');
 const INDEX_HTML_DIST = path.resolve('public/index.html');
 
 // 1. Jalur Sumber CSS dan Assets
