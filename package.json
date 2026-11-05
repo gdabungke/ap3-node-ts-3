@@ -8,10 +8,9 @@
     "build:client": "node scripts/build.js",
     "build:server": "tsc",
     "build": "npm run build:client && npm run build:server",
-    "prestart": "npm run build",
-    "start": "node dist/server/index.js",
-    "dev": "npm run build:client && tsx watch src/server/index.ts"
-  },,
+    "dev": "tsx watch src/server/index.ts",
+    "start": "node dist/server/index.js"
+  },
   "keywords": [
     "ap3",
     "penelitian-perkara",
