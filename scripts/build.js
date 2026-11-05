@@ -2,34 +2,35 @@ import * as esbuild from 'esbuild';
 import fs from 'fs';
 import path from 'path';
 
-const PUBLIC_DIR = path.resolve('public');
+// Output diarahkan ke 'docs' agar langsung dikenali oleh GitHub Pages
+const DOCS_DIR = path.resolve('docs');
 const SRC_CLIENT = path.resolve('src/client/app.ts');
 const INDEX_HTML_SRC = path.resolve('src/client/index.html');
-const INDEX_HTML_DIST = path.resolve('public/index.html');
+const INDEX_HTML_DIST = path.resolve('docs/index.html');
 
 // 1. Jalur Sumber CSS dan Assets
 const CSS_DIR = path.resolve('src/client/css');
 const ASSETS_SRC = path.resolve('src/client/assets');
-const ASSETS_DIST = path.resolve('public/assets');
+const ASSETS_DIST = path.resolve('docs/assets');
 
-console.log('📦 Memulai proses ultra-build frontend...');
+console.log('📦 Memulai proses ultra-build frontend untuk GitHub Pages (docs)...');
 
-// 2. Bersihkan sisa JS/CSS bundle dari build sebelumnya di folder public
-if (fs.existsSync(PUBLIC_DIR)) {
-  const files = fs.readdirSync(PUBLIC_DIR);
+// 2. Bersihkan sisa JS/CSS bundle dari build sebelumnya di folder docs
+if (fs.existsSync(DOCS_DIR)) {
+  const files = fs.readdirSync(DOCS_DIR);
   for (const file of files) {
     if (
       (file.startsWith('app.') && file.endsWith('.js')) ||
       (file.startsWith('style.') && file.endsWith('.css'))
     ) {
-      fs.unlinkSync(path.join(PUBLIC_DIR, file));
+      fs.unlinkSync(path.join(DOCS_DIR, file));
     }
   }
 } else {
-  fs.mkdirSync(PUBLIC_DIR, { recursive: true });
+  fs.mkdirSync(DOCS_DIR, { recursive: true });
 }
 
-// 3. Salin folder assets ke public
+// 3. Salin folder assets ke docs
 if (fs.existsSync(ASSETS_SRC)) {
   fs.cpSync(ASSETS_SRC, ASSETS_DIST, { recursive: true, force: true });
 }
@@ -45,24 +46,25 @@ const jsResult = await esbuild.build({
   target: ['es2020'],
   metafile: true,
   entryNames: '[name].[hash]',
-  outdir: 'public',
+  outdir: 'docs',
   format: 'esm',
   sourcemap: false
 });
 
 const jsOutputs = Object.keys(jsResult.metafile.outputs);
 const jsOutputFile = jsOutputs.find(f => f.endsWith('.js'));
-const jsPublicPath = path.resolve(jsOutputFile);
-const randomJsName = '/' + path.basename(jsOutputFile);
+const jsDocsPath = path.resolve(jsOutputFile);
+// Menggunakan relative path './' agar tidak 404 pada subpath /ap3-node-ts-3/
+const relativeJsName = './' + path.basename(jsOutputFile);
 
-// Hapus komentar HTML HANYA dari file bundel JS di folder public (file sumber ts tidak disentuh)
-if (fs.existsSync(jsPublicPath)) {
-  let bundledJs = fs.readFileSync(jsPublicPath, 'utf8');
+// Hapus komentar HTML HANYA dari file bundel JS di folder docs (file sumber ts tetap utuh)
+if (fs.existsSync(jsDocsPath)) {
+  let bundledJs = fs.readFileSync(jsDocsPath, 'utf8');
   bundledJs = bundledJs.replace(/<!--[\s\S]*?-->/g, '');
-  fs.writeFileSync(jsPublicPath, bundledJs, 'utf8');
+  fs.writeFileSync(jsDocsPath, bundledJs, 'utf8');
 }
 
-// 5. Gabungkan dan Kompres Maksimal CSS ke public
+// 5. Gabungkan dan Kompres Maksimal CSS ke docs
 let combinedCss = '';
 if (fs.existsSync(CSS_DIR)) {
   const cssOrder = ['main.css', 'layout.css', 'components.css', 'print.css'];
@@ -87,13 +89,14 @@ const cssMinified = await esbuild.transform(combinedCss, {
 });
 
 const cssHash = Math.random().toString(36).substring(2, 10).toUpperCase();
-const randomCssName = `/style.${cssHash}.css`;
-fs.writeFileSync(path.join(PUBLIC_DIR, `style.${cssHash}.css`), cssMinified.code, 'utf8');
+const cssFileName = `style.${cssHash}.css`;
+const relativeCssName = `./${cssFileName}`;
+fs.writeFileSync(path.join(DOCS_DIR, cssFileName), cssMinified.code, 'utf8');
 
-console.log(`✅ JS terkompresi : ${randomJsName}`);
-console.log(`✅ CSS terkompresi: ${randomCssName}`);
+console.log(`✅ JS terkompresi : ${relativeJsName}`);
+console.log(`✅ CSS terkompresi: ${relativeCssName}`);
 
-// 6. Sinkronkan & Minifikasi public/index.html saja
+// 6. Sinkronkan & Minifikasi docs/index.html saja
 let htmlContent = fs.readFileSync(INDEX_HTML_SRC, 'utf8');
 
 htmlContent = htmlContent.replace(/<link\s+rel="stylesheet"[^>]*css\/[^>]*>/gi, '');
@@ -101,19 +104,19 @@ htmlContent = htmlContent.replace(/<script\b[^>]*src="[^"]*"[^>]*><\/script>/gi,
 
 htmlContent = htmlContent.replace(
   '</head>',
-  `<link rel="stylesheet" href="${randomCssName}"></head>`
+  `<link rel="stylesheet" href="${relativeCssName}"></head>`
 );
 
 if (htmlContent.includes('</body>')) {
   htmlContent = htmlContent.replace(
     '</body>',
-    `<script type="module" src="${randomJsName}"></script></body>`
+    `<script type="module" src="${relativeJsName}"></script></body>`
   );
 } else {
-  htmlContent += `<script type="module" src="${randomJsName}"></script>`;
+  htmlContent += `<script type="module" src="${relativeJsName}"></script>`;
 }
 
-// Bersihkan komentar HTML dan spasi berlebih hanya untuk public/index.html
+// Minifikasi HTML: bersihkan komentar dan spasi berlebih untuk file docs/index.html saja
 htmlContent = htmlContent
   .replace(/<!--[\s\S]*?-->/g, '')
   .replace(/>\s+</g, '><')
@@ -121,4 +124,4 @@ htmlContent = htmlContent
 
 fs.writeFileSync(INDEX_HTML_DIST, htmlContent, 'utf8');
 
-console.log('🚀 Build client selesai! File asli tetap utuh, file public bersih.');
+console.log('🚀 Build client selesai! Folder docs siap dideploy ke GitHub Pages.');
